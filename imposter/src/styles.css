@@ -1,0 +1,39 @@
+:root {
+  --bg: #0b0b0d;
+  --panel: #1a1a1f;
+  --line: #2c2c34;
+  --text: #f4f4f6;
+  --muted: #9a9aa6;
+  --red: #e5242b;
+  --green: #2ecc71;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, 'Segoe UI', Arial, sans-serif; }
+.screen { min-height: 100dvh; max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+.screen.center { justify-content: center; align-items: center; text-align: center; }
+h1 { margin: 0; font-size: 2rem; }
+h2 { margin: 16px 0 0; font-size: 1.1rem; color: var(--muted); }
+.sub, .counter { color: var(--muted); margin: 0; line-height: 1.5; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 12px 16px; }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--red); border-color: var(--red); font-weight: 700; font-size: 1.1rem; padding: 14px; width: 100%; margin-top: 16px; }
+button.ghost { background: transparent; }
+button.icon { width: 44px; padding: 10px 0; }
+input { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; flex: 1; min-width: 0; }
+.names { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.names li { display: flex; gap: 8px; }
+.packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pack { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pack .emoji { font-size: 1.6rem; }
+.pack.on { border-color: var(--red); background: #2a1316; }
+.stepper { display: flex; align-items: center; gap: 20px; font-size: 1.4rem; }
+.card { width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px 16px; margin: 12px 0; }
+.card.imposter { background: #2a1013; border-color: var(--red); }
+.card .role { font-size: 1.8rem; font-weight: 800; color: var(--red); }
+.card .label { color: var(--muted); font-size: .85rem; margin-top: 8px; }
+.card .word { font-size: 2rem; font-weight: 800; margin: 4px 0 8px; }
+.timer { font-family: ui-monospace, monospace; font-size: 4rem; color: var(--red); text-shadow: 0 0 20px #e5242b88; }
+.targets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.target { padding: 18px 8px; font-size: 1.1rem; }
+.win { color: var(--green); }
+.lose { color: var(--red); }
