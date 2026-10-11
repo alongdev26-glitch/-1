@@ -83,3 +83,16 @@ button.primary { box-shadow: 0 8px 24px #e5242b55; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .screen > .avatar { align-self: center; }
 .screen > h1, .screen > .sub { text-align: center; }
+
+/* ---- quiz setup ---- */
+.quiz { align-items: center; text-align: center; }
+.quiz .names, .quiz .packs { width: 100%; text-align: start; }
+.progress { display: flex; gap: 6px; width: 100%; margin-top: 60px; }
+.progress i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); transition: background .3s; }
+.progress i.on { background: var(--red); box-shadow: 0 0 10px #e5242b88; }
+.stepper.big { gap: 32px; margin: 12px 0; }
+.stepper.big b { font-size: 4.5rem; min-width: 1.5ch; text-shadow: 0 0 24px #e5242b88; }
+.stepper.big .icon { width: 64px; height: 64px; font-size: 1.8rem; border-radius: 50%; }
+.nav { display: flex; gap: 10px; width: 100%; margin-top: auto; padding-top: 16px; }
+.nav .primary { margin-top: 0; flex: 1; }
+.nav .ghost { padding-inline: 20px; }

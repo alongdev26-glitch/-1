@@ -77,67 +77,113 @@ interface SetupProps {
   onStart: () => void;
 }
 
+const STEPS = ['players', 'names', 'packs', 'imposters'] as const;
+
 function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, onStart }: SetupProps) {
+  const [step, setStep] = useState(0);
   const maxImp = maxImposters(names.length);
   const imp = Math.min(imposters, maxImp);
   const togglePack = (id: string) =>
     setPackIds(packIds.includes(id) ? packIds.filter((p) => p !== id) : [...packIds, id]);
+  const resize = (n: number) =>
+    setNames(Array.from({ length: n }, (_, i) => names[i] ?? `שחקן ${i + 1}`));
+  const last = step === STEPS.length - 1;
+  const canNext = STEPS[step] !== 'packs' || packIds.length > 0;
+
+  const next = () => {
+    play('tap');
+    if (last) {
+      setImposters(imp);
+      onStart();
+    } else setStep(step + 1);
+  };
+  const back = () => {
+    play('tap');
+    setStep(step - 1);
+  };
 
   return (
-    <main className="screen">
+    <main className="screen quiz" key={step}>
       <SoundToggle />
-      <Avatar seed={0} kind="imposter" size={120} />
-      <h1>מתחזה</h1>
-      <p className="sub">מי משקר? מצאו את המתחזה לפני שהוא מתערבב.</p>
-
-      <h2>שחקנים ({names.length})</h2>
-      <ul className="names">
-        {names.map((n, i) => (
-          <li key={i}>
-            <Avatar seed={i} size={40} />
-            <input
-              value={n}
-              maxLength={14}
-              onChange={(e) => setNames(names.map((x, j) => (j === i ? e.target.value : x)))}
-            />
-            {names.length > MIN_PLAYERS && (
-              <button className="icon" aria-label="הסר" onClick={() => setNames(names.filter((_, j) => j !== i))}>
-                ✕
-              </button>
-            )}
-          </li>
+      <div className="progress" aria-label={`שאלה ${step + 1} מתוך ${STEPS.length}`}>
+        {STEPS.map((_, i) => (
+          <i key={i} className={i <= step ? 'on' : ''} />
         ))}
-      </ul>
-      {names.length < MAX_PLAYERS && (
-        <button className="ghost" onClick={() => setNames([...names, `שחקן ${names.length + 1}`])}>
-          + הוסף שחקן
-        </button>
+      </div>
+      <p className="counter">שאלה {step + 1} מתוך {STEPS.length}</p>
+
+      {STEPS[step] === 'players' && (
+        <>
+          <Avatar seed={0} kind="imposter" size={110} />
+          <h1>כמה שחקנים?</h1>
+          <p className="sub">{MIN_PLAYERS} עד {MAX_PLAYERS} אנשים על טלפון אחד.</p>
+          <div className="stepper big">
+            <button className="icon" disabled={names.length <= MIN_PLAYERS} onClick={() => resize(names.length - 1)}>−</button>
+            <b>{names.length}</b>
+            <button className="icon" disabled={names.length >= MAX_PLAYERS} onClick={() => resize(names.length + 1)}>+</button>
+          </div>
+        </>
       )}
 
-      <h2>קטגוריות</h2>
-      <div className="packs">
-        {PACKS.map((p) => (
-          <button
-            key={p.id}
-            className={'pack' + (packIds.includes(p.id) ? ' on' : '')}
-            onClick={() => togglePack(p.id)}
-          >
-            <span className="emoji">{p.emoji}</span>
-            {p.name}
-          </button>
-        ))}
-      </div>
+      {STEPS[step] === 'names' && (
+        <>
+          <h1>איך קוראים לכם?</h1>
+          <ul className="names">
+            {names.map((n, i) => (
+              <li key={i}>
+                <Avatar seed={i} size={40} />
+                <input
+                  value={n}
+                  maxLength={14}
+                  aria-label={`שם שחקן ${i + 1}`}
+                  onChange={(e) => setNames(names.map((x, j) => (j === i ? e.target.value : x)))}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
-      <h2>מתחזים</h2>
-      <div className="stepper">
-        <button className="icon" disabled={imp <= 1} onClick={() => setImposters(imp - 1)}>−</button>
-        <b>{imp}</b>
-        <button className="icon" disabled={imp >= maxImp} onClick={() => setImposters(imp + 1)}>+</button>
-      </div>
+      {STEPS[step] === 'packs' && (
+        <>
+          <h1>על מה משחקים?</h1>
+          <p className="sub">אפשר לבחור כמה קטגוריות.</p>
+          <div className="packs">
+            {PACKS.map((p) => (
+              <button
+                key={p.id}
+                className={'pack' + (packIds.includes(p.id) ? ' on' : '')}
+                onClick={() => togglePack(p.id)}
+              >
+                <span className="emoji">{p.emoji}</span>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      <button className="primary" disabled={packIds.length === 0} onClick={onStart}>
-        התחל משחק
-      </button>
+      {STEPS[step] === 'imposters' && (
+        <>
+          <Avatar seed={1} kind="imposter" size={110} />
+          <h1>כמה מתחזים?</h1>
+          <p className="sub">עם {names.length} שחקנים אפשר עד {maxImp}.</p>
+          <div className="stepper big">
+            <button className="icon" disabled={imp <= 1} onClick={() => setImposters(imp - 1)}>−</button>
+            <b>{imp}</b>
+            <button className="icon" disabled={imp >= maxImp} onClick={() => setImposters(imp + 1)}>+</button>
+          </div>
+        </>
+      )}
+
+      <div className="nav">
+        {step > 0 && (
+          <button className="ghost" onClick={back}>חזרה</button>
+        )}
+        <button className="primary" disabled={!canNext} onClick={next}>
+          {last ? 'התחל משחק' : 'הבא'}
+        </button>
+      </div>
     </main>
   );
 }
