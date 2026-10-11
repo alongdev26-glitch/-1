@@ -96,3 +96,4 @@ button.primary { box-shadow: 0 8px 24px #e5242b55; }
 .nav { display: flex; gap: 10px; width: 100%; margin-top: auto; padding-top: 16px; }
 .nav .primary { margin-top: 0; flex: 1; }
 .nav .ghost { padding-inline: 20px; }
+.bigname { flex: none; width: 100%; font-size: 1.6rem; text-align: center; padding: 16px; }

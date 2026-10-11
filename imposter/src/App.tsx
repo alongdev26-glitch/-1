@@ -77,7 +77,6 @@ interface SetupProps {
   onStart: () => void;
 }
 
-const STEPS = ['players', 'names', 'packs', 'imposters'] as const;
 
 function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, onStart }: SetupProps) {
   const [step, setStep] = useState(0);
@@ -87,8 +86,12 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
     setPackIds(packIds.includes(id) ? packIds.filter((p) => p !== id) : [...packIds, id]);
   const resize = (n: number) =>
     setNames(Array.from({ length: n }, (_, i) => names[i] ?? `שחקן ${i + 1}`));
-  const last = step === STEPS.length - 1;
-  const canNext = STEPS[step] !== 'packs' || packIds.length > 0;
+  // Questions: player count, one name per player, categories, imposters.
+  const total = names.length + 3;
+  const kind = step === 0 ? 'players' : step <= names.length ? 'name' : step === names.length + 1 ? 'packs' : 'imposters';
+  const nameIdx = step - 1;
+  const last = step === total - 1;
+  const canNext = kind !== 'packs' || packIds.length > 0;
 
   const next = () => {
     play('tap');
@@ -105,14 +108,14 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   return (
     <main className="screen quiz" key={step}>
       <SoundToggle />
-      <div className="progress" aria-label={`שאלה ${step + 1} מתוך ${STEPS.length}`}>
-        {STEPS.map((_, i) => (
+      <div className="progress" aria-label={`שאלה ${step + 1} מתוך ${total}`}>
+        {Array.from({ length: total }, (_, i) => (
           <i key={i} className={i <= step ? 'on' : ''} />
         ))}
       </div>
-      <p className="counter">שאלה {step + 1} מתוך {STEPS.length}</p>
+      <p className="counter">שאלה {step + 1} מתוך {total}</p>
 
-      {STEPS[step] === 'players' && (
+      {kind === 'players' && (
         <>
           <Avatar seed={0} kind="imposter" size={110} />
           <h1>כמה שחקנים?</h1>
@@ -125,26 +128,23 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
         </>
       )}
 
-      {STEPS[step] === 'names' && (
+      {kind === 'name' && (
         <>
-          <h1>איך קוראים לכם?</h1>
-          <ul className="names">
-            {names.map((n, i) => (
-              <li key={i}>
-                <Avatar seed={i} size={40} />
-                <input
-                  value={n}
-                  maxLength={14}
-                  aria-label={`שם שחקן ${i + 1}`}
-                  onChange={(e) => setNames(names.map((x, j) => (j === i ? e.target.value : x)))}
-                />
-              </li>
-            ))}
-          </ul>
+          <Avatar seed={nameIdx} size={110} />
+          <h1>איך קוראים לשחקן {nameIdx + 1}?</h1>
+          <input
+            className="bigname"
+            autoFocus
+            value={names[nameIdx]}
+            maxLength={14}
+            aria-label={`שם שחקן ${nameIdx + 1}`}
+            onChange={(e) => setNames(names.map((x, j) => (j === nameIdx ? e.target.value : x)))}
+            onKeyDown={(e) => e.key === 'Enter' && next()}
+          />
         </>
       )}
 
-      {STEPS[step] === 'packs' && (
+      {kind === 'packs' && (
         <>
           <h1>על מה משחקים?</h1>
           <p className="sub">אפשר לבחור כמה קטגוריות.</p>
@@ -163,7 +163,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
         </>
       )}
 
-      {STEPS[step] === 'imposters' && (
+      {kind === 'imposters' && (
         <>
           <Avatar seed={1} kind="imposter" size={110} />
           <h1>כמה מתחזים?</h1>
@@ -253,24 +253,41 @@ function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
 
 function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
   const [seconds, setSeconds] = useState(0);
+  const [turn, setTurn] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
   }, []);
+  const n = round.players.length;
+  const speaker = round.players[(round.firstSpeaker + turn) % n];
+  const roundDone = turn >= n - 1;
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
 
   return (
-    <main className="screen center">
-      <h2>הדיון</h2>
-      <Avatar seed={round.firstSpeaker} size={90} />
+    <main className="screen center" key={turn}>
+      <p className="counter">תור {turn + 1} מתוך {n}</p>
+      <Avatar seed={speaker.id} size={110} />
+      <h1>{speaker.name}</h1>
+      <p className="sub">אומר רמז של מילה אחת.</p>
       <div className="timer">{mm}:{ss}</div>
-      <p className="sub">
-        מתחיל: <b>{round.players[round.firstSpeaker].name}</b>
-        <br />
-        כל אחד אומר רמז של מילה אחת, ואז מתווכחים.
-      </p>
-      <button className="primary" onClick={onVote}>עוברים להצבעה</button>
+      {!roundDone ? (
+        <button
+          className="primary"
+          onClick={() => {
+            play('tap');
+            vibrate(20);
+            setTurn(turn + 1);
+          }}
+        >
+          הבא בתור ←
+        </button>
+      ) : (
+        <p className="sub">כולם דיברו. אפשר להצביע.</p>
+      )}
+      <button className={roundDone ? 'primary' : 'ghost'} disabled={!roundDone} onClick={onVote}>
+        {roundDone ? 'עוברים להצבעה' : 'הצבעה (אחרי שכולם מדברים)'}
+      </button>
     </main>
   );
 }
