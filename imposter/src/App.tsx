@@ -18,14 +18,48 @@ export default function App() {
   );
 }
 
+interface Saved {
+  names: string[];
+  packIds: string[];
+  imposters: number;
+  rolesMode: boolean;
+}
+
+const SAVE_KEY = 'imposter.setup';
+
+/** Last setup, so a group does not have to retype names every round. */
+function loadSaved(): Partial<Saved> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SAVE_KEY) ?? '{}') as Partial<Saved>;
+    const names = Array.isArray(raw.names) ? raw.names.slice(0, MAX_PLAYERS).map((n) => String(n).slice(0, 14)) : undefined;
+    return {
+      names: names && names.length >= MIN_PLAYERS ? names : undefined,
+      packIds: Array.isArray(raw.packIds) ? raw.packIds.filter((id) => PACKS.some((p) => p.id === id)) : undefined,
+      imposters: typeof raw.imposters === 'number' ? raw.imposters : undefined,
+      rolesMode: raw.rolesMode === true,
+    };
+  } catch {
+    return {};
+  }
+}
+
 function Game() {
   const { lang, t } = useLang();
+  const [saved] = useState(loadSaved);
   const [phase, setPhase] = useState<Phase>('setup');
   // An empty name means "use the default for the chosen language".
-  const [names, setNames] = useState<string[]>(['', '', '']);
-  const [packIds, setPackIds] = useState<string[]>([PACKS[0].id]);
-  const [imposters, setImposters] = useState(1);
-  const [rolesMode, setRolesMode] = useState(false);
+  const [names, setNames] = useState<string[]>(saved.names ?? ['', '', '']);
+  const [packIds, setPackIds] = useState<string[]>(saved.packIds?.length ? saved.packIds : [PACKS[0].id]);
+  const [imposters, setImposters] = useState(saved.imposters ?? 1);
+  const [rolesMode, setRolesMode] = useState(saved.rolesMode ?? false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ names, packIds, imposters, rolesMode }));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [names, packIds, imposters, rolesMode]);
   const [round, setRound] = useState<Round | null>(null);
   const [votes, setVotes] = useState<number[]>([]);
 

@@ -62,4 +62,40 @@ export const PACKS: Pack[] = [
       he: ['כדורגל', 'כדורסל', 'טניס', 'שחייה', 'ג׳ודו', 'רכיבה על אופניים', 'ריצה', 'גלישה', 'סקי', 'אגרוף', 'כדורעף', 'התעמלות', 'גולף', 'פינג פונג', 'קפיצה במוט', 'שחמט', 'טיפוס', 'הוקי', 'שנורקלינג', 'קראטה'],
     },
   },
+  {
+    id: 'countries',
+    emoji: '🌍',
+    name: { en: 'Countries', he: 'מדינות' },
+    words: {
+      en: ['France', 'Japan', 'Brazil', 'Egypt', 'Italy', 'Mexico', 'India', 'Canada', 'Greece', 'Spain', 'Germany', 'Australia', 'Turkey', 'Thailand', 'Argentina', 'Norway', 'Morocco', 'Peru', 'Kenya', 'Iceland'],
+      he: ['צרפת', 'יפן', 'ברזיל', 'מצרים', 'איטליה', 'מקסיקו', 'הודו', 'קנדה', 'יוון', 'ספרד', 'גרמניה', 'אוסטרליה', 'טורקיה', 'תאילנד', 'ארגנטינה', 'נורווגיה', 'מרוקו', 'פרו', 'קניה', 'איסלנד'],
+    },
+  },
+  {
+    id: 'movies',
+    emoji: '🎬',
+    name: { en: 'Movies', he: 'סרטים' },
+    words: {
+      en: ['Titanic', 'Jaws', 'Shrek', 'Frozen', 'Inception', 'Avatar', 'Matrix', 'Gladiator', 'Joker', 'Rocky', 'Alien', 'Psycho', 'Casablanca', 'Up', 'Coco', 'Bambi', 'Skyfall', 'Grease', 'Zorro', 'Dune'],
+      he: ['טיטניק', 'מלתעות', 'שרק', 'לשחרר', 'התחלה', 'אווטאר', 'מטריקס', 'גלדיאטור', 'ג׳וקר', 'רוקי', 'החייזר', 'פסיכו', 'קזבלנקה', 'למעלה', 'קוקו', 'במבי', 'סקייפול', 'גריז', 'זורו', 'חולית'],
+    },
+  },
+  {
+    id: 'music',
+    emoji: '🎵',
+    name: { en: 'Music', he: 'מוזיקה' },
+    words: {
+      en: ['Guitar', 'Piano', 'Drums', 'Violin', 'Concert', 'Microphone', 'Opera', 'Jazz', 'Rap', 'Choir', 'Saxophone', 'Trumpet', 'Festival', 'DJ', 'Orchestra', 'Lyrics', 'Headphones', 'Vinyl', 'Harmonica', 'Karaoke'],
+      he: ['גיטרה', 'פסנתר', 'תופים', 'כינור', 'הופעה', 'מיקרופון', 'אופרה', 'ג׳אז', 'ראפ', 'מקהלה', 'סקסופון', 'חצוצרה', 'פסטיבל', 'תקליטן', 'תזמורת', 'מילים', 'אוזניות', 'תקליט', 'מפוחית', 'קריוקי'],
+    },
+  },
+  {
+    id: 'tech',
+    emoji: '💻',
+    name: { en: 'Tech', he: 'טכנולוגיה' },
+    words: {
+      en: ['Robot', 'Satellite', 'Drone', 'Password', 'Wi-Fi', 'Server', 'Keyboard', 'Charger', 'Bluetooth', 'Hacker', 'Algorithm', 'Browser', 'Camera', 'Database', 'Router', 'Hologram', 'Battery', 'Cloud', 'Firewall', 'Emoji'],
+      he: ['רובוט', 'לוויין', 'רחפן', 'סיסמה', 'וויי פיי', 'שרת', 'מקלדת', 'מטען', 'בלוטות׳', 'האקר', 'אלגוריתם', 'דפדפן', 'מצלמה', 'מסד נתונים', 'נתב', 'הולוגרמה', 'סוללה', 'ענן', 'חומת אש', 'אמוג׳י'],
+    },
+  },
 ];
