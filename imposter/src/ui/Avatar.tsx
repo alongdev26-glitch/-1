@@ -8,7 +8,7 @@ const SUIT = ['#1c1c22', '#26262e', '#2b2d42', '#22303a', '#2e2420', '#1f2a24'];
 const LOOKS = ['short', 'ponytail', 'bob', 'cap', 'santa', 'bun', 'spiky', 'headband', 'long', 'beanie', 'alien', 'side'] as const;
 type Look = (typeof LOOKS)[number];
 
-const STROKE = { stroke: '#000', strokeWidth: 3, strokeLinejoin: 'round' as const };
+const STROKE = { stroke: '#050507', strokeWidth: 3.4, strokeLinejoin: 'round' as const };
 
 function Hair({ look, color }: { look: Look; color: string }) {
   const cap = <path d="M24 38 C22 10 78 10 76 38 C70 26 58 24 50 24 C42 24 30 26 24 38 Z" fill={color} {...STROKE} />;
@@ -71,11 +71,30 @@ function Hair({ look, color }: { look: Look; color: string }) {
   }
 }
 
+const Ground = () => <ellipse cx="50" cy="97" rx="30" ry="3.5" fill="#000" fillOpacity=".35" />;
+
+/** Ears behind the head, a soft blush and a highlight on top of it. */
+const Ears = ({ skin }: { skin: string }) => (
+  <>
+    <circle cx="26" cy="46" r="5" fill={skin} {...STROKE} strokeWidth={2.5} />
+    <circle cx="74" cy="46" r="5" fill={skin} {...STROKE} strokeWidth={2.5} />
+  </>
+);
+const Blush = () => (
+  <>
+    <ellipse cx="34" cy="53" rx="4.5" ry="2.8" fill="#ff7a7a" fillOpacity=".45" />
+    <ellipse cx="66" cy="53" rx="4.5" ry="2.8" fill="#ff7a7a" fillOpacity=".45" />
+  </>
+);
+const Shine = () => <path d="M32 24 Q40 17 50 17" fill="none" stroke="#fff" strokeOpacity=".45" strokeWidth="3" strokeLinecap="round" />;
+const BodyShade = () => <path d="M50 62 C66 62 82 70 82 100 L62 100 C64 80 60 68 50 62 Z" fill="#000" fillOpacity=".22" />;
+
 /** The shared agent body. Colour of the suit follows the role. */
 function Body({ suit, tie = '#c1121f', gun = false }: { suit: string; tie?: string; gun?: boolean }) {
   return (
     <>
       <path d="M18 100 C18 70 34 62 50 62 C66 62 82 70 82 100 Z" fill={suit} {...STROKE} />
+      <BodyShade />
       <path d="M43 62 L50 80 L57 62 Z" fill="#f4f4f4" {...STROKE} strokeWidth={2} />
       <path d="M48 66 L50 84 L52 66 Z" fill={tie} />
       {gun && (
@@ -126,6 +145,7 @@ export default function Avatar({ seed, kind = 'innocent', size = 96 }: { seed: n
       );
       return (
         <svg className="avatar" width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+          <Ground />
           {body}
           {/* hood and Guy Fawkes style mask */}
           <path d="M22 44 C16 6 84 6 78 44 C78 62 66 68 50 68 C34 68 22 62 22 44 Z" fill="#161616" {...STROKE} />
@@ -164,8 +184,11 @@ export default function Avatar({ seed, kind = 'innocent', size = 96 }: { seed: n
       );
       return (
         <svg className="avatar" width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+          <Ground />
           {body}
+          <Ears skin={skin} />
           {head}
+          <Blush />
           {face}
           {hat}
         </svg>
@@ -209,8 +232,12 @@ export default function Avatar({ seed, kind = 'innocent', size = 96 }: { seed: n
 
   return (
     <svg className="avatar" width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+      <Ground />
       {body}
+      {!alien && <Ears skin={faceFill} />}
       {head}
+      {!alien && kind !== 'imposter' && <Blush />}
+      <Shine />
       {alien && (
         <>
           <ellipse cx="38" cy="42" rx="8" ry="5" transform="rotate(20 38 42)" fill="#0c0c10" />

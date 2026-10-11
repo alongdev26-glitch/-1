@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Role } from '../engine/game';
+import { useLang } from '../i18n';
 import { play, vibrate } from './fx';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 
 /** A card that shows its content only while pressed. Releasing hides it again. */
 export default function HoldCard({ resetKey, role, onSeen, children }: Props) {
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const seen = useRef(false);
 
@@ -45,8 +47,8 @@ export default function HoldCard({ resetKey, role, onSeen, children }: Props) {
     >
       <div className="face front">
         <div className="fingerprint">☝️</div>
-        <b>Press and hold to reveal</b>
-        <span>Release to hide</span>
+        <b>{t.holdReveal}</b>
+        <span>{t.releaseHide}</span>
       </div>
       <div className="face back">{children}</div>
     </div>

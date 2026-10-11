@@ -1,18 +1,28 @@
 import { useEffect, useState } from 'react';
 import { PACKS } from './data/packs';
 import { MAX_PLAYERS, MIN_PLAYERS, ROLE_MIN_PLAYERS, createRound, maxImposters, tallyVotes } from './engine/game';
-import type { Role, Round } from './engine/game';
+import type { Round } from './engine/game';
+import { LangProvider, useLang } from './i18n';
+import type { Lang } from './i18n';
 import Avatar from './ui/Avatar';
 import HoldCard from './ui/HoldCard';
 import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'result';
 
-const DEFAULT_NAMES = ['Player 1', 'Player 2', 'Player 3'];
-
 export default function App() {
+  return (
+    <LangProvider>
+      <Game />
+    </LangProvider>
+  );
+}
+
+function Game() {
+  const { lang, t } = useLang();
   const [phase, setPhase] = useState<Phase>('setup');
-  const [names, setNames] = useState<string[]>(DEFAULT_NAMES);
+  // An empty name means "use the default for the chosen language".
+  const [names, setNames] = useState<string[]>(['', '', '']);
   const [packIds, setPackIds] = useState<string[]>([PACKS[0].id]);
   const [imposters, setImposters] = useState(1);
   const [rolesMode, setRolesMode] = useState(false);
@@ -20,8 +30,8 @@ export default function App() {
   const [votes, setVotes] = useState<number[]>([]);
 
   const start = () => {
-    const words = PACKS.filter((p) => packIds.includes(p.id)).flatMap((p) => p.words);
-    const clean = names.map((n, i) => n.trim() || `Player ${i + 1}`);
+    const words = PACKS.filter((p) => packIds.includes(p.id)).flatMap((p) => p.words[lang]);
+    const clean = names.map((n, i) => n.trim() || t.player(i + 1));
     setRound(createRound(clean, words, imposters, Math.random, rolesMode && clean.length >= ROLE_MIN_PLAYERS.jester));
     setVotes([]);
     setPhase('reveal');
@@ -60,14 +70,7 @@ export default function App() {
       />
     );
   }
-  return (
-    <Result
-      round={round}
-      votes={votes}
-      onAgain={start}
-      onMenu={() => go('setup')}
-    />
-  );
+  return <Result round={round} votes={votes} onAgain={start} onMenu={() => go('setup')} />;
 }
 
 interface SetupProps {
@@ -82,21 +85,27 @@ interface SetupProps {
   onStart: () => void;
 }
 
+const LANGS: { id: Lang; label: string; sub: string }[] = [
+  { id: 'en', label: 'English', sub: 'Left to right' },
+  { id: 'he', label: 'עברית', sub: 'מימין לשמאל' },
+];
 
 function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart }: SetupProps) {
+  const { lang, setLang, t } = useLang();
   const [step, setStep] = useState(0);
   const maxImp = maxImposters(names.length);
   const imp = Math.min(imposters, maxImp);
   const togglePack = (id: string) =>
     setPackIds(packIds.includes(id) ? packIds.filter((p) => p !== id) : [...packIds, id]);
-  const resize = (n: number) =>
-    setNames(Array.from({ length: n }, (_, i) => names[i] ?? `Player ${i + 1}`));
-  // Questions: player count, one name per player, categories, imposters.
-  const total = names.length + 4;
+  const resize = (n: number) => setNames(Array.from({ length: n }, (_, i) => names[i] ?? ''));
+
+  // Questions: language, player count, one name per player, categories, mode, imposters.
+  const n = names.length;
+  const total = n + 5;
   const kind =
-    step === 0 ? 'players' : step <= names.length ? 'name' : step === names.length + 1 ? 'packs' : step === names.length + 2 ? 'mode' : 'imposters';
-  const canRoles = names.length >= ROLE_MIN_PLAYERS.jester;
-  const nameIdx = step - 1;
+    step === 0 ? 'lang' : step === 1 ? 'players' : step <= n + 1 ? 'name' : step === n + 2 ? 'packs' : step === n + 3 ? 'mode' : 'imposters';
+  const nameIdx = step - 2;
+  const canRoles = n >= ROLE_MIN_PLAYERS.jester;
   const last = step === total - 1;
   const canNext = kind !== 'packs' || packIds.length > 0;
 
@@ -115,22 +124,38 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   return (
     <main className="screen quiz" key={step}>
       <SoundToggle />
-      <div className="progress" aria-label={`Question ${step + 1} of ${total}`}>
+      <div className="progress" aria-label={t.question(step + 1, total)}>
         {Array.from({ length: total }, (_, i) => (
           <i key={i} className={i <= step ? 'on' : ''} />
         ))}
       </div>
-      <p className="counter">Question {step + 1} of {total}</p>
+      <p className="counter">{t.question(step + 1, total)}</p>
+
+      {kind === 'lang' && (
+        <>
+          <Avatar seed={0} kind="imposter" size={120} />
+          <h1>Imposter</h1>
+          <p className="sub">Language · שפה</p>
+          <div className="modes">
+            {LANGS.map((l) => (
+              <button key={l.id} className={'mode' + (lang === l.id ? ' on' : '')} onClick={() => { play('tap'); setLang(l.id); }}>
+                <b>{l.label}</b>
+                <span>{l.sub}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {kind === 'players' && (
         <>
-          <Avatar seed={0} kind="imposter" size={110} />
-          <h1>How many players?</h1>
-          <p className="sub">{MIN_PLAYERS} to {MAX_PLAYERS} people on one phone.</p>
+          <Avatar seed={1} kind="innocent" size={110} />
+          <h1>{t.howMany}</h1>
+          <p className="sub">{t.howManySub(MIN_PLAYERS, MAX_PLAYERS)}</p>
           <div className="stepper big">
-            <button className="icon" disabled={names.length <= MIN_PLAYERS} onClick={() => resize(names.length - 1)}>−</button>
-            <b>{names.length}</b>
-            <button className="icon" disabled={names.length >= MAX_PLAYERS} onClick={() => resize(names.length + 1)}>+</button>
+            <button className="icon" disabled={n <= MIN_PLAYERS} onClick={() => resize(n - 1)}>−</button>
+            <b>{n}</b>
+            <button className="icon" disabled={n >= MAX_PLAYERS} onClick={() => resize(n + 1)}>+</button>
           </div>
         </>
       )}
@@ -138,13 +163,14 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
       {kind === 'name' && (
         <>
           <Avatar seed={nameIdx} size={110} />
-          <h1>What's player {nameIdx + 1}'s name?</h1>
+          <h1>{t.nameQ(nameIdx + 1)}</h1>
           <input
             className="bigname"
             autoFocus
             value={names[nameIdx]}
+            placeholder={t.player(nameIdx + 1)}
             maxLength={14}
-            aria-label={`Player ${nameIdx + 1} name`}
+            aria-label={t.nameAria(nameIdx + 1)}
             onChange={(e) => setNames(names.map((x, j) => (j === nameIdx ? e.target.value : x)))}
             onKeyDown={(e) => e.key === 'Enter' && next()}
           />
@@ -153,8 +179,8 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
       {kind === 'packs' && (
         <>
-          <h1>What are you playing?</h1>
-          <p className="sub">Pick one or more categories.</p>
+          <h1>{t.packsQ}</h1>
+          <p className="sub">{t.packsSub}</p>
           <div className="packs">
             {PACKS.map((p) => (
               <button
@@ -163,8 +189,8 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
                 onClick={() => togglePack(p.id)}
               >
                 <span className="emoji">{p.emoji}</span>
-                {p.name}
-                <small>{p.words.length} words</small>
+                {p.name[lang]}
+                <small>{t.words(p.words[lang].length)}</small>
               </button>
             ))}
           </div>
@@ -173,23 +199,19 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
       {kind === 'mode' && (
         <>
-          <h1>Pick a mode</h1>
+          <h1>{t.modeQ}</h1>
           <div className="modes">
             <button className={'mode' + (!rolesMode ? ' on' : '')} onClick={() => setRolesMode(false)}>
-              <b>Classic</b>
-              <span>One or more imposters. Everyone else shares the secret word.</span>
+              <b>{t.classic}</b>
+              <span>{t.classicDesc}</span>
             </button>
             <button
               className={'mode' + (rolesMode && canRoles ? ' on' : '')}
               disabled={!canRoles}
               onClick={() => setRolesMode(true)}
             >
-              <b>Roles</b>
-              <span>
-                {canRoles
-                  ? 'Adds a Jester, plus a Bounty Hunter at 5 players and a Bodyguard at 6.'
-                  : `Needs ${ROLE_MIN_PLAYERS.jester}+ players.`}
-              </span>
+              <b>{t.roles}</b>
+              <span>{canRoles ? t.rolesDesc : t.rolesNeed(ROLE_MIN_PLAYERS.jester)}</span>
             </button>
           </div>
         </>
@@ -198,8 +220,8 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
       {kind === 'imposters' && (
         <>
           <Avatar seed={1} kind="imposter" size={110} />
-          <h1>How many imposters?</h1>
-          <p className="sub">With {names.length} players you can have up to {maxImp}.</p>
+          <h1>{t.impQ}</h1>
+          <p className="sub">{t.impSub(n, maxImp)}</p>
           <div className="stepper big">
             <button className="icon" disabled={imp <= 1} onClick={() => setImposters(imp - 1)}>−</button>
             <b>{imp}</b>
@@ -210,10 +232,10 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
       <div className="nav">
         {step > 0 && (
-          <button className="ghost" onClick={back}>Back</button>
+          <button className="ghost" onClick={back}>{t.back}</button>
         )}
         <button className="primary" disabled={!canNext} onClick={next}>
-          {last ? 'Start game' : 'Next'}
+          {last ? t.startGame : t.next}
         </button>
       </div>
     </main>
@@ -221,11 +243,12 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 }
 
 function SoundToggle() {
+  const { t } = useLang();
   const [on, setOn] = useState(isSoundOn());
   return (
     <button
       className="icon sound"
-      aria-label="Sound and vibration"
+      aria-label={t.soundAria}
       onClick={() => {
         setSoundOn(!on);
         setOn(!on);
@@ -237,45 +260,39 @@ function SoundToggle() {
   );
 }
 
-const ROLE_INFO: Record<Role, { title: string; blurb: string }> = {
-  imposter: { title: 'Imposter', blurb: 'Blend in with the innocents and avoid suspicion.' },
-  innocent: { title: 'Innocent', blurb: 'Work with the group to find and expose the imposters.' },
-  jester: { title: 'Jester', blurb: 'Create chaos and misdirection. You win if the group votes you out.' },
-  bodyguard: { title: 'Bodyguard', blurb: 'Secretly shield a fellow imposter-team player from suspicion.' },
-  bounty: { title: 'Bounty Hunter', blurb: 'Target a specific imposter-team player and work to expose them.' },
-};
-
 function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
+  const { t } = useLang();
   const [index, setIndex] = useState(0);
   const [seen, setSeen] = useState(false);
   const player = round.players[index];
   const last = index === round.players.length - 1;
+  const info = t.roleInfo[player.role];
 
   return (
     <main className="screen center" key={index}>
-      <p className="counter">{index + 1} / {round.players.length}</p>
+      <p className="counter" dir="ltr">{index + 1} / {round.players.length}</p>
       <Avatar seed={player.id} kind="unknown" size={110} />
       <h1>{player.name}</h1>
       <HoldCard resetKey={index} role={player.role} onSeen={() => setSeen(true)}>
-        <div className="eyebrow">Identity confirmed</div>
+        <div className="eyebrow">{t.eyebrow}</div>
         <Avatar seed={player.id} kind={player.role} size={96} />
-        <div className="badge">{ROLE_INFO[player.role].title}</div>
+        <div className="badge">{info.title}</div>
         {player.target !== undefined && (
           <div className="target-row">
             <Avatar seed={player.target} kind="unknown" size={30} />
             <span>
-              <small>{player.role === 'bodyguard' ? 'Your client' : 'Your target'}</small>
+              <small>{player.role === 'bodyguard' ? t.yourClient : t.yourTarget}</small>
               {round.players[player.target].name}
             </span>
           </div>
         )}
         {player.role !== 'imposter' && (
           <div className="wordbox">
-            <small>Secret word</small>
+            <small>{t.secretWord}</small>
             <b>{round.word}</b>
           </div>
         )}
-        <p>{ROLE_INFO[player.role].blurb}</p>
+        <p>{info.blurb}</p>
       </HoldCard>
       <button
         className="primary"
@@ -290,18 +307,19 @@ function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
           }
         }}
       >
-        {last ? 'Start playing' : 'Next player →'}
+        {last ? t.startPlaying : `${t.nextPlayer} ${t.arrow}`}
       </button>
     </main>
   );
 }
 
 function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
+  const { t } = useLang();
   const [seconds, setSeconds] = useState(0);
   const [turn, setTurn] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
   }, []);
   const n = round.players.length;
   const speaker = round.players[(round.firstSpeaker + turn) % n];
@@ -311,11 +329,11 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
 
   return (
     <main className="screen center" key={turn}>
-      <p className="counter">Turn {turn + 1} of {n}</p>
+      <p className="counter">{t.turn(turn + 1, n)}</p>
       <Avatar seed={speaker.id} size={110} />
       <h1>{speaker.name}</h1>
-      <p className="sub">Gives a one-word clue.</p>
-      <div className="timer">{mm}:{ss}</div>
+      <p className="sub">{t.givesClue}</p>
+      <div className="timer" dir="ltr">{mm}:{ss}</div>
       {!roundDone ? (
         <button
           className="primary"
@@ -325,28 +343,29 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
             setTurn(turn + 1);
           }}
         >
-          Next player →
+          {t.nextPlayer} {t.arrow}
         </button>
       ) : (
-        <p className="sub">Everyone has spoken. You can vote now.</p>
+        <p className="sub">{t.allSpoke}</p>
       )}
       <button className={roundDone ? 'primary' : 'ghost'} disabled={!roundDone} onClick={onVote}>
-        {roundDone ? 'Go to vote' : 'Vote (after everyone speaks)'}
+        {roundDone ? t.goVote : t.voteLocked}
       </button>
     </main>
   );
 }
 
 function Vote({ round, onDone }: { round: Round; onDone: (votes: number[]) => void }) {
+  const { t } = useLang();
   const [votes, setVotes] = useState<number[]>([]);
   const voter = round.players[votes.length];
 
   return (
     <main className="screen center">
-      <p className="counter">{votes.length + 1} / {round.players.length}</p>
+      <p className="counter" dir="ltr">{votes.length + 1} / {round.players.length}</p>
       <Avatar seed={voter.id} size={90} />
       <h1>{voter.name}</h1>
-      <p className="sub">Who do you think is the imposter?</p>
+      <p className="sub">{t.whoImposter}</p>
       <div className="targets">
         {round.players
           .filter((p) => p.id !== voter.id)
@@ -382,6 +401,7 @@ function Result({
   onAgain: () => void;
   onMenu: () => void;
 }) {
+  const { t } = useLang();
   const res = tallyVotes(round, votes);
   const tie = res.top.length > 1;
   useEffect(() => {
@@ -394,15 +414,11 @@ function Result({
     <main className="screen center">
       {res.outcome === 'crew' && <Confetti />}
       <h1 className={res.outcome === 'crew' ? 'win' : 'lose'}>
-        {{ crew: 'The crew wins! 🎉', imposter: 'The imposter wins! 😈', jester: 'The jester wins! 🃏' }[res.outcome]}
+        {{ crew: t.crewWins, imposter: t.imposterWins, jester: t.jesterWins }[res.outcome]}
       </h1>
-      <p className="sub">
-        {tie
-          ? 'The vote was tied, so nobody was caught.'
-          : `The group voted out ${round.players[res.top[0]].name}.`}
-      </p>
+      <p className="sub">{tie ? t.tie : t.votedOut(round.players[res.top[0]].name)}</p>
       <div className="card">
-        <div className="label">The word was</div>
+        <div className="label">{t.wordWas}</div>
         <div className="word">{round.word}</div>
         <ul className="roster">
           {round.players.map((p) => (
@@ -410,16 +426,16 @@ function Result({
               <Avatar seed={p.id} kind={p.role} size={44} />
               <span className="who">{p.name}</span>
               <span className="what">
-                {ROLE_INFO[p.role].title}
-                {p.target !== undefined && ` → ${round.players[p.target].name}`}
+                {t.roleInfo[p.role].title}
+                {p.target !== undefined && ` ${t.arrow} ${round.players[p.target].name}`}
                 {res.bountyHits.includes(p.id) && ' ✓'}
               </span>
             </li>
           ))}
         </ul>
       </div>
-      <button className="primary" onClick={onAgain}>Play again</button>
-      <button className="ghost" onClick={onMenu}>Back to setup</button>
+      <button className="primary" onClick={onAgain}>{t.playAgain}</button>
+      <button className="ghost" onClick={onMenu}>{t.backToSetup}</button>
     </main>
   );
 }

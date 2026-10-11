@@ -8,7 +8,7 @@
   --green: #2ecc71;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, 'Segoe UI', Arial, sans-serif; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Rubik', system-ui, 'Segoe UI', Arial, sans-serif; }
 .screen { min-height: 100dvh; max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
 .screen.center { justify-content: center; align-items: center; text-align: center; }
 h1 { margin: 0; font-size: 2rem; }
@@ -135,3 +135,23 @@ button.primary { box-shadow: 0 8px 24px #e5242b55; }
 .roster li.jester .what { color: #f1c24b; }
 .roster li.bodyguard .what { color: #a79fff; }
 .roster li.bounty .what { color: #4fd6e6; }
+
+/* ---- polish pass ---- */
+h1 { font-weight: 800; letter-spacing: -.01em; }
+.counter { font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; }
+button.primary { background: linear-gradient(180deg, #f0343b, #c91a21); border: 0; box-shadow: 0 10px 28px #e5242b55, inset 0 1px 0 #ffffff40; letter-spacing: .02em; }
+button.primary:disabled { background: #2a2a31; box-shadow: none; color: var(--muted); opacity: 1; }
+button.ghost { color: var(--muted); }
+button.icon { background: #1b1b20; }
+.avatar { filter: drop-shadow(0 8px 12px #000a); }
+.card { background: linear-gradient(170deg, #202026, #141418); border-radius: 24px; box-shadow: 0 20px 50px #0009; }
+.mode { border-radius: 18px; }
+.mode b { font-size: 1.15rem; }
+.mode.on { border-color: var(--red); background: #2a1013; box-shadow: 0 0 22px #e5242b40; }
+.mode:disabled { opacity: .45; }
+.target { border-radius: 18px; background: #17171c; }
+.target:active { border-color: var(--red); }
+.timer { font-variant-numeric: tabular-nums; }
+.holdcard .face { border-radius: 26px; }
+.holdcard .front { background: repeating-linear-gradient(45deg, #1b1b20 0 10px, #17171b 10px 20px); border: 1px dashed #3a3a42; }
+.progress i.on { background: linear-gradient(90deg, #ff4b52, #e5242b); }
