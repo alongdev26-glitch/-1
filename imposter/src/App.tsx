@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { PACKS } from './data/packs';
 import { MAX_PLAYERS, MIN_PLAYERS, createRound, maxImposters, tallyVotes } from './engine/game';
 import type { Round } from './engine/game';
+import Avatar from './ui/Avatar';
+import HoldCard from './ui/HoldCard';
+import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'result';
 
@@ -23,6 +26,11 @@ export default function App() {
     setPhase('reveal');
   };
 
+  const go = (p: Phase) => {
+    play('tap');
+    setPhase(p);
+  };
+
   if (phase === 'setup' || !round) {
     return (
       <Setup
@@ -36,8 +44,8 @@ export default function App() {
       />
     );
   }
-  if (phase === 'reveal') return <Reveal round={round} onDone={() => setPhase('discuss')} />;
-  if (phase === 'discuss') return <Discuss round={round} onVote={() => setPhase('vote')} />;
+  if (phase === 'reveal') return <Reveal round={round} onDone={() => go('discuss')} />;
+  if (phase === 'discuss') return <Discuss round={round} onVote={() => go('vote')} />;
   if (phase === 'vote') {
     return (
       <Vote
@@ -54,7 +62,7 @@ export default function App() {
       round={round}
       votes={votes}
       onAgain={start}
-      onMenu={() => setPhase('setup')}
+      onMenu={() => go('setup')}
     />
   );
 }
@@ -77,13 +85,16 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
   return (
     <main className="screen">
-      <h1>מתחזה 🕵️</h1>
+      <SoundToggle />
+      <Avatar seed={0} kind="imposter" size={120} />
+      <h1>מתחזה</h1>
       <p className="sub">מי משקר? מצאו את המתחזה לפני שהוא מתערבב.</p>
 
       <h2>שחקנים ({names.length})</h2>
       <ul className="names">
         {names.map((n, i) => (
           <li key={i}>
+            <Avatar seed={i} size={40} />
             <input
               value={n}
               maxLength={14}
@@ -131,49 +142,65 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   );
 }
 
+function SoundToggle() {
+  const [on, setOn] = useState(isSoundOn());
+  return (
+    <button
+      className="icon sound"
+      aria-label="צלילים ורטט"
+      onClick={() => {
+        setSoundOn(!on);
+        setOn(!on);
+        if (!on) play('tap');
+      }}
+    >
+      {on ? '🔊' : '🔇'}
+    </button>
+  );
+}
+
 function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
   const [index, setIndex] = useState(0);
-  const [shown, setShown] = useState(false);
+  const [seen, setSeen] = useState(false);
   const player = round.players[index];
   const last = index === round.players.length - 1;
 
   return (
-    <main className="screen center">
+    <main className="screen center" key={index}>
       <p className="counter">{index + 1} / {round.players.length}</p>
+      <Avatar seed={player.id} kind="unknown" size={110} />
       <h1>{player.name}</h1>
-      {!shown ? (
-        <>
-          <p className="sub">ודאו שאף אחד אחר לא מסתכל, ואז לחצו.</p>
-          <button className="primary" onClick={() => setShown(true)}>הצג את התפקיד שלי</button>
-        </>
-      ) : (
-        <>
-          <div className={'card ' + (player.isImposter ? 'imposter' : 'crew')}>
-            {player.isImposter ? (
-              <>
-                <div className="role">מתחזה 🕵️</div>
-                <p>אתה לא יודע את המילה. התערבב ואל תיתפס.</p>
-              </>
-            ) : (
-              <>
-                <div className="label">המילה הסודית</div>
-                <div className="word">{round.word}</div>
-                <p>תן רמז של מילה אחת בלי לחשוף יותר מדי.</p>
-              </>
-            )}
-          </div>
-          <button
-            className="primary"
-            onClick={() => {
-              setShown(false);
-              if (last) onDone();
-              else setIndex(index + 1);
-            }}
-          >
-            {last ? 'התחילו לשחק' : 'הבא בתור ←'}
-          </button>
-        </>
-      )}
+      <HoldCard resetKey={index} imposter={player.isImposter} onSeen={() => setSeen(true)}>
+        {player.isImposter ? (
+          <>
+            <Avatar seed={player.id} kind="imposter" size={90} />
+            <div className="role">מתחזה</div>
+            <p>אתה לא יודע את המילה. התערבב ואל תיתפס.</p>
+          </>
+        ) : (
+          <>
+            <Avatar seed={player.id} size={90} />
+            <div className="label">המילה הסודית</div>
+            <div className="word">{round.word}</div>
+            <p>תן רמז של מילה אחת.</p>
+          </>
+        )}
+      </HoldCard>
+      <button
+        className="primary"
+        disabled={!seen}
+        onClick={() => {
+          play('tap');
+          vibrate(20);
+          if (last) onDone();
+          else {
+            setSeen(false);
+            setIndex(index + 1);
+          }
+        }}
+      >
+        {last ? 'התחילו לשחק' : 'הבא בתור ←'}
+      </button>
     </main>
   );
 }
@@ -190,6 +217,7 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
   return (
     <main className="screen center">
       <h2>הדיון</h2>
+      <Avatar seed={round.firstSpeaker} size={90} />
       <div className="timer">{mm}:{ss}</div>
       <p className="sub">
         מתחיל: <b>{round.players[round.firstSpeaker].name}</b>
@@ -208,6 +236,7 @@ function Vote({ round, onDone }: { round: Round; onDone: (votes: number[]) => vo
   return (
     <main className="screen center">
       <p className="counter">{votes.length + 1} / {round.players.length}</p>
+      <Avatar seed={voter.id} size={90} />
       <h1>{voter.name}</h1>
       <p className="sub">מי לדעתך המתחזה?</p>
       <div className="targets">
@@ -218,11 +247,14 @@ function Vote({ round, onDone }: { round: Round; onDone: (votes: number[]) => vo
               key={p.id}
               className="target"
               onClick={() => {
+                play('vote');
+                vibrate(25);
                 const next = [...votes, p.id];
                 if (next.length === round.players.length) onDone(next);
                 else setVotes(next);
               }}
             >
+              <Avatar seed={p.id} size={56} />
               {p.name}
             </button>
           ))}
@@ -245,9 +277,14 @@ function Result({
   const res = tallyVotes(round, votes);
   const impNames = round.players.filter((p) => p.isImposter).map((p) => p.name).join(', ');
   const tie = res.top.length > 1;
+  useEffect(() => {
+    play(res.outcome === 'crew' ? 'win' : 'lose');
+    vibrate(res.outcome === 'crew' ? [80, 50, 80, 50, 200] : [300]);
+  }, [res.outcome]);
 
   return (
     <main className="screen center">
+      {res.outcome === 'crew' && <Confetti />}
       <h1 className={res.outcome === 'crew' ? 'win' : 'lose'}>
         {res.outcome === 'crew' ? 'הצוות ניצח! 🎉' : 'המתחזה ניצח! 😈'}
       </h1>
@@ -257,6 +294,11 @@ function Result({
           : `הקבוצה הצביעה נגד ${round.players[res.top[0]].name}.`}
       </p>
       <div className="card">
+        <div className="avatars">
+          {round.players.filter((p) => p.isImposter).map((p) => (
+            <Avatar key={p.id} seed={p.id} kind="imposter" size={80} />
+          ))}
+        </div>
         <div className="label">המתחזה היה</div>
         <div className="word">{impNames}</div>
         <div className="label">המילה הייתה</div>
@@ -265,5 +307,24 @@ function Result({
       <button className="primary" onClick={onAgain}>סיבוב נוסף</button>
       <button className="ghost" onClick={onMenu}>חזרה להגדרות</button>
     </main>
+  );
+}
+
+function Confetti() {
+  const colors = ['#e5242b', '#2ecc71', '#f1c40f', '#3498db', '#9b59b6'];
+  return (
+    <div className="confetti" aria-hidden="true">
+      {Array.from({ length: 36 }, (_, i) => (
+        <i
+          key={i}
+          style={{
+            left: `${(i * 97) % 100}%`,
+            background: colors[i % colors.length],
+            animationDelay: `${(i % 9) * 0.12}s`,
+            animationDuration: `${2 + (i % 5) * 0.4}s`,
+          }}
+        />
+      ))}
+    </div>
   );
 }
