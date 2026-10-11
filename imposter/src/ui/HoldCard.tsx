@@ -48,8 +48,8 @@ export default function HoldCard({ resetKey, imposter, onSeen, children }: Props
     >
       <div className="face front">
         <div className="fingerprint">☝️</div>
-        <b>החזק לחוץ כדי לחשוף</b>
-        <span>עזוב כדי להסתיר</span>
+        <b>Press and hold to reveal</b>
+        <span>Release to hide</span>
       </div>
       <div className="face back">{children}</div>
     </div>

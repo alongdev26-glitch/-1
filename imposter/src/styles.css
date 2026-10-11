@@ -51,7 +51,7 @@ h1 { text-shadow: 0 0 24px #ffffff30; }
 button { transition: transform .12s, background .2s, border-color .2s; }
 button:active:not(:disabled) { transform: scale(.96); }
 button.primary { box-shadow: 0 8px 24px #e5242b55; }
-.sound { position: absolute; top: 16px; inset-inline-start: 16px; }
+.sound { position: absolute; top: 16px; inset-inline-end: 16px; }
 .names li { align-items: center; }
 .pack.on { box-shadow: 0 0 18px #e5242b40; }
 .target { display: flex; flex-direction: column; align-items: center; gap: 6px; }

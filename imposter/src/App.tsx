@@ -8,7 +8,7 @@ import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'result';
 
-const DEFAULT_NAMES = ['שחקן 1', 'שחקן 2', 'שחקן 3'];
+const DEFAULT_NAMES = ['Player 1', 'Player 2', 'Player 3'];
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>('setup');
@@ -20,7 +20,7 @@ export default function App() {
 
   const start = () => {
     const words = PACKS.filter((p) => packIds.includes(p.id)).flatMap((p) => p.words);
-    const clean = names.map((n, i) => n.trim() || `שחקן ${i + 1}`);
+    const clean = names.map((n, i) => n.trim() || `Player ${i + 1}`);
     setRound(createRound(clean, words, imposters));
     setVotes([]);
     setPhase('reveal');
@@ -85,7 +85,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   const togglePack = (id: string) =>
     setPackIds(packIds.includes(id) ? packIds.filter((p) => p !== id) : [...packIds, id]);
   const resize = (n: number) =>
-    setNames(Array.from({ length: n }, (_, i) => names[i] ?? `שחקן ${i + 1}`));
+    setNames(Array.from({ length: n }, (_, i) => names[i] ?? `Player ${i + 1}`));
   // Questions: player count, one name per player, categories, imposters.
   const total = names.length + 3;
   const kind = step === 0 ? 'players' : step <= names.length ? 'name' : step === names.length + 1 ? 'packs' : 'imposters';
@@ -108,18 +108,18 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   return (
     <main className="screen quiz" key={step}>
       <SoundToggle />
-      <div className="progress" aria-label={`שאלה ${step + 1} מתוך ${total}`}>
+      <div className="progress" aria-label={`Question ${step + 1} of ${total}`}>
         {Array.from({ length: total }, (_, i) => (
           <i key={i} className={i <= step ? 'on' : ''} />
         ))}
       </div>
-      <p className="counter">שאלה {step + 1} מתוך {total}</p>
+      <p className="counter">Question {step + 1} of {total}</p>
 
       {kind === 'players' && (
         <>
           <Avatar seed={0} kind="imposter" size={110} />
-          <h1>כמה שחקנים?</h1>
-          <p className="sub">{MIN_PLAYERS} עד {MAX_PLAYERS} אנשים על טלפון אחד.</p>
+          <h1>How many players?</h1>
+          <p className="sub">{MIN_PLAYERS} to {MAX_PLAYERS} people on one phone.</p>
           <div className="stepper big">
             <button className="icon" disabled={names.length <= MIN_PLAYERS} onClick={() => resize(names.length - 1)}>−</button>
             <b>{names.length}</b>
@@ -131,13 +131,13 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
       {kind === 'name' && (
         <>
           <Avatar seed={nameIdx} size={110} />
-          <h1>איך קוראים לשחקן {nameIdx + 1}?</h1>
+          <h1>What's player {nameIdx + 1}'s name?</h1>
           <input
             className="bigname"
             autoFocus
             value={names[nameIdx]}
             maxLength={14}
-            aria-label={`שם שחקן ${nameIdx + 1}`}
+            aria-label={`Player ${nameIdx + 1} name`}
             onChange={(e) => setNames(names.map((x, j) => (j === nameIdx ? e.target.value : x)))}
             onKeyDown={(e) => e.key === 'Enter' && next()}
           />
@@ -146,8 +146,8 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
       {kind === 'packs' && (
         <>
-          <h1>על מה משחקים?</h1>
-          <p className="sub">אפשר לבחור כמה קטגוריות.</p>
+          <h1>What are you playing?</h1>
+          <p className="sub">Pick one or more categories.</p>
           <div className="packs">
             {PACKS.map((p) => (
               <button
@@ -166,8 +166,8 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
       {kind === 'imposters' && (
         <>
           <Avatar seed={1} kind="imposter" size={110} />
-          <h1>כמה מתחזים?</h1>
-          <p className="sub">עם {names.length} שחקנים אפשר עד {maxImp}.</p>
+          <h1>How many imposters?</h1>
+          <p className="sub">With {names.length} players you can have up to {maxImp}.</p>
           <div className="stepper big">
             <button className="icon" disabled={imp <= 1} onClick={() => setImposters(imp - 1)}>−</button>
             <b>{imp}</b>
@@ -178,10 +178,10 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
 
       <div className="nav">
         {step > 0 && (
-          <button className="ghost" onClick={back}>חזרה</button>
+          <button className="ghost" onClick={back}>Back</button>
         )}
         <button className="primary" disabled={!canNext} onClick={next}>
-          {last ? 'התחל משחק' : 'הבא'}
+          {last ? 'Start game' : 'Next'}
         </button>
       </div>
     </main>
@@ -193,7 +193,7 @@ function SoundToggle() {
   return (
     <button
       className="icon sound"
-      aria-label="צלילים ורטט"
+      aria-label="Sound and vibration"
       onClick={() => {
         setSoundOn(!on);
         setOn(!on);
@@ -220,15 +220,15 @@ function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
         {player.isImposter ? (
           <>
             <Avatar seed={player.id} kind="imposter" size={90} />
-            <div className="role">מתחזה</div>
-            <p>אתה לא יודע את המילה. התערבב ואל תיתפס.</p>
+            <div className="role">Imposter</div>
+            <p>You don't know the word. Blend in and don't get caught.</p>
           </>
         ) : (
           <>
             <Avatar seed={player.id} size={90} />
-            <div className="label">המילה הסודית</div>
+            <div className="label">Secret word</div>
             <div className="word">{round.word}</div>
-            <p>תן רמז של מילה אחת.</p>
+            <p>Give a one-word clue.</p>
           </>
         )}
       </HoldCard>
@@ -245,7 +245,7 @@ function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
           }
         }}
       >
-        {last ? 'התחילו לשחק' : 'הבא בתור ←'}
+        {last ? 'Start playing' : 'Next player →'}
       </button>
     </main>
   );
@@ -266,10 +266,10 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
 
   return (
     <main className="screen center" key={turn}>
-      <p className="counter">תור {turn + 1} מתוך {n}</p>
+      <p className="counter">Turn {turn + 1} of {n}</p>
       <Avatar seed={speaker.id} size={110} />
       <h1>{speaker.name}</h1>
-      <p className="sub">אומר רמז של מילה אחת.</p>
+      <p className="sub">Gives a one-word clue.</p>
       <div className="timer">{mm}:{ss}</div>
       {!roundDone ? (
         <button
@@ -280,13 +280,13 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
             setTurn(turn + 1);
           }}
         >
-          הבא בתור ←
+          Next player →
         </button>
       ) : (
-        <p className="sub">כולם דיברו. אפשר להצביע.</p>
+        <p className="sub">Everyone has spoken. You can vote now.</p>
       )}
       <button className={roundDone ? 'primary' : 'ghost'} disabled={!roundDone} onClick={onVote}>
-        {roundDone ? 'עוברים להצבעה' : 'הצבעה (אחרי שכולם מדברים)'}
+        {roundDone ? 'Go to vote' : 'Vote (after everyone speaks)'}
       </button>
     </main>
   );
@@ -301,7 +301,7 @@ function Vote({ round, onDone }: { round: Round; onDone: (votes: number[]) => vo
       <p className="counter">{votes.length + 1} / {round.players.length}</p>
       <Avatar seed={voter.id} size={90} />
       <h1>{voter.name}</h1>
-      <p className="sub">מי לדעתך המתחזה?</p>
+      <p className="sub">Who do you think is the imposter?</p>
       <div className="targets">
         {round.players
           .filter((p) => p.id !== voter.id)
@@ -349,12 +349,12 @@ function Result({
     <main className="screen center">
       {res.outcome === 'crew' && <Confetti />}
       <h1 className={res.outcome === 'crew' ? 'win' : 'lose'}>
-        {res.outcome === 'crew' ? 'הצוות ניצח! 🎉' : 'המתחזה ניצח! 😈'}
+        {res.outcome === 'crew' ? 'The crew wins! 🎉' : 'The imposter wins! 😈'}
       </h1>
       <p className="sub">
         {tie
-          ? 'תיקו בהצבעה, אף אחד לא נתפס.'
-          : `הקבוצה הצביעה נגד ${round.players[res.top[0]].name}.`}
+          ? 'The vote was tied, so nobody was caught.'
+          : `The group voted out ${round.players[res.top[0]].name}.`}
       </p>
       <div className="card">
         <div className="avatars">
@@ -362,13 +362,13 @@ function Result({
             <Avatar key={p.id} seed={p.id} kind="imposter" size={80} />
           ))}
         </div>
-        <div className="label">המתחזה היה</div>
+        <div className="label">The imposter was</div>
         <div className="word">{impNames}</div>
-        <div className="label">המילה הייתה</div>
+        <div className="label">The word was</div>
         <div className="word">{round.word}</div>
       </div>
-      <button className="primary" onClick={onAgain}>סיבוב נוסף</button>
-      <button className="ghost" onClick={onMenu}>חזרה להגדרות</button>
+      <button className="primary" onClick={onAgain}>Play again</button>
+      <button className="ghost" onClick={onMenu}>Back to setup</button>
     </main>
   );
 }
