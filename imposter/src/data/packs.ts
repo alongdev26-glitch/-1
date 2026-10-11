@@ -9,13 +9,13 @@ export const PACKS: Pack[] = [
   {
     id: 'animals',
     name: 'Animals',
-    emoji: '🐶',
+    emoji: '🐕',
     words: ['Dog', 'Cat', 'Elephant', 'Giraffe', 'Lion', 'Dolphin', 'Penguin', 'Monkey', 'Snake', 'Owl', 'Crocodile', 'Horse', 'Cow', 'Sheep', 'Rabbit', 'Turtle', 'Bat', 'Shark', 'Parrot', 'Kangaroo'],
   },
   {
     id: 'food',
     name: 'Food',
-    emoji: '🍣',
+    emoji: '🍔',
     words: ['Pizza', 'Burger', 'Sushi', 'Tacos', 'Falafel', 'Hummus', 'Schnitzel', 'Pasta', 'Salad', 'Ice cream', 'Chocolate', 'Pancakes', 'Pretzel', 'Soup', 'Steak', 'Popcorn', 'Bread', 'Sandwich', 'Fries', 'Omelette'],
   },
   {
@@ -27,13 +27,13 @@ export const PACKS: Pack[] = [
   {
     id: 'jobs',
     name: 'Jobs',
-    emoji: '🧑‍⚕️',
+    emoji: '💼',
     words: ['Doctor', 'Teacher', 'Pilot', 'Police officer', 'Firefighter', 'Chef', 'Taxi driver', 'Engineer', 'Lawyer', 'Photographer', 'Singer', 'Actor', 'Farmer', 'Barber', 'Programmer', 'Astronaut', 'Baker', 'Plumber', 'Painter', 'Lifeguard'],
   },
   {
     id: 'objects',
     name: 'Objects',
-    emoji: '🎒',
+    emoji: '📓',
     words: ['Umbrella', 'Key', 'Phone', 'Glasses', 'Suitcase', 'Clock', 'Chair', 'Mirror', 'Camera', 'Candle', 'Scissors', 'Ball', 'Battery', 'Headphones', 'Toothbrush', 'Laptop', 'Lock', 'Balloon', 'Flashlight', 'Blanket'],
   },
   {
