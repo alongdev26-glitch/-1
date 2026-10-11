@@ -2,7 +2,18 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Role } from './engine/game';
 
-export type Lang = 'en' | 'he';
+export type Lang = 'en' | 'he' | 'ar' | 'ru' | 'es' | 'fr';
+
+export const LANG_OPTIONS: { id: Lang; label: string }[] = [
+  { id: 'en', label: 'English' },
+  { id: 'he', label: 'עברית' },
+  { id: 'ar', label: 'العربية' },
+  { id: 'ru', label: 'Русский' },
+  { id: 'es', label: 'Español' },
+  { id: 'fr', label: 'Français' },
+];
+
+const RTL: Lang[] = ['he', 'ar'];
 
 export interface Strings {
   question: (a: number, b: number) => string;
@@ -13,6 +24,7 @@ export interface Strings {
   nameAria: (n: number) => string;
   packsQ: string;
   packsSub: string;
+  packsMin: (min: number, have: number) => string;
   words: (n: number) => string;
   modeQ: string;
   classic: string;
@@ -36,6 +48,8 @@ export interface Strings {
   nextPlayer: string;
   startPlaying: string;
   turn: (a: number, b: number) => string;
+  roundLabel: (r: number) => string;
+  anotherRound: string;
   givesClue: string;
   goVote: string;
   voteLocked: string;
@@ -60,7 +74,8 @@ const en: Strings = {
   nameQ: (n) => `What's player ${n}'s name?`,
   nameAria: (n) => `Player ${n} name`,
   packsQ: 'What are you playing?',
-  packsSub: 'Pick one or more categories.',
+  packsSub: 'Pick at least 3 categories.',
+  packsMin: (min, have) => `${have} of ${min} chosen`,
   words: (n) => `${n} words`,
   modeQ: 'Pick a mode',
   classic: 'Classic',
@@ -90,6 +105,8 @@ const en: Strings = {
   nextPlayer: 'Next player',
   startPlaying: 'Start playing',
   turn: (a, b) => `Turn ${a} of ${b}`,
+  roundLabel: (r) => `Round ${r}`,
+  anotherRound: 'Another round',
   givesClue: 'Gives a one-word clue.',
   goVote: 'Go to vote',
   voteLocked: 'Vote (after everyone speaks)',
@@ -114,7 +131,8 @@ const he: Strings = {
   nameQ: (n) => `איך קוראים לשחקן ${n}\u200F?`,
   nameAria: (n) => `שם שחקן ${n}`,
   packsQ: 'על מה משחקים?',
-  packsSub: 'אפשר לבחור כמה קטגוריות.',
+  packsSub: 'בחרו לפחות 3 קטגוריות.',
+  packsMin: (min, have) => `${have} מתוך ${min} נבחרו`,
   words: (n) => `${n} מילים`,
   modeQ: 'בחרו מצב',
   classic: 'קלאסי',
@@ -144,6 +162,8 @@ const he: Strings = {
   nextPlayer: 'השחקן הבא',
   startPlaying: 'מתחילים לשחק',
   turn: (a, b) => `תור ${a} מתוך ${b}`,
+  roundLabel: (r) => `סבב ${r}`,
+  anotherRound: 'סבב נוסף',
   givesClue: 'אומר רמז של מילה אחת.',
   goVote: 'עוברים להצבעה',
   voteLocked: 'הצבעה (אחרי שכולם מדברים)',
@@ -160,7 +180,235 @@ const he: Strings = {
   arrow: '←',
 };
 
-const STRINGS: Record<Lang, Strings> = { en, he };
+const ar: Strings = {
+  question: (a, b) => `السؤال ${a} من ${b}`,
+  player: (n) => `لاعب ${n}`,
+  howMany: 'كم عدد اللاعبين؟',
+  howManySub: (min, max) => `من ${min} إلى ${max} أشخاص على هاتف واحد.`,
+  nameQ: (n) => `ما اسم اللاعب ${n}؟`,
+  nameAria: (n) => `اسم اللاعب ${n}`,
+  packsQ: 'ماذا ستلعبون؟',
+  packsSub: 'اختاروا 3 فئات على الأقل.',
+  packsMin: (min, have) => `تم اختيار ${have} من ${min}`,
+  words: (n) => `${n} كلمة`,
+  modeQ: 'اختاروا الوضع',
+  classic: 'كلاسيكي',
+  classicDesc: 'محتال واحد أو أكثر. الباقون يعرفون الكلمة السرية.',
+  roles: 'الأدوار',
+  rolesDesc: 'يضيف مهرجاً، وصائد جوائز عند 5 لاعبين وحارساً شخصياً عند 6.',
+  rolesNeed: (n) => `يحتاج ${n}+ لاعبين.`,
+  impQ: 'كم عدد المحتالين؟',
+  impSub: (p, m) => `مع ${p} لاعبين يمكن حتى ${m}.`,
+  back: 'رجوع',
+  next: 'التالي',
+  startGame: 'ابدأ اللعبة',
+  soundAria: 'الصوت والاهتزاز',
+  roleInfo: {
+    imposter: { title: 'محتال', blurb: 'اندمج مع الأبرياء وتجنب الشبهات.' },
+    innocent: { title: 'بريء', blurb: 'تعاون مع المجموعة لكشف المحتالين.' },
+    jester: { title: 'مهرج', blurb: 'أثر الفوضى وشتت الجميع. تفوز إذا صوتوا ضدك.' },
+    bodyguard: { title: 'حارس شخصي', blurb: 'احمِ سراً لاعباً من فريق المحتالين من الشبهات.' },
+    bounty: { title: 'صائد جوائز', blurb: 'هدفك لاعب محدد من فريق المحتالين. اكشفه.' },
+  },
+  eyebrow: 'تم تأكيد الهوية',
+  yourClient: 'عميلك',
+  yourTarget: 'هدفك',
+  secretWord: 'الكلمة السرية',
+  holdReveal: 'اضغط مطولاً للكشف',
+  releaseHide: 'ارفع إصبعك للإخفاء',
+  nextPlayer: 'اللاعب التالي',
+  startPlaying: 'ابدأوا اللعب',
+  turn: (a, b) => `الدور ${a} من ${b}`,
+  roundLabel: (r) => `الجولة ${r}`,
+  anotherRound: 'جولة أخرى',
+  givesClue: 'يعطي تلميحاً من كلمة واحدة.',
+  goVote: 'انتقلوا للتصويت',
+  voteLocked: 'التصويت (بعد أن يتكلم الجميع)',
+  allSpoke: 'تكلم الجميع. يمكنكم التصويت الآن.',
+  whoImposter: 'من برأيك المحتال؟',
+  crewWins: 'فاز الفريق! 🎉',
+  imposterWins: 'فاز المحتال! 😈',
+  jesterWins: 'فاز المهرج! 🃏',
+  tie: 'تعادل في التصويت، لم يُكشف أحد.',
+  votedOut: (n) => `صوتت المجموعة ضد ${n}.`,
+  wordWas: 'الكلمة كانت',
+  playAgain: 'جولة جديدة',
+  backToSetup: 'العودة للإعدادات',
+  arrow: '←',
+};
+
+const ru: Strings = {
+  question: (a, b) => `Вопрос ${a} из ${b}`,
+  player: (n) => `Игрок ${n}`,
+  howMany: 'Сколько игроков?',
+  howManySub: (min, max) => `От ${min} до ${max} человек на одном телефоне.`,
+  nameQ: (n) => `Как зовут игрока ${n}?`,
+  nameAria: (n) => `Имя игрока ${n}`,
+  packsQ: 'Во что играем?',
+  packsSub: 'Выберите не меньше 3 категорий.',
+  packsMin: (min, have) => `Выбрано ${have} из ${min}`,
+  words: (n) => `слов: ${n}`,
+  modeQ: 'Выберите режим',
+  classic: 'Классика',
+  classicDesc: 'Один или несколько самозванцев. Остальные знают секретное слово.',
+  roles: 'Роли',
+  rolesDesc: 'Добавляет Шута, а также Охотника за головами при 5 игроках и Телохранителя при 6.',
+  rolesNeed: (n) => `Нужно ${n}+ игроков.`,
+  impQ: 'Сколько самозванцев?',
+  impSub: (p, m) => `При ${p} игроках можно до ${m}.`,
+  back: 'Назад',
+  next: 'Далее',
+  startGame: 'Начать игру',
+  soundAria: 'Звук и вибрация',
+  roleInfo: {
+    imposter: { title: 'Самозванец', blurb: 'Сливайтесь с невиновными и не вызывайте подозрений.' },
+    innocent: { title: 'Невиновный', blurb: 'Помогите группе найти и разоблачить самозванцев.' },
+    jester: { title: 'Шут', blurb: 'Создавайте хаос. Вы побеждаете, если за вас проголосуют.' },
+    bodyguard: { title: 'Телохранитель', blurb: 'Тайно защищайте игрока из команды самозванцев.' },
+    bounty: { title: 'Охотник за головами', blurb: 'Ваша цель конкретный игрок из команды самозванцев. Разоблачите его.' },
+  },
+  eyebrow: 'Личность подтверждена',
+  yourClient: 'Ваш клиент',
+  yourTarget: 'Ваша цель',
+  secretWord: 'Секретное слово',
+  holdReveal: 'Нажмите и держите',
+  releaseHide: 'Отпустите, чтобы скрыть',
+  nextPlayer: 'Следующий игрок',
+  startPlaying: 'Начать игру',
+  turn: (a, b) => `Ход ${a} из ${b}`,
+  roundLabel: (r) => `Раунд ${r}`,
+  anotherRound: 'Ещё раунд',
+  givesClue: 'Даёт подсказку в одно слово.',
+  goVote: 'Перейти к голосованию',
+  voteLocked: 'Голосование (когда все скажут)',
+  allSpoke: 'Все высказались. Можно голосовать.',
+  whoImposter: 'Кто, по-вашему, самозванец?',
+  crewWins: 'Команда победила! 🎉',
+  imposterWins: 'Самозванец победил! 😈',
+  jesterWins: 'Шут победил! 🃏',
+  tie: 'Голоса разделились, никого не поймали.',
+  votedOut: (n) => `Группа проголосовала против: ${n}.`,
+  wordWas: 'Слово было',
+  playAgain: 'Сыграть ещё',
+  backToSetup: 'К настройкам',
+  arrow: '→',
+};
+
+const es: Strings = {
+  question: (a, b) => `Pregunta ${a} de ${b}`,
+  player: (n) => `Jugador ${n}`,
+  howMany: '¿Cuántos jugadores?',
+  howManySub: (min, max) => `De ${min} a ${max} personas con un solo teléfono.`,
+  nameQ: (n) => `¿Cómo se llama el jugador ${n}?`,
+  nameAria: (n) => `Nombre del jugador ${n}`,
+  packsQ: '¿A qué jugáis?',
+  packsSub: 'Elige al menos 3 categorías.',
+  packsMin: (min, have) => `${have} de ${min} elegidas`,
+  words: (n) => `${n} palabras`,
+  modeQ: 'Elige un modo',
+  classic: 'Clásico',
+  classicDesc: 'Uno o más impostores. El resto conoce la palabra secreta.',
+  roles: 'Roles',
+  rolesDesc: 'Añade un Bufón, un Cazarrecompensas con 5 jugadores y un Guardaespaldas con 6.',
+  rolesNeed: (n) => `Necesita ${n}+ jugadores.`,
+  impQ: '¿Cuántos impostores?',
+  impSub: (p, m) => `Con ${p} jugadores puede haber hasta ${m}.`,
+  back: 'Atrás',
+  next: 'Siguiente',
+  startGame: 'Empezar partida',
+  soundAria: 'Sonido y vibración',
+  roleInfo: {
+    imposter: { title: 'Impostor', blurb: 'Mézclate con los inocentes y evita sospechas.' },
+    innocent: { title: 'Inocente', blurb: 'Ayuda al grupo a encontrar y descubrir a los impostores.' },
+    jester: { title: 'Bufón', blurb: 'Crea caos y confusión. Ganas si el grupo vota contra ti.' },
+    bodyguard: { title: 'Guardaespaldas', blurb: 'Protege en secreto a un jugador del equipo impostor.' },
+    bounty: { title: 'Cazarrecompensas', blurb: 'Tu objetivo es un jugador concreto del equipo impostor. Descúbrelo.' },
+  },
+  eyebrow: 'Identidad confirmada',
+  yourClient: 'Tu cliente',
+  yourTarget: 'Tu objetivo',
+  secretWord: 'Palabra secreta',
+  holdReveal: 'Mantén pulsado para ver',
+  releaseHide: 'Suelta para ocultar',
+  nextPlayer: 'Siguiente jugador',
+  startPlaying: 'A jugar',
+  turn: (a, b) => `Turno ${a} de ${b}`,
+  roundLabel: (r) => `Ronda ${r}`,
+  anotherRound: 'Otra ronda',
+  givesClue: 'Da una pista de una palabra.',
+  goVote: 'Ir a votar',
+  voteLocked: 'Votar (cuando todos hablen)',
+  allSpoke: 'Todos han hablado. Ya se puede votar.',
+  whoImposter: '¿Quién crees que es el impostor?',
+  crewWins: '¡Gana el equipo! 🎉',
+  imposterWins: '¡Gana el impostor! 😈',
+  jesterWins: '¡Gana el bufón! 🃏',
+  tie: 'Empate en la votación, nadie fue descubierto.',
+  votedOut: (n) => `El grupo votó contra ${n}.`,
+  wordWas: 'La palabra era',
+  playAgain: 'Jugar otra vez',
+  backToSetup: 'Volver a ajustes',
+  arrow: '→',
+};
+
+const fr: Strings = {
+  question: (a, b) => `Question ${a} sur ${b}`,
+  player: (n) => `Joueur ${n}`,
+  howMany: 'Combien de joueurs ?',
+  howManySub: (min, max) => `De ${min} à ${max} personnes sur un seul téléphone.`,
+  nameQ: (n) => `Comment s'appelle le joueur ${n} ?`,
+  nameAria: (n) => `Nom du joueur ${n}`,
+  packsQ: 'À quoi jouez-vous ?',
+  packsSub: 'Choisissez au moins 3 catégories.',
+  packsMin: (min, have) => `${have} sur ${min} choisies`,
+  words: (n) => `${n} mots`,
+  modeQ: 'Choisissez un mode',
+  classic: 'Classique',
+  classicDesc: 'Un ou plusieurs imposteurs. Les autres connaissent le mot secret.',
+  roles: 'Rôles',
+  rolesDesc: 'Ajoute un Bouffon, un Chasseur de primes à 5 joueurs et un Garde du corps à 6.',
+  rolesNeed: (n) => `Il faut ${n}+ joueurs.`,
+  impQ: 'Combien d\'imposteurs ?',
+  impSub: (p, m) => `Avec ${p} joueurs, jusqu'à ${m}.`,
+  back: 'Retour',
+  next: 'Suivant',
+  startGame: 'Lancer la partie',
+  soundAria: 'Son et vibration',
+  roleInfo: {
+    imposter: { title: 'Imposteur', blurb: 'Fondez-vous parmi les innocents et évitez les soupçons.' },
+    innocent: { title: 'Innocent', blurb: 'Aidez le groupe à démasquer les imposteurs.' },
+    jester: { title: 'Bouffon', blurb: 'Semez le chaos. Vous gagnez si le groupe vote contre vous.' },
+    bodyguard: { title: 'Garde du corps', blurb: "Protégez en secret un joueur de l'équipe des imposteurs." },
+    bounty: { title: 'Chasseur de primes', blurb: "Votre cible est un joueur précis de l'équipe des imposteurs. Démasquez-le." },
+  },
+  eyebrow: 'Identité confirmée',
+  yourClient: 'Votre client',
+  yourTarget: 'Votre cible',
+  secretWord: 'Mot secret',
+  holdReveal: 'Maintenez pour révéler',
+  releaseHide: 'Relâchez pour cacher',
+  nextPlayer: 'Joueur suivant',
+  startPlaying: 'Jouer',
+  turn: (a, b) => `Tour ${a} sur ${b}`,
+  roundLabel: (r) => `Manche ${r}`,
+  anotherRound: 'Une autre manche',
+  givesClue: 'Donne un indice d\'un seul mot.',
+  goVote: 'Passer au vote',
+  voteLocked: 'Voter (quand tout le monde a parlé)',
+  allSpoke: 'Tout le monde a parlé. Vous pouvez voter.',
+  whoImposter: 'Qui est l\'imposteur selon vous ?',
+  crewWins: 'L\'équipe gagne ! 🎉',
+  imposterWins: 'L\'imposteur gagne ! 😈',
+  jesterWins: 'Le bouffon gagne ! 🃏',
+  tie: 'Égalité au vote, personne n\'est démasqué.',
+  votedOut: (n) => `Le groupe a voté contre ${n}.`,
+  wordWas: 'Le mot était',
+  playAgain: 'Rejouer',
+  backToSetup: 'Retour aux réglages',
+  arrow: '→',
+};
+
+const STRINGS: Record<Lang, Strings> = { en, he, ar, ru, es, fr };
 const KEY = 'imposter.lang';
 
 interface Ctx {
@@ -174,14 +422,15 @@ const LangContext = createContext<Ctx>({ lang: 'en', setLang: () => {}, t: en })
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     try {
-      return localStorage.getItem(KEY) === 'he' ? 'he' : 'en';
+      const saved = localStorage.getItem(KEY);
+      return LANG_OPTIONS.some((l) => l.id === saved) ? (saved as Lang) : 'en';
     } catch {
       return 'en';
     }
   });
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.dir = RTL.includes(lang) ? 'rtl' : 'ltr';
   }, [lang]);
   const setLang = (l: Lang) => {
     setLangState(l);

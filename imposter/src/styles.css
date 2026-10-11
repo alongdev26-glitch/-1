@@ -161,3 +161,6 @@ button.icon { background: #1b1b20; }
 .fp .scan { fill: #ff6b73; filter: drop-shadow(0 0 6px #ff6b73); animation: sweep 2.2s ease-in-out infinite; }
 @keyframes sweep { 0%, 100% { transform: translateY(0); opacity: 0; } 15%, 85% { opacity: 1; } 50% { transform: translateY(72px); } }
 .holdcard .front b { margin-top: 6px; letter-spacing: .04em; }
+
+.langs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.langs .mode { align-items: center; text-align: center; padding-block: 18px; }

@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { PACKS } from './data/packs';
 import { MAX_PLAYERS, MIN_PLAYERS, ROLE_MIN_PLAYERS, createRound, maxImposters, tallyVotes } from './engine/game';
 import type { Round } from './engine/game';
-import { LangProvider, useLang } from './i18n';
-import type { Lang } from './i18n';
+import { LANG_OPTIONS, LangProvider, useLang } from './i18n';
 import Avatar from './ui/Avatar';
 import HoldCard from './ui/HoldCard';
 import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
@@ -49,7 +48,9 @@ function Game() {
   const [phase, setPhase] = useState<Phase>('setup');
   // An empty name means "use the default for the chosen language".
   const [names, setNames] = useState<string[]>(saved.names ?? ['', '', '']);
-  const [packIds, setPackIds] = useState<string[]>(saved.packIds?.length ? saved.packIds : [PACKS[0].id]);
+  const [packIds, setPackIds] = useState<string[]>(
+    saved.packIds && saved.packIds.length >= MIN_PACKS ? saved.packIds : PACKS.slice(0, MIN_PACKS).map((p) => p.id),
+  );
   const [imposters, setImposters] = useState(saved.imposters ?? 1);
   const [rolesMode, setRolesMode] = useState(saved.rolesMode ?? false);
 
@@ -119,10 +120,7 @@ interface SetupProps {
   onStart: () => void;
 }
 
-const LANGS: { id: Lang; label: string; sub: string }[] = [
-  { id: 'en', label: 'English', sub: 'Left to right' },
-  { id: 'he', label: 'עברית', sub: 'מימין לשמאל' },
-];
+const MIN_PACKS = 3;
 
 function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart }: SetupProps) {
   const { lang, setLang, t } = useLang();
@@ -141,7 +139,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   const nameIdx = step - 2;
   const canRoles = n >= ROLE_MIN_PLAYERS.jester;
   const last = step === total - 1;
-  const canNext = kind !== 'packs' || packIds.length > 0;
+  const canNext = kind !== 'packs' || packIds.length >= MIN_PACKS;
 
   const next = () => {
     play('tap');
@@ -169,12 +167,11 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
         <>
           <Avatar seed={0} kind="imposter" size={120} />
           <h1>Imposter</h1>
-          <p className="sub">Language · שפה</p>
-          <div className="modes">
-            {LANGS.map((l) => (
+          <p className="sub">Language · שפה · لغة</p>
+          <div className="langs">
+            {LANG_OPTIONS.map((l) => (
               <button key={l.id} className={'mode' + (lang === l.id ? ' on' : '')} onClick={() => { play('tap'); setLang(l.id); }}>
                 <b>{l.label}</b>
-                <span>{l.sub}</span>
               </button>
             ))}
           </div>
@@ -214,7 +211,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
       {kind === 'packs' && (
         <>
           <h1>{t.packsQ}</h1>
-          <p className="sub">{t.packsSub}</p>
+          <p className="sub">{t.packsSub} · {t.packsMin(MIN_PACKS, packIds.length)}</p>
           <div className="packs">
             {PACKS.map((p) => (
               <button
@@ -351,6 +348,7 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
   const { t } = useLang();
   const [seconds, setSeconds] = useState(0);
   const [turn, setTurn] = useState(0);
+  const [roundNo, setRoundNo] = useState(1);
   useEffect(() => {
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
@@ -362,8 +360,8 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
   const ss = String(seconds % 60).padStart(2, '0');
 
   return (
-    <main className="screen center" key={turn}>
-      <p className="counter">{t.turn(turn + 1, n)}</p>
+    <main className="screen center" key={`${roundNo}-${turn}`}>
+      <p className="counter">{roundNo > 1 && `${t.roundLabel(roundNo)} · `}{t.turn(turn + 1, n)}</p>
       <Avatar seed={speaker.id} size={110} />
       <h1>{speaker.name}</h1>
       <p className="sub">{t.givesClue}</p>
@@ -385,6 +383,18 @@ function Discuss({ round, onVote }: { round: Round; onVote: () => void }) {
       <button className={roundDone ? 'primary' : 'ghost'} disabled={!roundDone} onClick={onVote}>
         {roundDone ? t.goVote : t.voteLocked}
       </button>
+      {roundDone && (
+        <button
+          className="ghost"
+          onClick={() => {
+            play('tap');
+            setTurn(0);
+            setRoundNo(roundNo + 1);
+          }}
+        >
+          {t.anotherRound}
+        </button>
+      )}
     </main>
   );
 }
