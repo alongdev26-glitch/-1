@@ -101,7 +101,7 @@ button.primary { box-shadow: 0 8px 24px #e5242b55; }
 /* ---- classified category tiles: grayscale, no colour ---- */
 .pack { background: #141417; border-color: #26262b; color: #b4b4bc; text-transform: uppercase; letter-spacing: .14em; font-size: .75rem; padding-block: 18px; }
 .pack .emoji { font-size: 2rem; filter: grayscale(1) brightness(.85) contrast(1.1); opacity: .75; transition: opacity .2s, filter .2s; }
-.pack.on { background: #202024; border-color: #d0d0d6; color: #fff; box-shadow: 0 0 0 1px #d0d0d633, 0 0 22px #ffffff14; }
+.pack.on { background: #2a1013; border-color: var(--red); color: #fff; box-shadow: 0 0 0 1px #e5242b55, 0 0 22px #e5242b40; }
 .pack.on .emoji { opacity: 1; filter: grayscale(1) brightness(1.15) contrast(1.1); }
 
 /* ---- role cards (reference-style) ---- */

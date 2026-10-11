@@ -40,7 +40,7 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = '
   osc.stop(t + dur);
 }
 
-export type Sfx = 'tap' | 'reveal' | 'imposter' | 'vote' | 'win' | 'lose';
+export type Sfx = 'tap' | 'reveal' | 'vote' | 'win' | 'lose';
 
 export function play(sfx: Sfx) {
   if (!enabled) return;
@@ -57,10 +57,6 @@ export function play(sfx: Sfx) {
     case 'reveal':
       tone(440, 0, 0.1, 'triangle');
       tone(660, 0.08, 0.14, 'triangle');
-      break;
-    case 'imposter':
-      tone(160, 0, 0.35, 'sawtooth', 0.12);
-      tone(120, 0.12, 0.45, 'sawtooth', 0.12);
       break;
     case 'vote':
       tone(300, 0, 0.08, 'square', 0.08);

@@ -24,13 +24,9 @@ export default function HoldCard({ resetKey, role, onSeen, children }: Props) {
   const show = () => {
     if (open) return;
     setOpen(true);
-    if (role === 'imposter') {
-      play('imposter');
-      vibrate([60, 40, 60, 40, 160]);
-    } else {
-      play('reveal');
-      vibrate(40);
-    }
+    // Same sound and vibration for every role, so nobody can tell who the imposter is.
+    play('reveal');
+    vibrate(40);
     if (!seen.current) {
       seen.current = true;
       onSeen();
