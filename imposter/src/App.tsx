@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PACKS } from './data/packs';
-import { MAX_PLAYERS, MIN_PLAYERS, createRound, maxImposters, tallyVotes } from './engine/game';
-import type { Round } from './engine/game';
+import { MAX_PLAYERS, MIN_PLAYERS, ROLE_MIN_PLAYERS, createRound, maxImposters, tallyVotes } from './engine/game';
+import type { Role, Round } from './engine/game';
 import Avatar from './ui/Avatar';
 import HoldCard from './ui/HoldCard';
 import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
@@ -15,13 +15,14 @@ export default function App() {
   const [names, setNames] = useState<string[]>(DEFAULT_NAMES);
   const [packIds, setPackIds] = useState<string[]>([PACKS[0].id]);
   const [imposters, setImposters] = useState(1);
+  const [rolesMode, setRolesMode] = useState(false);
   const [round, setRound] = useState<Round | null>(null);
   const [votes, setVotes] = useState<number[]>([]);
 
   const start = () => {
     const words = PACKS.filter((p) => packIds.includes(p.id)).flatMap((p) => p.words);
     const clean = names.map((n, i) => n.trim() || `Player ${i + 1}`);
-    setRound(createRound(clean, words, imposters));
+    setRound(createRound(clean, words, imposters, Math.random, rolesMode && clean.length >= ROLE_MIN_PLAYERS.jester));
     setVotes([]);
     setPhase('reveal');
   };
@@ -40,6 +41,8 @@ export default function App() {
         setPackIds={setPackIds}
         imposters={imposters}
         setImposters={setImposters}
+        rolesMode={rolesMode}
+        setRolesMode={setRolesMode}
         onStart={start}
       />
     );
@@ -74,11 +77,13 @@ interface SetupProps {
   setPackIds: (p: string[]) => void;
   imposters: number;
   setImposters: (n: number) => void;
+  rolesMode: boolean;
+  setRolesMode: (v: boolean) => void;
   onStart: () => void;
 }
 
 
-function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, onStart }: SetupProps) {
+function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart }: SetupProps) {
   const [step, setStep] = useState(0);
   const maxImp = maxImposters(names.length);
   const imp = Math.min(imposters, maxImp);
@@ -87,8 +92,10 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
   const resize = (n: number) =>
     setNames(Array.from({ length: n }, (_, i) => names[i] ?? `Player ${i + 1}`));
   // Questions: player count, one name per player, categories, imposters.
-  const total = names.length + 3;
-  const kind = step === 0 ? 'players' : step <= names.length ? 'name' : step === names.length + 1 ? 'packs' : 'imposters';
+  const total = names.length + 4;
+  const kind =
+    step === 0 ? 'players' : step <= names.length ? 'name' : step === names.length + 1 ? 'packs' : step === names.length + 2 ? 'mode' : 'imposters';
+  const canRoles = names.length >= ROLE_MIN_PLAYERS.jester;
   const nameIdx = step - 1;
   const last = step === total - 1;
   const canNext = kind !== 'packs' || packIds.length > 0;
@@ -157,8 +164,33 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
               >
                 <span className="emoji">{p.emoji}</span>
                 {p.name}
+                <small>{p.words.length} words</small>
               </button>
             ))}
+          </div>
+        </>
+      )}
+
+      {kind === 'mode' && (
+        <>
+          <h1>Pick a mode</h1>
+          <div className="modes">
+            <button className={'mode' + (!rolesMode ? ' on' : '')} onClick={() => setRolesMode(false)}>
+              <b>Classic</b>
+              <span>One or more imposters. Everyone else shares the secret word.</span>
+            </button>
+            <button
+              className={'mode' + (rolesMode && canRoles ? ' on' : '')}
+              disabled={!canRoles}
+              onClick={() => setRolesMode(true)}
+            >
+              <b>Roles</b>
+              <span>
+                {canRoles
+                  ? 'Adds a Jester, plus a Bounty Hunter at 5 players and a Bodyguard at 6.'
+                  : `Needs ${ROLE_MIN_PLAYERS.jester}+ players.`}
+              </span>
+            </button>
           </div>
         </>
       )}
@@ -205,6 +237,14 @@ function SoundToggle() {
   );
 }
 
+const ROLE_INFO: Record<Role, { title: string; blurb: string }> = {
+  imposter: { title: 'Imposter', blurb: 'Blend in with the innocents and avoid suspicion.' },
+  innocent: { title: 'Innocent', blurb: 'Work with the group to find and expose the imposters.' },
+  jester: { title: 'Jester', blurb: 'Create chaos and misdirection. You win if the group votes you out.' },
+  bodyguard: { title: 'Bodyguard', blurb: 'Secretly shield a fellow imposter-team player from suspicion.' },
+  bounty: { title: 'Bounty Hunter', blurb: 'Target a specific imposter-team player and work to expose them.' },
+};
+
 function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
   const [index, setIndex] = useState(0);
   const [seen, setSeen] = useState(false);
@@ -216,21 +256,26 @@ function Reveal({ round, onDone }: { round: Round; onDone: () => void }) {
       <p className="counter">{index + 1} / {round.players.length}</p>
       <Avatar seed={player.id} kind="unknown" size={110} />
       <h1>{player.name}</h1>
-      <HoldCard resetKey={index} imposter={player.isImposter} onSeen={() => setSeen(true)}>
-        {player.isImposter ? (
-          <>
-            <Avatar seed={player.id} kind="imposter" size={90} />
-            <div className="role">Imposter</div>
-            <p>You don't know the word. Blend in and don't get caught.</p>
-          </>
-        ) : (
-          <>
-            <Avatar seed={player.id} size={90} />
-            <div className="label">Secret word</div>
-            <div className="word">{round.word}</div>
-            <p>Give a one-word clue.</p>
-          </>
+      <HoldCard resetKey={index} role={player.role} onSeen={() => setSeen(true)}>
+        <div className="eyebrow">Identity confirmed</div>
+        <Avatar seed={player.id} kind={player.role} size={96} />
+        <div className="badge">{ROLE_INFO[player.role].title}</div>
+        {player.target !== undefined && (
+          <div className="target-row">
+            <Avatar seed={player.target} kind="unknown" size={30} />
+            <span>
+              <small>{player.role === 'bodyguard' ? 'Your client' : 'Your target'}</small>
+              {round.players[player.target].name}
+            </span>
+          </div>
         )}
+        {player.role !== 'imposter' && (
+          <div className="wordbox">
+            <small>Secret word</small>
+            <b>{round.word}</b>
+          </div>
+        )}
+        <p>{ROLE_INFO[player.role].blurb}</p>
       </HoldCard>
       <button
         className="primary"
@@ -338,18 +383,18 @@ function Result({
   onMenu: () => void;
 }) {
   const res = tallyVotes(round, votes);
-  const impNames = round.players.filter((p) => p.isImposter).map((p) => p.name).join(', ');
   const tie = res.top.length > 1;
   useEffect(() => {
-    play(res.outcome === 'crew' ? 'win' : 'lose');
-    vibrate(res.outcome === 'crew' ? [80, 50, 80, 50, 200] : [300]);
+    const good = res.outcome === 'crew' || res.outcome === 'jester';
+    play(good ? 'win' : 'lose');
+    vibrate(good ? [80, 50, 80, 50, 200] : [300]);
   }, [res.outcome]);
 
   return (
     <main className="screen center">
       {res.outcome === 'crew' && <Confetti />}
       <h1 className={res.outcome === 'crew' ? 'win' : 'lose'}>
-        {res.outcome === 'crew' ? 'The crew wins! 🎉' : 'The imposter wins! 😈'}
+        {{ crew: 'The crew wins! 🎉', imposter: 'The imposter wins! 😈', jester: 'The jester wins! 🃏' }[res.outcome]}
       </h1>
       <p className="sub">
         {tie
@@ -357,15 +402,21 @@ function Result({
           : `The group voted out ${round.players[res.top[0]].name}.`}
       </p>
       <div className="card">
-        <div className="avatars">
-          {round.players.filter((p) => p.isImposter).map((p) => (
-            <Avatar key={p.id} seed={p.id} kind="imposter" size={80} />
-          ))}
-        </div>
-        <div className="label">The imposter was</div>
-        <div className="word">{impNames}</div>
         <div className="label">The word was</div>
         <div className="word">{round.word}</div>
+        <ul className="roster">
+          {round.players.map((p) => (
+            <li key={p.id} className={p.role}>
+              <Avatar seed={p.id} kind={p.role} size={44} />
+              <span className="who">{p.name}</span>
+              <span className="what">
+                {ROLE_INFO[p.role].title}
+                {p.target !== undefined && ` → ${round.players[p.target].name}`}
+                {res.bountyHits.includes(p.id) && ' ✓'}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
       <button className="primary" onClick={onAgain}>Play again</button>
       <button className="ghost" onClick={onMenu}>Back to setup</button>
