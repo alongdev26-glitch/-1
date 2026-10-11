@@ -155,3 +155,9 @@ button.icon { background: #1b1b20; }
 .holdcard .face { border-radius: 26px; }
 .holdcard .front { background: repeating-linear-gradient(45deg, #1b1b20 0 10px, #17171b 10px 20px); border: 1px dashed #3a3a42; }
 .progress i.on { background: linear-gradient(90deg, #ff4b52, #e5242b); }
+
+/* ---- fingerprint scanner ---- */
+.fp { color: var(--red); filter: drop-shadow(0 0 10px #e5242b99); animation: pulse 1.8s ease-in-out infinite; overflow: visible; }
+.fp .scan { fill: #ff6b73; filter: drop-shadow(0 0 6px #ff6b73); animation: sweep 2.2s ease-in-out infinite; }
+@keyframes sweep { 0%, 100% { transform: translateY(0); opacity: 0; } 15%, 85% { opacity: 1; } 50% { transform: translateY(72px); } }
+.holdcard .front b { margin-top: 6px; letter-spacing: .04em; }
