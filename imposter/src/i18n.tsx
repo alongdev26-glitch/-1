@@ -64,6 +64,42 @@ export interface Strings {
   playAgain: string;
   backToSetup: string;
   arrow: string;
+  o: OnlineStrings;
+}
+
+export interface OnlineStrings {
+  howPlay: string;
+  onePhone: string;
+  onePhoneDesc: string;
+  createRoom: string;
+  createRoomDesc: string;
+  joinRoom: string;
+  joinRoomDesc: string;
+  yourName: string;
+  roomCode: string;
+  create: string;
+  join: string;
+  connecting: string;
+  errNet: string;
+  errNotFound: string;
+  errFull: string;
+  errStarted: string;
+  hostLeft: string;
+  lobby: string;
+  shareCode: string;
+  copyLink: string;
+  copied: string;
+  waitingHost: string;
+  needPlayers: (n: number) => string;
+  you: string;
+  host: string;
+  ready: string;
+  waitingOthers: (k: number, n: number) => string;
+  waitingHostAction: string;
+  voteSent: string;
+  leave: string;
+  left: string;
+  speaking: string;
 }
 
 const en: Strings = {
@@ -121,6 +157,40 @@ const en: Strings = {
   playAgain: 'Play again',
   backToSetup: 'Back to setup',
   arrow: '→',
+  o: {
+    howPlay: 'How do you want to play?',
+    onePhone: 'One phone',
+    onePhoneDesc: 'Pass the phone around the group.',
+    createRoom: 'Create a room',
+    createRoomDesc: 'Everyone plays on their own phone. You get a room code.',
+    joinRoom: 'Join a room',
+    joinRoomDesc: 'Enter the code from your host.',
+    yourName: 'Your name',
+    roomCode: 'Room code',
+    create: 'Create room',
+    join: 'Join',
+    connecting: 'Connecting…',
+    errNet: 'Could not connect. Check your internet and try again.',
+    errNotFound: 'No room with that code. Check it and try again.',
+    errFull: 'That room is full.',
+    errStarted: 'That game has already started.',
+    hostLeft: 'The host left the room.',
+    lobby: 'Lobby',
+    shareCode: 'Share this code with your friends',
+    copyLink: 'Copy invite link',
+    copied: 'Copied!',
+    waitingHost: 'Waiting for the host to start…',
+    needPlayers: (n) => `Need ${n} more to start`,
+    you: 'you',
+    host: 'host',
+    ready: 'I saw my card',
+    waitingOthers: (k, n) => `Waiting for others (${k}/${n})`,
+    waitingHostAction: 'Waiting for the host…',
+    voteSent: 'Vote sent. Waiting for the others…',
+    leave: 'Leave room',
+    left: 'left',
+    speaking: 'is giving a clue',
+  },
 };
 
 const he: Strings = {
@@ -178,6 +248,40 @@ const he: Strings = {
   playAgain: 'סיבוב נוסף',
   backToSetup: 'חזרה להגדרות',
   arrow: '←',
+  o: {
+    howPlay: 'איך רוצים לשחק?',
+    onePhone: 'טלפון אחד',
+    onePhoneDesc: 'מעבירים את הטלפון בין כולם.',
+    createRoom: 'יצירת חדר',
+    createRoomDesc: 'כל אחד משחק בטלפון שלו. מקבלים קוד חדר.',
+    joinRoom: 'הצטרפות לחדר',
+    joinRoomDesc: 'מקלידים את הקוד של המארח.',
+    yourName: 'השם שלך',
+    roomCode: 'קוד חדר',
+    create: 'צור חדר',
+    join: 'הצטרף',
+    connecting: 'מתחבר…',
+    errNet: 'אי אפשר להתחבר. בדקו את האינטרנט ונסו שוב.',
+    errNotFound: 'אין חדר עם הקוד הזה. בדקו ונסו שוב.',
+    errFull: 'החדר מלא.',
+    errStarted: 'המשחק כבר התחיל.',
+    hostLeft: 'המארח עזב את החדר.',
+    lobby: 'לובי',
+    shareCode: 'שתפו את הקוד עם החברים',
+    copyLink: 'העתק קישור הזמנה',
+    copied: 'הועתק!',
+    waitingHost: 'מחכים שהמארח יתחיל…',
+    needPlayers: (n) => `חסרים עוד ${n} כדי להתחיל`,
+    you: 'אתה',
+    host: 'מארח',
+    ready: 'ראיתי את הכרטיס',
+    waitingOthers: (k, n) => `מחכים לשאר (${k}/${n})`,
+    waitingHostAction: 'מחכים למארח…',
+    voteSent: 'ההצבעה נשלחה. מחכים לשאר…',
+    leave: 'עזוב חדר',
+    left: 'עזב',
+    speaking: 'נותן רמז',
+  },
 };
 
 const ar: Strings = {
@@ -235,6 +339,40 @@ const ar: Strings = {
   playAgain: 'جولة جديدة',
   backToSetup: 'العودة للإعدادات',
   arrow: '←',
+  o: {
+    howPlay: 'كيف تريدون اللعب؟',
+    onePhone: 'هاتف واحد',
+    onePhoneDesc: 'مرروا الهاتف بين الجميع.',
+    createRoom: 'إنشاء غرفة',
+    createRoomDesc: 'كل واحد يلعب على هاتفه. تحصل على رمز الغرفة.',
+    joinRoom: 'الانضمام إلى غرفة',
+    joinRoomDesc: 'اكتب الرمز من المضيف.',
+    yourName: 'اسمك',
+    roomCode: 'رمز الغرفة',
+    create: 'أنشئ الغرفة',
+    join: 'انضم',
+    connecting: 'جارٍ الاتصال…',
+    errNet: 'تعذر الاتصال. تحقق من الإنترنت وحاول مجدداً.',
+    errNotFound: 'لا توجد غرفة بهذا الرمز. تحقق وحاول مجدداً.',
+    errFull: 'الغرفة ممتلئة.',
+    errStarted: 'اللعبة بدأت بالفعل.',
+    hostLeft: 'غادر المضيف الغرفة.',
+    lobby: 'الردهة',
+    shareCode: 'شاركوا هذا الرمز مع أصدقائكم',
+    copyLink: 'انسخ رابط الدعوة',
+    copied: 'تم النسخ!',
+    waitingHost: 'بانتظار المضيف ليبدأ…',
+    needPlayers: (n) => `يلزم ${n} آخرون للبدء`,
+    you: 'أنت',
+    host: 'المضيف',
+    ready: 'رأيت بطاقتي',
+    waitingOthers: (k, n) => `بانتظار الآخرين (${k}/${n})`,
+    waitingHostAction: 'بانتظار المضيف…',
+    voteSent: 'تم إرسال صوتك. بانتظار الآخرين…',
+    leave: 'غادر الغرفة',
+    left: 'غادر',
+    speaking: 'يعطي تلميحاً',
+  },
 };
 
 const ru: Strings = {
@@ -292,6 +430,40 @@ const ru: Strings = {
   playAgain: 'Сыграть ещё',
   backToSetup: 'К настройкам',
   arrow: '→',
+  o: {
+    howPlay: 'Как будете играть?',
+    onePhone: 'Один телефон',
+    onePhoneDesc: 'Передаёте телефон по кругу.',
+    createRoom: 'Создать комнату',
+    createRoomDesc: 'Каждый играет на своём телефоне. Вы получите код комнаты.',
+    joinRoom: 'Войти в комнату',
+    joinRoomDesc: 'Введите код от ведущего.',
+    yourName: 'Ваше имя',
+    roomCode: 'Код комнаты',
+    create: 'Создать',
+    join: 'Войти',
+    connecting: 'Подключение…',
+    errNet: 'Не удалось подключиться. Проверьте интернет и попробуйте снова.',
+    errNotFound: 'Комнаты с таким кодом нет. Проверьте код.',
+    errFull: 'Комната заполнена.',
+    errStarted: 'Игра уже началась.',
+    hostLeft: 'Ведущий покинул комнату.',
+    lobby: 'Лобби',
+    shareCode: 'Отправьте этот код друзьям',
+    copyLink: 'Скопировать ссылку',
+    copied: 'Скопировано!',
+    waitingHost: 'Ждём, пока ведущий начнёт…',
+    needPlayers: (n) => `Нужно ещё ${n}, чтобы начать`,
+    you: 'вы',
+    host: 'ведущий',
+    ready: 'Я посмотрел карточку',
+    waitingOthers: (k, n) => `Ждём остальных (${k}/${n})`,
+    waitingHostAction: 'Ждём ведущего…',
+    voteSent: 'Голос отправлен. Ждём остальных…',
+    leave: 'Выйти из комнаты',
+    left: 'вышел',
+    speaking: 'даёт подсказку',
+  },
 };
 
 const es: Strings = {
@@ -349,6 +521,40 @@ const es: Strings = {
   playAgain: 'Jugar otra vez',
   backToSetup: 'Volver a ajustes',
   arrow: '→',
+  o: {
+    howPlay: '¿Cómo queréis jugar?',
+    onePhone: 'Un teléfono',
+    onePhoneDesc: 'Os pasáis el teléfono.',
+    createRoom: 'Crear una sala',
+    createRoomDesc: 'Cada uno juega en su teléfono. Recibes un código de sala.',
+    joinRoom: 'Unirse a una sala',
+    joinRoomDesc: 'Escribe el código del anfitrión.',
+    yourName: 'Tu nombre',
+    roomCode: 'Código de sala',
+    create: 'Crear sala',
+    join: 'Unirse',
+    connecting: 'Conectando…',
+    errNet: 'No se pudo conectar. Revisa tu internet e inténtalo de nuevo.',
+    errNotFound: 'No hay ninguna sala con ese código. Revísalo.',
+    errFull: 'La sala está llena.',
+    errStarted: 'La partida ya empezó.',
+    hostLeft: 'El anfitrión salió de la sala.',
+    lobby: 'Sala de espera',
+    shareCode: 'Comparte este código con tus amigos',
+    copyLink: 'Copiar enlace de invitación',
+    copied: '¡Copiado!',
+    waitingHost: 'Esperando a que el anfitrión empiece…',
+    needPlayers: (n) => `Faltan ${n} para empezar`,
+    you: 'tú',
+    host: 'anfitrión',
+    ready: 'Ya vi mi carta',
+    waitingOthers: (k, n) => `Esperando a los demás (${k}/${n})`,
+    waitingHostAction: 'Esperando al anfitrión…',
+    voteSent: 'Voto enviado. Esperando a los demás…',
+    leave: 'Salir de la sala',
+    left: 'salió',
+    speaking: 'da una pista',
+  },
 };
 
 const fr: Strings = {
@@ -406,6 +612,40 @@ const fr: Strings = {
   playAgain: 'Rejouer',
   backToSetup: 'Retour aux réglages',
   arrow: '→',
+  o: {
+    howPlay: 'Comment voulez-vous jouer ?',
+    onePhone: 'Un seul téléphone',
+    onePhoneDesc: 'Faites circuler le téléphone.',
+    createRoom: 'Créer un salon',
+    createRoomDesc: 'Chacun joue sur son téléphone. Vous recevez un code de salon.',
+    joinRoom: 'Rejoindre un salon',
+    joinRoomDesc: 'Saisissez le code de l\'hôte.',
+    yourName: 'Votre nom',
+    roomCode: 'Code du salon',
+    create: 'Créer le salon',
+    join: 'Rejoindre',
+    connecting: 'Connexion…',
+    errNet: 'Connexion impossible. Vérifiez votre internet et réessayez.',
+    errNotFound: 'Aucun salon avec ce code. Vérifiez-le.',
+    errFull: 'Le salon est plein.',
+    errStarted: 'La partie a déjà commencé.',
+    hostLeft: 'L\'hôte a quitté le salon.',
+    lobby: 'Salle d\'attente',
+    shareCode: 'Partagez ce code avec vos amis',
+    copyLink: 'Copier le lien d\'invitation',
+    copied: 'Copié !',
+    waitingHost: 'En attente du lancement par l\'hôte…',
+    needPlayers: (n) => `Il manque ${n} joueur(s) pour commencer`,
+    you: 'vous',
+    host: 'hôte',
+    ready: 'J\'ai vu ma carte',
+    waitingOthers: (k, n) => `En attente des autres (${k}/${n})`,
+    waitingHostAction: 'En attente de l\'hôte…',
+    voteSent: 'Vote envoyé. En attente des autres…',
+    leave: 'Quitter le salon',
+    left: 'parti',
+    speaking: 'donne un indice',
+  },
 };
 
 const STRINGS: Record<Lang, Strings> = { en, he, ar, ru, es, fr };

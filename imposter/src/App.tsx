@@ -5,7 +5,10 @@ import type { Round } from './engine/game';
 import { LANG_OPTIONS, LangProvider, useLang } from './i18n';
 import Avatar from './ui/Avatar';
 import HoldCard from './ui/HoldCard';
-import { isSoundOn, play, setSoundOn, vibrate } from './ui/fx';
+import Online from './screens/Online';
+import { cleanCode } from './online/room';
+import { play, vibrate } from './ui/fx';
+import { Confetti, SoundToggle } from './ui/shared';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'result';
 
@@ -61,6 +64,10 @@ function Game() {
       /* storage unavailable */
     }
   }, [names, packIds, imposters, rolesMode]);
+  const [online, setOnline] = useState<{ mode: 'host' | 'join'; code: string } | null>(() => {
+    const code = cleanCode(new URLSearchParams(location.search).get('room') ?? '');
+    return code.length === 4 ? { mode: 'join', code } : null;
+  });
   const [round, setRound] = useState<Round | null>(null);
   const [votes, setVotes] = useState<number[]>([]);
 
@@ -77,6 +84,21 @@ function Game() {
     setPhase(p);
   };
 
+  if (online) {
+    return (
+      <Online
+        mode={online.mode}
+        initialCode={online.code}
+        defaultName={names[0]}
+        settings={{ packIds, rolesMode, imposters }}
+        onExit={() => {
+          history.replaceState(null, '', location.pathname);
+          setOnline(null);
+        }}
+      />
+    );
+  }
+
   if (phase === 'setup' || !round) {
     return (
       <Setup
@@ -89,6 +111,7 @@ function Game() {
         rolesMode={rolesMode}
         setRolesMode={setRolesMode}
         onStart={start}
+        onOnline={(mode) => setOnline({ mode, code: '' })}
       />
     );
   }
@@ -118,32 +141,35 @@ interface SetupProps {
   rolesMode: boolean;
   setRolesMode: (v: boolean) => void;
   onStart: () => void;
+  onOnline: (mode: 'host' | 'join') => void;
 }
 
 const MIN_PACKS = 3;
 
-function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart }: SetupProps) {
+function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart, onOnline }: SetupProps) {
   const { lang, setLang, t } = useLang();
   const [step, setStep] = useState(0);
+  const [where, setWhere] = useState<'phone' | 'host' | 'join'>('phone');
   const maxImp = maxImposters(names.length);
   const imp = Math.min(imposters, maxImp);
   const togglePack = (id: string) =>
     setPackIds(packIds.includes(id) ? packIds.filter((p) => p !== id) : [...packIds, id]);
   const resize = (n: number) => setNames(Array.from({ length: n }, (_, i) => names[i] ?? ''));
 
-  // Questions: language, player count, one name per player, categories, mode, imposters.
+  // Questions: language, where to play, player count, one name per player, categories, mode, imposters.
   const n = names.length;
-  const total = n + 5;
+  const total = n + 6;
   const kind =
-    step === 0 ? 'lang' : step === 1 ? 'players' : step <= n + 1 ? 'name' : step === n + 2 ? 'packs' : step === n + 3 ? 'mode' : 'imposters';
-  const nameIdx = step - 2;
+    step === 0 ? 'lang' : step === 1 ? 'where' : step === 2 ? 'players' : step <= n + 2 ? 'name' : step === n + 3 ? 'packs' : step === n + 4 ? 'mode' : 'imposters';
+  const nameIdx = step - 3;
   const canRoles = n >= ROLE_MIN_PLAYERS.jester;
   const last = step === total - 1;
   const canNext = kind !== 'packs' || packIds.length >= MIN_PACKS;
 
   const next = () => {
     play('tap');
-    if (last) {
+    if (kind === 'where' && where !== 'phone') onOnline(where);
+    else if (last) {
       setImposters(imp);
       onStart();
     } else setStep(step + 1);
@@ -172,6 +198,25 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
             {LANG_OPTIONS.map((l) => (
               <button key={l.id} className={'mode' + (lang === l.id ? ' on' : '')} onClick={() => { play('tap'); setLang(l.id); }}>
                 <b>{l.label}</b>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {kind === 'where' && (
+        <>
+          <Avatar seed={4} kind="innocent" size={110} />
+          <h1>{t.o.howPlay}</h1>
+          <div className="modes">
+            {([
+              ['phone', t.o.onePhone, t.o.onePhoneDesc],
+              ['host', t.o.createRoom, t.o.createRoomDesc],
+              ['join', t.o.joinRoom, t.o.joinRoomDesc],
+            ] as const).map(([id, title, desc]) => (
+              <button key={id} className={'mode' + (where === id ? ' on' : '')} onClick={() => { play('tap'); setWhere(id); }}>
+                <b>{title}</b>
+                <span>{desc}</span>
               </button>
             ))}
           </div>
@@ -270,24 +315,6 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
         </button>
       </div>
     </main>
-  );
-}
-
-function SoundToggle() {
-  const { t } = useLang();
-  const [on, setOn] = useState(isSoundOn());
-  return (
-    <button
-      className="icon sound"
-      aria-label={t.soundAria}
-      onClick={() => {
-        setSoundOn(!on);
-        setOn(!on);
-        if (!on) play('tap');
-      }}
-    >
-      {on ? '🔊' : '🔇'}
-    </button>
   );
 }
 
@@ -481,24 +508,5 @@ function Result({
       <button className="primary" onClick={onAgain}>{t.playAgain}</button>
       <button className="ghost" onClick={onMenu}>{t.backToSetup}</button>
     </main>
-  );
-}
-
-function Confetti() {
-  const colors = ['#e5242b', '#2ecc71', '#f1c40f', '#3498db', '#9b59b6'];
-  return (
-    <div className="confetti" aria-hidden="true">
-      {Array.from({ length: 36 }, (_, i) => (
-        <i
-          key={i}
-          style={{
-            left: `${(i * 97) % 100}%`,
-            background: colors[i % colors.length],
-            animationDelay: `${(i % 9) * 0.12}s`,
-            animationDuration: `${2 + (i % 5) * 0.4}s`,
-          }}
-        />
-      ))}
-    </div>
   );
 }

@@ -164,3 +164,17 @@ button.icon { background: #1b1b20; }
 
 .langs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
 .langs .mode { align-items: center; text-align: center; padding-block: 18px; }
+
+/* ---- online rooms ---- */
+.field { display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: start; }
+.field span { color: var(--muted); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; }
+.field input { font-size: 1.2rem; padding: 14px; flex: none; }
+.codeinput { text-align: center; font-size: 2rem !important; letter-spacing: .4em; text-transform: uppercase; font-weight: 800; }
+.error { color: #ff6b73; margin: 0; }
+.codecard { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px; border-radius: 22px; background: linear-gradient(170deg, #26141a, #151012); border: 1px solid #e5242b55; box-shadow: 0 0 30px #e5242b26; }
+.codecard small { color: var(--muted); letter-spacing: .08em; }
+.codecard b { font-size: 3rem; letter-spacing: .3em; color: #fff; text-shadow: 0 0 22px #e5242b99; padding-inline-start: .3em; }
+.players li { align-items: center; }
+.players .who { flex: 1; font-weight: 700; text-align: start; }
+.players em { font-style: normal; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; }
+.quiz .stepper { justify-content: space-between; width: 100%; font-size: 1.2rem; }

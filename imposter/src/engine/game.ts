@@ -93,7 +93,9 @@ export function createRound(
 /** `votes[i]` is the player id that player i voted for. */
 export function tallyVotes(round: Round, votes: number[]): VoteResult {
   const counts = new Map<number, number>();
-  for (const v of votes) counts.set(v, (counts.get(v) ?? 0) + 1);
+  // Negative entries are players who never voted (they left the room).
+  for (const v of votes) if (v >= 0) counts.set(v, (counts.get(v) ?? 0) + 1);
+  if (counts.size === 0) return { top: [], caught: [], bountyHits: [], outcome: 'imposter' };
   const max = Math.max(...counts.values());
   const top = [...counts].filter(([, c]) => c === max).map(([id]) => id);
   const single = top.length === 1 ? round.players[top[0]] : undefined;
