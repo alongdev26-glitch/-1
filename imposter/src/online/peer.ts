@@ -2,6 +2,7 @@ import Peer from 'peerjs';
 import type { DataConnection, PeerOptions } from 'peerjs';
 import { joinError, newCode, newRoom, reduce, viewFor } from './room';
 import type { Action, Settings, View } from './room';
+import { openGuestViaRoom, openHostViaRoom, roomCapability } from './roomcap';
 
 /**
  * Phone-to-phone rooms over WebRTC (PeerJS). The player who creates the code is the host: their phone
@@ -80,7 +81,7 @@ function openPeer(id?: string): Promise<Peer> {
   });
 }
 
-export async function openHost(name: string, settings: Settings, cb: Callbacks): Promise<Session> {
+async function openHostPeer(name: string, settings: Settings, cb: Callbacks): Promise<Session> {
   const uid = myUid();
   let peer: Peer | null = null;
   let code = '';
@@ -156,7 +157,7 @@ export async function openHost(name: string, settings: Settings, cb: Callbacks):
   };
 }
 
-export async function openGuest(code: string, name: string, cb: Callbacks): Promise<Session> {
+async function openGuestPeer(code: string, name: string, cb: Callbacks): Promise<Session> {
   const uid = myUid();
   let peer: Peer;
   try {
@@ -207,4 +208,15 @@ export async function openGuest(code: string, name: string, cb: Callbacks): Prom
       if (joined) cb.onClosed();
     });
   });
+}
+
+/** Picks the transport: the Artifact `room` capability when this page runs inside claude.ai, otherwise PeerJS. */
+export async function openHost(name: string, settings: Settings, cb: Callbacks): Promise<Session> {
+  const ns = await roomCapability();
+  return ns ? openHostViaRoom(ns, name, settings, cb) : openHostPeer(name, settings, cb);
+}
+
+export async function openGuest(code: string, name: string, cb: Callbacks): Promise<Session> {
+  const ns = await roomCapability();
+  return ns ? openGuestViaRoom(ns, code, name, cb) : openGuestPeer(code, name, cb);
 }
