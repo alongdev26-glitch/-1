@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>קרב נארוטו נגד ססקה</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html{overflow-x:hidden}body{overflow-x:hidden;background:#111;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+#stage{position:relative;width:min(100vw,960px);aspect-ratio:16/9;overflow:hidden;margin-top:8px;border-radius:10px;
+ background:linear-gradient(#ff9a4d 0%,#ffd48a 45%,#6b5a3a 45%,#3d3223 100%)}
+.sun{position:absolute;left:50%;top:8%;width:18%;aspect-ratio:1;border-radius:50%;background:#fff4c2;transform:translateX(-50%);box-shadow:0 0 60px #fff4c2}
+.cliff{position:absolute;bottom:0;width:100%;height:55%;background:#3d3223;clip-path:polygon(0 30%,12% 20%,25% 32%,100% 28%,100% 100%,0 100%)}
+.fighter{position:absolute;bottom:22%;width:17%;aspect-ratio:1/2.2;transition:none;will-change:transform}
+#naruto{left:12%}#sasuke{right:12%}
+.fighter .head{position:absolute;left:12%;top:0;width:76%;aspect-ratio:1;border-radius:50%;background-size:cover;background-position:center;border:3px solid #222;z-index:3}
+#naruto .head{background-image:url(naruto_face.jpg)}
+#sasuke .head{background-image:url(sasuke_face.jpg);background-size:130%;background-position:50% 35%}
+.band{position:absolute;left:8%;top:-2%;width:84%;height:9%;background:#223a8a;border:2px solid #111;z-index:4;border-radius:4px;transform:rotate(-3deg)}
+.band::after{content:"";position:absolute;left:36%;top:15%;width:28%;height:70%;background:#c9ced6;border-radius:3px}
+.whisk{position:absolute;z-index:5;left:12%;top:19%;width:76%;height:9%;background:
+ repeating-linear-gradient(to bottom,#2a1a10 0 3px,transparent 3px 9px);-webkit-mask:linear-gradient(90deg,#000 0 22%,transparent 22% 78%,#000 78%);mask:linear-gradient(90deg,#000 0 22%,transparent 22% 78%,#000 78%);opacity:.8}
+.body{position:absolute;left:18%;top:32%;width:64%;height:36%;border-radius:18px 18px 8px 8px;z-index:1}
+#naruto .body{background:linear-gradient(#ff7a00,#e05a00);top:32%}
+#sasuke .body{background:linear-gradient(#2a3b75,#18224a);top:32%}
+.legs{position:absolute;left:24%;top:64%;width:52%;height:34%;z-index:0}
+#naruto .legs{background:#ff7a00}#sasuke .legs{background:#eee}
+.arm{position:absolute;top:34%;width:14%;height:28%;border-radius:10px;z-index:2;transform-origin:50% 8%}
+#naruto .arm{background:#ff8f1f}#sasuke .arm{background:#2a3b75}
+.arm.l{left:4%}.arm.r{right:4%}
+.fx{position:absolute;pointer-events:none;border-radius:50%;opacity:0}
+#rasengan{width:9%;aspect-ratio:1;background:radial-gradient(#fff,#7fd6ff 40%,#2a8fff 70%,transparent 72%);box-shadow:0 0 30px #5cf}
+#chidori{width:11%;aspect-ratio:1;background:radial-gradient(#fff,#b7a6ff 35%,#6a4dff 65%,transparent 70%);box-shadow:0 0 35px #96f}
+#boom{width:30%;aspect-ratio:1;background:radial-gradient(#fff,#ffe27a 30%,#ff7a1a 60%,transparent 70%)}
+#caption{position:absolute;top:3%;width:100%;text-align:center;font-size:clamp(14px,3vw,30px);font-weight:900;text-shadow:2px 2px 0 #000;z-index:20;color:#fff}
+.hp{position:absolute;top:12%;width:36%;height:2.2%;background:#400;border:2px solid #000;z-index:20}
+.hp i{display:block;height:100%;background:#4cd137;width:100%;transition:width .3s}
+#hp1{left:3%}#hp2{right:3%}
+.lbl{position:absolute;top:15%;font-weight:800;font-size:clamp(11px,1.8vw,18px);z-index:20;text-shadow:1px 1px #000}
+#l1{left:3%}#l2{right:3%}
+#shake{position:absolute;inset:0}
+button{margin:12px;padding:10px 24px;font-size:18px;border-radius:8px;border:0;background:#ff7a00;color:#fff;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="stage"><div id="shake">
+ <div class="sun"></div><div class="cliff"></div>
+ <div id="caption">מוכנים?</div>
+ <div class="hp"id="hp1"><i></i></div><div class="hp"id="hp2"><i></i></div>
+ <div class="lbl"id="l1">נארוטו</div><div class="lbl"id="l2">ססקה</div>
+ <div class="fighter" id="naruto"><div class="legs"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div><div class="head"></div><div class="band"></div><div class="whisk"></div></div>
+ <div class="fighter" id="sasuke"><div class="legs"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div><div class="head"></div><div class="band"></div></div>
+ <div class="fx" id="rasengan"></div><div class="fx" id="chidori"></div><div class="fx" id="boom"></div>
+</div></div>
+<button id="go">▶ הפעל קרב מחדש</button>
+<script>
+const $=s=>document.querySelector(s);
+const N=$('#naruto'),S=$('#sasuke'),R=$('#rasengan'),C=$('#chidori'),B=$('#boom'),cap=$('#caption'),sh=$('#shake');
+const W=()=>$('#stage').clientWidth;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let run=0;
+function tween(el,from,to,ms,fn){return new Promise(res=>{const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/ms);fn(el,from+(to-from)*k,k);k<1?requestAnimationFrame(f):res()})(t0)})}
+const mx=(el,x,y=0,r=0,s=1,flip=1)=>el.style.transform=`translate(${x}px,${y}px) rotate(${r}deg) scale(${flip*s},${s})`;
+const place=(fx,el,dx=0,dy=0)=>{const a=el.getBoundingClientRect(),p=$('#stage').getBoundingClientRect();fx.style.left=(a.left-p.left+a.width/2+dx)+'px';fx.style.top=(a.top-p.top+a.height*.55+dy)+'px';fx.style.marginLeft='-'+fx.offsetWidth/2+'px';fx.style.marginTop='-'+fx.offsetHeight/2+'px'};
+function hit(side,pct){const i=$(side).querySelector('i');i.style.width=pct+'%'}
+async function shake(ms=400){const t0=performance.now();while(performance.now()-t0<ms){sh.style.transform=`translate(${(Math.random()-.5)*14}px,${(Math.random()-.5)*14}px)`;await sleep(30)}sh.style.transform=''}
+async function dash(el,x0,x1,flip,ms){await tween(el,x0,x1,ms,(e,v,k)=>mx(e,v,-Math.sin(k*Math.PI)*30,flip*(k*8),1,flip))}
+async function battle(){
+ const id=++run;const ok=()=>id===run;
+ const w=W(),gap=w*.36;
+ hit('#hp1',100);hit('#hp2',100);R.style.opacity=C.style.opacity=B.style.opacity=0;
+ mx(N,0);mx(S,0);
+ cap.textContent='נארוטו נגד ססקה!';await sleep(1200);if(!ok())return;
+ // round 1: dash and punch exchange
+ cap.textContent='⚔️ מתחילים!';
+ await dash(N,0,gap*.8,1,350);if(!ok())return;
+ await dash(S,0,-gap*.8,-1,350);if(!ok())return;
+ await shake(300);hit('#hp1',80);hit('#hp2',85);
+ await tween(N,gap*.8,gap*.4,250,(e,v)=>mx(e,v,0,-8));
+ await tween(S,-gap*.8,-gap*.4,250,(e,v)=>mx(e,v,0,8,1,-1));
+ // jutsus
+ cap.textContent='🌀 ראסנגן!  vs  ⚡ צ׳ידורי!';
+ await Promise.all([
+  tween(N,gap*.4,gap*.4,600,(e,v,k)=>{mx(e,v,0,-6*k);place(R,e,e.offsetWidth*.7,0);R.style.opacity=k;R.style.transform=`scale(${.4+k*.8}) rotate(${k*720}deg)`}),
+  tween(S,-gap*.4,-gap*.4,600,(e,v,k)=>{mx(e,v,0,6*k,1,-1);place(C,e,-e.offsetWidth*.7,0);C.style.opacity=k;C.style.transform=`scale(${.4+k*.8}) rotate(${-k*720}deg)`})]);
+ if(!ok())return;
+ // charge
+ await Promise.all([
+  tween(N,gap*.4,gap*1.0,450,(e,v)=>{mx(e,v,-10,-12);place(R,e,e.offsetWidth*.7,0)}),
+  tween(S,-gap*.4,-gap*1.0,450,(e,v)=>{mx(e,v,-10,12,1,-1);place(C,e,-e.offsetWidth*.7,0)})]);
+ if(!ok())return;
+ // clash
+ cap.textContent='💥 התנגשות!!!';
+ B.style.left=(w/2)+'px';B.style.top=($('#stage').clientHeight*.62)+'px';B.style.marginLeft='-'+B.offsetWidth/2+'px';B.style.marginTop='-'+B.offsetHeight/2+'px';
+ R.style.opacity=C.style.opacity=0;
+ await Promise.all([tween(B,0,1,500,(e,v)=>{e.style.opacity=1-v*.8;e.style.transform=`scale(${.3+v*2})`}),shake(600)]);
+ hit('#hp1',45);hit('#hp2',50);
+ await tween(N,gap,-gap*.1,500,(e,v,k)=>mx(e,v,-k*40,-k*360));
+ await tween(S,-gap,gap*.1,500,(e,v,k)=>mx(e,v,-k*40,k*360,1,-1)); // knocked back
+ B.style.opacity=0;if(!ok())return;
+ cap.textContent='😤 עוד סיבוב!';await sleep(500);
+ await Promise.all([dash(N,-gap*.1,gap*.7,1,350),dash(S,gap*.1,-gap*.7,-1,350)]);
+ await shake(400);hit('#hp1',20);hit('#hp2',10);
+ await tween(S,-gap*.7,-gap*.2,400,(e,v,k)=>mx(e,v,0,k*-85,1,-1));
+ cap.textContent='🏆 נארוטו מנצח!';
+ for(let i=0;i<5;i++){await tween(N,gap*.7,gap*.7,200,(e,v,k)=>mx(e,v,-Math.sin(k*Math.PI)*40));if(!ok())return}
+}
+$('#go').onclick=battle;
+battle();
+</script>
+</body>
+</html>
