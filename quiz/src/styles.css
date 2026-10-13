@@ -1,0 +1,38 @@
+:root {
+  --bg: #f6f7fb; --card: #fff; --text: #1d2433; --muted: #66708a;
+  --accent: #3b5bdb; --ok: #2f9e44; --bad: #e03131; --line: #dde1ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #11141c; --card: #1b2030; --text: #eef0f6; --muted: #98a2bd; --line: #2d3550; --accent: #748ffc; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; }
+main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+h1 { font-size: 1.5rem; margin: 8px 0 12px; }
+h2 { font-size: 1.05rem; margin: 22px 0 8px; }
+.muted { color: var(--muted); margin: 4px 0; }
+.center { text-align: center; }
+button { font: inherit; cursor: pointer; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 10px 16px; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.primary, .secondary { display: block; width: 100%; padding: 14px; margin-top: 16px; font-weight: 600; }
+.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.link { background: none; border: 0; color: var(--muted); text-decoration: underline; margin-top: 8px; }
+.history, .mistakes { list-style: none; padding: 0; margin: 0; }
+.history li, .mistakes li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.mistakes li { flex-direction: column; gap: 4px; }
+.mistakes span { color: var(--muted); }
+.progress { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.progress div { height: 100%; background: var(--accent); transition: width .3s; }
+.options { display: grid; gap: 10px; margin-top: 16px; }
+.option { padding: 16px; text-align: start; font-size: 1.05rem; }
+.option.right { background: var(--ok); border-color: var(--ok); color: #fff; }
+.option.wrong { background: var(--bad); border-color: var(--bad); color: #fff; }
+.option:disabled { cursor: default; }
+.feedback { margin-top: 18px; padding: 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.feedback.ok { border-inline-start: 6px solid var(--ok); }
+.feedback.bad { border-inline-start: 6px solid var(--bad); }
+.feedback p { margin: 6px 0 0; }
+.score { font-size: 5rem; font-weight: 800; text-align: center; color: var(--accent); margin: 12px 0 0; }
+.score::after { content: '%'; font-size: 2rem; }
