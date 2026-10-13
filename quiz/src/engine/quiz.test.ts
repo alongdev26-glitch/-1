@@ -28,9 +28,9 @@ describe('engine', () => {
 
   it('pickQuestions respects count and topic', () => {
     expect(pickQuestions(5)).toHaveLength(5);
-    const qs = pickQuestions(50, 'מדע');
+    const qs = pickQuestions(50, 'מדעים');
     expect(qs.length).toBeGreaterThan(0);
-    expect(qs.every((q) => q.topic === 'מדע')).toBe(true);
+    expect(qs.every((q) => q.topic === 'מדעים')).toBe(true);
   });
 
   it('grades and collects wrong answers', () => {

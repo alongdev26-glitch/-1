@@ -39,7 +39,7 @@ export function App() {
   return (
     <Home
       history={history}
-      onStart={(count, topic) => start(pickQuestions(count, topic), topic === 'all' ? 'כללי' : topic)}
+      onStart={(count, topic) => start(pickQuestions(count, topic), topic === 'all' ? 'כל המקצועות' : topic)}
       onClear={() => {
         clearHistory();
         setHistory([]);
@@ -53,13 +53,13 @@ function Home(props: { history: HistoryEntry[]; onStart: (count: number, topic: 
   const [topic, setTopic] = useState<Topic | 'all'>('all');
   return (
     <main>
-      <h1>מבחן ידע כללי 📝</h1>
-      <p className="muted">שאלות אמריקאיות ושאלות נכון/לא נכון, עם הסבר לכל תשובה.</p>
+      <h1>מבחן סיכום לכיתה ח׳ 📝</h1>
+      <p className="muted">חומר מכל המקצועות: שאלות אמריקאיות ונכון/לא נכון, עם הסבר לכל תשובה.</p>
       <h2>נושא</h2>
       <div className="chips">
         {(['all', ...TOPICS] as const).map((t) => (
           <button key={t} className={'chip' + (topic === t ? ' on' : '')} onClick={() => setTopic(t)}>
-            {t === 'all' ? 'הכול' : t}
+            {t === 'all' ? 'כל המקצועות' : t}
           </button>
         ))}
       </div>
