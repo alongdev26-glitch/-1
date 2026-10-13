@@ -10,7 +10,7 @@ interface Session {
   retry: boolean;
 }
 
-const COUNTS = [5, 10, 15];
+const COUNTS = [10, 15, 20];
 
 export function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -49,12 +49,12 @@ export function App() {
 }
 
 function Home(props: { history: HistoryEntry[]; onStart: (count: number, topic: Topic | 'all') => void; onClear: () => void }) {
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(15);
   const [topic, setTopic] = useState<Topic | 'all'>('all');
   return (
     <main>
       <h1>מבחן סיכום לכיתה ח׳ 📝</h1>
-      <p className="muted">חומר מכל המקצועות: שאלות אמריקאיות ונכון/לא נכון, עם הסבר לכל תשובה.</p>
+      <p className="muted">חומר מכל המקצועות, ברמה מאתגרת: שאלות אמריקאיות ונכון/לא נכון, עם הסבר לכל תשובה.</p>
       <h2>נושא</h2>
       <div className="chips">
         {(['all', ...TOPICS] as const).map((t) => (
