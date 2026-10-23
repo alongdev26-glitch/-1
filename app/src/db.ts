@@ -33,7 +33,7 @@ export async function getMeta<T>(key: string, fallback: T): Promise<T> {
 
 export const setMeta = (key: string, value: unknown) => db.meta.put({ key, value });
 
-export const MEMBER_COLORS = ['#10b981', '#38bdf8', '#f59e0b', '#f472b6', '#a78bfa', '#fb7185', '#2dd4bf', '#facc15'];
+export const MEMBER_COLORS = ['#2fbf71', '#a9b5ae', '#1d8f55', '#7bd9a3', '#6f7d75', '#c9d3cd', '#47a273', '#8f9b95'];
 
 export async function createTrip(input: Omit<Trip, 'id'>, memberNames: string[]): Promise<string> {
   const id = uid();

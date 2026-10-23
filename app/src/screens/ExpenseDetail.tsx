@@ -3,6 +3,7 @@ import { useApp } from '../ctx';
 import { db } from '../db';
 import { formatShort } from '../logic/dates';
 import { amountIn, money } from '../ui/format';
+import { Icon } from '../ui/icons';
 import { Sheet } from '../ui/kit';
 
 export function ExpenseDetail({ id, onClose }: { id: string; onClose: () => void }) {
@@ -12,7 +13,7 @@ export function ExpenseDetail({ id, onClose }: { id: string; onClose: () => void
   const cat = categoryById(e.categoryId);
   const name = (mid: string) => members.find((m) => m.id === mid)?.name ?? '—';
   return (
-    <Sheet title={`${cat.icon} ${e.note || cat.name}`} onClose={onClose}>
+    <Sheet title={e.note || cat.name} onClose={onClose}>
       <div className="mb-4 space-y-1 text-sm">
         <div className="num text-3xl font-bold">{money(e.amountHome)}</div>
         {e.currency !== trip.homeCurrency && (
@@ -28,8 +29,8 @@ export function ExpenseDetail({ id, onClose }: { id: string; onClose: () => void
           </div>
         ))}
       </div>
-      <button className="btn-soft w-full text-rose" onClick={async () => { if (confirm('למחוק את ההוצאה?')) { await db.expenses.delete(id); onClose(); } }}>
-        מחק הוצאה
+      <button className="btn-soft flex w-full items-center justify-center gap-2 text-mute" onClick={async () => { if (confirm('למחוק את ההוצאה?')) { await db.expenses.delete(id); onClose(); } }}>
+        <Icon name="trash" size={16} />מחק הוצאה
       </button>
     </Sheet>
   );

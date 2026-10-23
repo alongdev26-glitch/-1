@@ -3,16 +3,16 @@ import { CURRENCIES } from '../data/currencies';
 import { createTrip, db } from '../db';
 import { addDays, today } from '../logic/dates';
 import type { Trip } from '../types';
+import { Icon } from '../ui/icons';
 import { Chip, Field } from '../ui/kit';
 
 interface Props {
   initial?: Trip;
-  first?: boolean;
   onDone: () => void;
   onCancel?: () => void;
 }
 
-export function TripForm({ initial, first, onDone, onCancel }: Props) {
+export function TripForm({ initial, onDone, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [start, setStart] = useState(initial?.startDate ?? today());
   const [end, setEnd] = useState(initial?.endDate ?? addDays(today(), 29));
@@ -39,13 +39,6 @@ export function TripForm({ initial, first, onDone, onCancel }: Props) {
 
   return (
     <div className="space-y-4">
-      {first && (
-        <div className="py-4 text-center">
-          <div className="text-5xl">🧭</div>
-          <h1 className="mt-2 text-2xl font-bold">קופת טיול</h1>
-          <p className="mt-1 text-sm text-mute">תקציב יומי, חלוקת הוצאות וימי ויזה. הכל עובד גם בלי אינטרנט.</p>
-        </div>
-      )}
       <Field label="שם הטיול">
         <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="תאילנד וויאטנם 2025" />
       </Field>
@@ -83,8 +76,8 @@ export function TripForm({ initial, first, onDone, onCancel }: Props) {
                 onChange={(e) => setNames((cur) => cur.map((x, j) => (j === i ? e.target.value : x)))}
               />
             ))}
-            <button className="btn-soft w-full text-sm text-sky" onClick={() => setNames((n) => [...n, ''])}>
-              + הוסף חבר
+            <button className="btn-soft flex w-full items-center justify-center gap-2 text-sm text-mint" onClick={() => setNames((n) => [...n, ''])}>
+              <Icon name="plus" size={16} />הוסף חבר
             </button>
           </div>
         </div>

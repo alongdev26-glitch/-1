@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { Icon, type IconName } from './icons';
 
 export function Sheet({ onClose, title, children }: { onClose: () => void; title?: string; children: ReactNode }) {
   useEffect(() => {
@@ -44,17 +45,17 @@ export function Chip({ active, onClick, children }: { active?: boolean; onClick?
   return (
     <button
       onClick={onClick}
-      className={`pill shrink-0 px-4 py-2 text-sm ${active ? 'border-sky! bg-sky/20! text-sky' : 'text-mute'}`}
+      className={`pill shrink-0 px-4 py-2 text-sm ${active ? 'border-mint/70! bg-mint/15! text-mint' : 'text-mute'}`}
     >
       {children}
     </button>
   );
 }
 
-export function Empty({ icon, text }: { icon: string; text: string }) {
+export function Empty({ icon, text }: { icon: IconName; text: string }) {
   return (
     <div className="glass p-8 text-center text-mute">
-      <div className="mb-2 text-4xl">{icon}</div>
+      <div className="mb-3 grid place-items-center text-mint"><Icon name={icon} size={40} /></div>
       {text}
     </div>
   );

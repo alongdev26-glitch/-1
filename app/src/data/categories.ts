@@ -1,12 +1,16 @@
 import type { Category } from '../types';
+import type { IconName } from '../ui/icons';
 
-export const CATEGORIES: Category[] = [
-  { id: 'food', name: 'אוכל', icon: '🍜', color: '#f59e0b' },
-  { id: 'transport', name: 'תחבורה', icon: '🚕', color: '#38bdf8' },
-  { id: 'lodging', name: 'לינה', icon: '🛏️', color: '#a78bfa' },
-  { id: 'activity', name: 'אטרקציות', icon: '🤿', color: '#34d399' },
-  { id: 'shopping', name: 'קניות', icon: '🛍️', color: '#f472b6' },
-  { id: 'other', name: 'אחר', icon: '⋯', color: '#94a3b8' },
+export type CategoryDef = Omit<Category, 'icon'> & { icon: IconName };
+
+/** Shades of green and grey, in the order the summary draws them. */
+export const CATEGORIES: CategoryDef[] = [
+  { id: 'food', name: 'אוכל', icon: 'food', color: '#2fbf71' },
+  { id: 'transport', name: 'תחבורה', icon: 'car', color: '#7bd9a3' },
+  { id: 'lodging', name: 'לינה', icon: 'bed', color: '#1d8f55' },
+  { id: 'activity', name: 'אטרקציות', icon: 'mountain', color: '#a9b5ae' },
+  { id: 'shopping', name: 'קניות', icon: 'bag', color: '#6f7d75' },
+  { id: 'other', name: 'אחר', icon: 'dots', color: '#47524c' },
 ];
 
-export const categoryById = (id: string): Category => CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
+export const categoryById = (id: string): CategoryDef => CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];

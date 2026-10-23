@@ -5,6 +5,7 @@ import { sumHome, tripStats } from '../logic/budget';
 import { formatDayTitle } from '../logic/dates';
 import { csvCell, downloadFile, money } from '../ui/format';
 import { Chip, Empty } from '../ui/kit';
+import { Icon } from '../ui/icons';
 import { ExpenseRow } from './Home';
 
 type Filter = 'all' | 'today' | string;
@@ -47,27 +48,27 @@ export function Expenses({ onOpenExpense }: { onOpenExpense: (id: string) => voi
           <div>
             <div className="text-xs text-mute">סה״כ הוצאות הטיול</div>
             <div className="num text-4xl font-bold">{money(s.total)}</div>
-            <div className="num mt-1 text-sm text-gold">ממוצע ליום: {money(s.avgPerDay)}</div>
+            <div className="num mt-1 text-sm text-mint">ממוצע ליום: {money(s.avgPerDay)}</div>
           </div>
           <button className="btn-soft text-sm" onClick={() => exportCsv(app)} disabled={!expenses.length}>
-            ⬆ ייצוא לאקסל
+            <span className="flex items-center gap-2"><Icon name="upload" size={16} />ייצוא לאקסל</span>
           </button>
         </div>
       </section>
 
-      <input className="field" placeholder="🔍 חפש הוצאה, מקום, חבר קבוצה..." value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="relative"><Icon name="search" size={18} className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-mute" /><input className="field ps-11" placeholder="חפש הוצאה, מקום, חבר קבוצה..." value={q} onChange={(e) => setQ(e.target.value)} /></div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
         <Chip active={filter === 'all'} onClick={() => setFilter('all')}>הכל {expenses.length}</Chip>
         <Chip active={filter === 'today'} onClick={() => setFilter('today')}>היום</Chip>
         {CATEGORIES.map((c) => (
           <Chip key={c.id} active={filter === c.id} onClick={() => setFilter(c.id)}>
-            {c.icon} {c.name}
+            <span className="flex items-center gap-1.5"><Icon name={c.icon} size={15} />{c.name}</span>
           </Chip>
         ))}
       </div>
 
-      {groups.length === 0 && <Empty icon="🧾" text={expenses.length ? 'לא נמצאו הוצאות' : 'עוד אין הוצאות בטיול'} />}
+      {groups.length === 0 && <Empty icon="receipt" text={expenses.length ? 'לא נמצאו הוצאות' : 'עוד אין הוצאות בטיול'} />}
       {groups.map(([date, list]) => (
         <section key={date} className="space-y-2">
           <div className="flex items-center justify-between text-sm">

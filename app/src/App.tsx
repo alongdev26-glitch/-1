@@ -10,8 +10,10 @@ import { Expenses } from './screens/Expenses';
 import { Group } from './screens/Group';
 import { Home } from './screens/Home';
 import { Summary } from './screens/Summary';
+import { Onboarding } from './screens/Onboarding';
 import { TripForm } from './screens/TripForm';
 import { checkVisaNotifications, Visa } from './screens/Visa';
+import { Icon } from './ui/icons';
 import { BottomNav, type Tab } from './ui/Nav';
 import { Sheet } from './ui/kit';
 
@@ -77,9 +79,7 @@ export function App() {
   if (trips === undefined || activeId === undefined) return <div className="grid min-h-dvh place-items-center text-mute">טוען…</div>;
   if (trips.length === 0) {
     return (
-      <div className="mx-auto max-w-md px-4 py-6">
-        <TripForm first onDone={() => {}} />
-      </div>
+      <Onboarding />
     );
   }
   if (!state) return <div className="grid min-h-dvh place-items-center text-mute">טוען…</div>;
@@ -106,9 +106,9 @@ function Shell() {
             <div className="text-[10px] text-mute">טיול פעיל</div>
             <div className="truncate text-sm font-bold">{trip.name}</div>
           </div>
-          <span className="text-mute">⌄</span>
+          <Icon name="down" size={18} className="text-mute" />
         </button>
-        <span className={`pill flex items-center gap-1.5 px-3 py-1.5 text-xs ${online ? 'text-mint' : 'text-gold'}`}>
+        <span className={`pill flex items-center gap-1.5 px-3 py-1.5 text-xs ${online ? 'text-mint' : 'text-warn'}`}>
           <span className="h-2 w-2 rounded-full bg-current" />
           {online ? 'מחובר' : 'עובד אופליין'}
         </span>
@@ -136,7 +136,7 @@ function Shell() {
                 onClick={async () => { await setMeta('activeTripId', t.id); setOverlay(null); }}
               >
                 <span className="font-semibold">{t.name}</span>
-                {t.id === trip.id && <span className="text-mint">✓</span>}
+                {t.id === trip.id && <Icon name="check" size={18} className="text-mint" />}
               </button>
             ))}
           </div>
@@ -145,7 +145,7 @@ function Shell() {
             <button className="btn-soft shrink-0" onClick={() => setOverlay('editTrip')}>ערוך</button>
           </div>
           <button
-            className="mt-3 w-full text-sm text-rose"
+            className="mt-3 w-full text-sm text-mute"
             onClick={async () => { if (confirm(`למחוק את "${trip.name}" וכל הנתונים שלו?`)) { await deleteTrip(trip.id); setOverlay(null); } }}
           >
             מחק את הטיול הנוכחי

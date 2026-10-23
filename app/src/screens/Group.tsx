@@ -5,6 +5,7 @@ import { computeBalances, memberTotals, suggestTransfers } from '../logic/balanc
 import { today } from '../logic/dates';
 import type { Transfer } from '../types';
 import { money } from '../ui/format';
+import { Icon } from '../ui/icons';
 import { Avatar, Bar, Sheet } from '../ui/kit';
 
 export function Group() {
@@ -36,7 +37,7 @@ export function Group() {
   }
 
   const remind = (t: Transfer) => {
-    const text = `היי ${nameOf(t.fromId)}, מסכמים את החשבון בטיול: ${money(t.amount)} ל${nameOf(t.toId)} 🙏`;
+    const text = `היי ${nameOf(t.fromId)}, מסכמים את החשבון בטיול: ${money(t.amount)} ל${nameOf(t.toId)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -44,7 +45,7 @@ export function Group() {
     <div className="space-y-4">
       <section className="glass p-5">
         <div className="text-sm text-mute">{myBal >= 0 ? 'מאזן נוכחי בטיול (מגיע לך)' : 'מאזן נוכחי בטיול (אתה חייב)'}</div>
-        <div className={`num text-5xl font-bold ${myBal >= 0 ? 'text-mint' : 'text-rose'}`}>{money(myBal, '₪', true)}</div>
+        <div className={`num text-5xl font-bold ${myBal >= 0 ? 'text-mint' : 'text-warn'}`}>{money(myBal, '₪', true)}</div>
         <p className="mt-2 text-sm text-mute">
           {Math.abs(myBal) < 0.5 ? 'אתה מאוזן, אין חובות פתוחים.' : myBal > 0 ? 'אתה ביתרת זכות: הקבוצה חייבת לך.' : 'אתה ביתרת חובה: כדאי להשלים העברה.'}
         </p>
@@ -53,23 +54,23 @@ export function Group() {
       <section className="glass p-5">
         <div className="mb-3 flex items-center gap-2">
           <h2 className="font-semibold">איזון מהיר וחכם</h2>
-          <span className="pill px-2 py-0.5 text-xs text-sky">{transfers.length} העברות בלבד</span>
+          <span className="pill px-2 py-0.5 text-xs text-mint">{transfers.length} העברות בלבד</span>
         </div>
         <p className="mb-3 text-xs text-mute">החישוב מצמצם את מספר ההעברות כך שכל אחד יעביר כסף הכי מעט פעמים.</p>
-        {transfers.length === 0 && <p className="py-3 text-center text-mint">הכל מסודר ✓</p>}
+        {transfers.length === 0 && <p className="py-3 text-center text-mint">הכל מסודר</p>}
         <div className="space-y-3">
           {transfers.map((t, i) => (
             <div key={i} className="rounded-2xl bg-white/5 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Avatar name={nameOf(t.fromId)} color={memberOf(t.fromId)?.color ?? '#888'} size={32} />
-                  <span>{nameOf(t.fromId)} ← {nameOf(t.toId)}</span>
+                  <span className="flex items-center gap-1.5">{nameOf(t.fromId)} <Icon name="back" size={16} className="text-mute" /> {nameOf(t.toId)}</span>
                 </div>
                 <span className="num text-xl font-bold text-mint">{money(t.amount)}</span>
               </div>
               <div className="mt-3 flex gap-2">
-                <button className="btn-soft flex-1 text-sm" onClick={() => remind(t)}>תזכורת בוואטסאפ</button>
-                <button className="btn-soft flex-1 text-sm text-mint" onClick={() => settle(t)}>✓ סומן כשולם</button>
+                <button className="btn-soft flex-1 text-sm" onClick={() => remind(t)}><span className="flex items-center justify-center gap-2"><Icon name="message" size={16} />תזכורת בוואטסאפ</span></button>
+                <button className="btn-soft flex-1 text-sm text-mint" onClick={() => settle(t)}><span className="flex items-center justify-center gap-2"><Icon name="check" size={16} />סומן כשולם</span></button>
               </div>
             </div>
           ))}
@@ -90,10 +91,10 @@ export function Group() {
                   {i === 0 && <span className="pill px-2 text-[10px] text-mute">אתה</span>}
                 </div>
                 <div className="num text-xs text-mute">שילם: {money(t.paid)} · חלקו: {money(t.share)}</div>
-                <Bar className="mt-1 h-1.5!" value={t.share ? (t.paid / t.share) * 100 : 0} color={b >= 0 ? 'var(--color-mint)' : 'var(--color-rose)'} />
+                <Bar className="mt-1 h-1.5!" value={t.share ? (t.paid / t.share) * 100 : 0} color={b >= 0 ? 'var(--color-mint)' : '#6f7d75'} />
               </div>
               <div className="text-end">
-                <div className={`num text-lg font-bold ${b >= 0 ? 'text-mint' : 'text-rose'}`}>{money(b, '₪', true)}</div>
+                <div className={`num text-lg font-bold ${b >= 0 ? 'text-mint' : 'text-warn'}`}>{money(b, '₪', true)}</div>
                 <div className="text-[11px] text-mute">{b >= 0 ? 'יתרת זכות' : 'יתרת חובה'}</div>
               </div>
             </div>
@@ -102,7 +103,7 @@ export function Group() {
       </section>
 
       <button className="btn-primary" disabled={!transfers.length} onClick={() => setConfirmAll(true)}>סגירת חוב / רישום פירעון</button>
-      <button className="btn-soft w-full" onClick={() => setAdding(true)}>+ הוסף חבר לקבוצה</button>
+      <button className="btn-soft w-full" onClick={() => setAdding(true)}><span className="flex items-center justify-center gap-2"><Icon name="plus" size={16} />הוסף חבר לקבוצה</span></button>
 
       {adding && (
         <Sheet title="חבר חדש" onClose={() => setAdding(false)}>

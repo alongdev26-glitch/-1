@@ -5,9 +5,10 @@ import { db, getMeta, setMeta, uid } from '../db';
 import { formatShort, today } from '../logic/dates';
 import { ALERT_DAYS, dueAlert, visaStatus } from '../logic/visa';
 import type { VisaStay } from '../types';
+import { Icon } from '../ui/icons';
 import { Bar, Field, Sheet } from '../ui/kit';
 
-const LEVEL_COLOR = { ok: 'var(--color-mint)', warn: 'var(--color-gold)', danger: 'var(--color-rose)', over: 'var(--color-rose)' } as const;
+const LEVEL_COLOR = { ok: 'var(--color-mint)', warn: '#b9c4be', danger: 'var(--color-warn)', over: 'var(--color-warn)' } as const;
 const LEVEL_TEXT = { ok: 'בטוח', warn: 'מתקרב לסוף', danger: 'דחוף!', over: 'חריגה מהימים המותרים' } as const;
 
 /** Fires at most one notification per stay, per threshold. */
@@ -50,21 +51,21 @@ export function Visa() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold">🛂 מעקב ימי שהייה וויזה</h1>
+        <h1 className="flex items-center gap-2 text-xl font-bold"><Icon name="passport" size={24} className="text-mint" />מעקב ימי שהייה וויזה</h1>
         <p className="mt-1 text-sm text-mute">ניהול ימי ויזה והגבלות שהייה, כדי להימנע משהייה יתר (Overstay) וקנסות מיותרים.</p>
       </div>
 
-      {visaStays.length === 0 && <div className="glass p-8 text-center text-mute"><div className="mb-2 text-4xl">🛂</div>עוד לא הוספת מדינה למסלול</div>}
+      {visaStays.length === 0 && <div className="glass p-8 text-center text-mute"><div className="mb-3 grid place-items-center text-mint"><Icon name="passport" size={40} /></div>עוד לא הוספת מדינה למסלול</div>}
 
       {[...visaStays].sort((a, b) => b.entryDate.localeCompare(a.entryDate)).map((stay) => {
         const st = visaStatus(stay, now);
-        const flag = defaults.countries.find((c) => c.country === stay.country)?.flag ?? '🌍';
+        const code = defaults.countries.find((c) => c.country === stay.country)?.code ?? '';
         const color = LEVEL_COLOR[st.level];
         return (
           <section key={stay.id} className="glass space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-white/10 text-3xl">{flag}</div>
+                <div className="grid h-14 w-14 place-items-center rounded-full border border-line bg-white/5 text-sm font-semibold tracking-widest text-mint">{code || <Icon name="globe" size={24} />}</div>
                 <div>
                   <div className="text-xl font-bold">{stay.country}</div>
                   <div className="text-xs text-mute">{stay.visaType}</div>
@@ -89,36 +90,36 @@ export function Visa() {
                 <span>יום אחרון: {formatShort(st.lastDay)}</span>
               </div>
             </div>
-            <div className="rounded-2xl p-3 text-sm" style={{ background: color + '1f', color }}>
+            <div className="rounded-2xl p-3 text-sm" style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}>
               סטטוס: {LEVEL_TEXT[st.level]}
               {st.level === 'ok' && ' · הכל לפי התוכנית'}
             </div>
             <div className="flex gap-2">
               {st.active && <button className="btn-soft flex-1 text-sm" onClick={() => db.visaStays.update(stay.id, { exitDate: today() })}>יצאתי מהמדינה</button>}
-              <button className="btn-soft text-sm text-rose" onClick={() => confirm(`למחוק את ${stay.country}?`) && db.visaStays.delete(stay.id)}>מחק</button>
+              <button className="btn-soft flex items-center gap-1.5 text-sm text-mute" onClick={() => confirm(`למחוק את ${stay.country}?`) && db.visaStays.delete(stay.id)}><Icon name="trash" size={15} />מחק</button>
             </div>
           </section>
         );
       })}
 
       <section className="glass p-5">
-        <h2 className="mb-1 font-semibold">🔔 תזכורות תפוגת ויזה</h2>
+        <h2 className="mb-1 flex items-center gap-2 font-semibold"><Icon name="bell" size={18} className="text-mint" />תזכורות תפוגת ויזה</h2>
         <p className="mb-3 text-xs text-mute">
           {perm === 'granted' ? 'ההתראות פעילות במכשיר הזה.' : perm === 'denied' ? 'ההתראות חסומות בדפדפן. אפשר להפעיל אותן בהגדרות האתר.' : perm === 'unsupported' ? 'הדפדפן לא תומך בהתראות.' : 'בחירת תזכורת תבקש אישור להתראות.'}
         </p>
         <div className="grid grid-cols-3 gap-2">
           {ALERT_DAYS.map((d) => (
-            <button key={d} onClick={() => toggleAlert(d)} className={`rounded-2xl border py-3 text-sm ${alerts.includes(d) ? 'border-sky bg-sky/20 text-sky' : 'border-line bg-white/5 text-mute'}`}>
-              🔔<br />{d === 1 ? 'יום לפני' : `${d} ימים לפני`}
+            <button key={d} onClick={() => toggleAlert(d)} className={`rounded-2xl border py-3 text-sm ${alerts.includes(d) ? 'border-mint/70 bg-mint/15 text-mint' : 'border-line bg-white/5 text-mute'}`}>
+              <Icon name="bell" size={18} className="mx-auto mb-1" />{d === 1 ? 'יום לפני' : `${d} ימים לפני`}
             </button>
           ))}
         </div>
       </section>
 
-      <button className="btn-soft w-full" onClick={() => setAdding(true)}>⊕ הוסף מדינה / כניסה חדשה למסלול</button>
+      <button className="btn-soft w-full" onClick={() => setAdding(true)}><span className="flex items-center justify-center gap-2"><Icon name="plus" size={16} />הוסף מדינה / כניסה חדשה למסלול</span></button>
 
-      <div className="glass border-gold/30! p-4 text-sm">
-        <div className="mb-1 font-bold text-gold">הבהרה משפטית חשובה למטייל</div>
+      <div className="glass border-dashed! p-4 text-sm">
+        <div className="mb-1 flex items-center gap-2 font-bold text-warn"><Icon name="alert" size={18} />הבהרה משפטית חשובה למטייל</div>
         <p className="text-mute">חוקי ויזה והגבלות משתנים מעת לעת. יש לוודא תמיד את התנאים העדכניים באתר השגרירות הרשמי של המדינה ובחומת הדרכון בפועל. האפליקציה אינה מהווה תחליף לבדיקה רשמית מול פקיד ביקורת הגבולות.</p>
       </div>
 
@@ -148,7 +149,7 @@ function AddStay({ tripId, onClose }: { tripId: string; onClose: () => void }) {
       <div className="space-y-3">
         <Field label="מדינה">
           <select className="field" value={country} onChange={(e) => pick(e.target.value)}>
-            {defaults.countries.map((c) => <option key={c.country} value={c.country} className="text-black">{c.flag} {c.country}</option>)}
+            {defaults.countries.map((c) => <option key={c.country} value={c.country} className="text-black">{c.country}</option>)}
             <option value="__custom" className="text-black">אחר...</option>
           </select>
         </Field>

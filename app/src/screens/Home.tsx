@@ -5,6 +5,7 @@ import { lastDays, remainingToday, spentOn, tripStats } from '../logic/budget';
 import { weekdayShort } from '../logic/dates';
 import { amountIn, money } from '../ui/format';
 import { Bar } from '../ui/kit';
+import { IconBadge, Icon } from '../ui/icons';
 
 export function ExpenseRow({ id, onOpen }: { id: string; onOpen?: (id: string) => void }) {
   const { expenses, members, trip } = useApp();
@@ -14,9 +15,7 @@ export function ExpenseRow({ id, onOpen }: { id: string; onOpen?: (id: string) =
   const payer = members.find((m) => m.id === e.paidById);
   return (
     <button className="glass flex w-full items-center gap-3 p-3 text-start" onClick={() => onOpen?.(id)}>
-      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-xl" style={{ background: cat.color + '26' }}>
-        {cat.icon}
-      </div>
+      <IconBadge name={cat.icon} size={48} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{e.note || cat.name}</div>
         <div className="text-xs text-mute">
@@ -45,11 +44,11 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
     <div className="space-y-4">
       <section className="glass p-6 text-center">
         <div className="text-sm text-mute">נשאר להיום</div>
-        <div className={`num my-1 text-6xl font-bold ${over ? 'text-rose' : 'text-white'}`}>{money(left)}</div>
+        <div className={`num my-1 text-6xl font-bold ${over ? 'text-warn' : 'text-white'}`}>{money(left)}</div>
         <div className="text-xs text-mute">
           {over ? 'חרגת מהתקציב היומי' : `מתוך ${money(trip.dailyBudget)} · הוצאת היום ${money(spent)}`}
         </div>
-        <Bar className="mt-4" value={(spent / trip.dailyBudget) * 100} color={over ? 'var(--color-rose)' : 'var(--color-mint)'} />
+        <Bar className="mt-4" value={(spent / trip.dailyBudget) * 100} color={over ? 'var(--color-warn)' : 'var(--color-mint)'} />
       </section>
 
       <section className="glass p-5">
@@ -60,9 +59,9 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
         <div className="num text-3xl font-bold">
           {money(s.total)} <span className="text-base font-normal text-mute">/ {money(s.budget)}</span>
         </div>
-        <Bar className="mt-3" value={s.usedPercent} color="linear-gradient(90deg,var(--color-mint),var(--color-sky))" />
+        <Bar className="mt-3" value={s.usedPercent} color="linear-gradient(90deg,#1d8f55,var(--color-mint))" />
         <div className="mt-2 flex justify-between text-xs">
-          <span className={s.rolling >= 0 ? 'text-mint' : 'text-rose'}>
+          <span className={s.rolling >= 0 ? 'text-mint' : 'text-warn'}>
             {s.rolling >= 0 ? `חסכון מצטבר ${money(s.rolling)}` : `חריגה מצטברת ${money(-s.rolling)}`}
           </span>
           <span className="text-mute">נוצל {s.usedPercent.toFixed(1)}%</span>
@@ -73,11 +72,11 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
         <div className="glass p-4">
           <div className="text-xs text-mute">ממוצע יומי</div>
           <div className="num text-2xl font-bold">{money(s.avgPerDay)}</div>
-          <div className={`text-xs ${s.avgPerDay <= trip.dailyBudget ? 'text-mint' : 'text-rose'}`}>יעד: {money(trip.dailyBudget)}</div>
+          <div className={`text-xs ${s.avgPerDay <= trip.dailyBudget ? 'text-mint' : 'text-warn'}`}>יעד: {money(trip.dailyBudget)}</div>
         </div>
         <div className="glass p-4">
           <div className="text-xs text-mute">היום הכי יקר</div>
-          <div className="num text-2xl font-bold text-gold">{s.priciest ? money(s.priciest.total) : '—'}</div>
+          <div className="num text-2xl font-bold text-warn">{s.priciest ? money(s.priciest.total) : '—'}</div>
           <div className="text-xs text-mute">{s.priciest ? s.priciest.date.split('-').reverse().slice(0, 2).join('/') : 'אין עדיין'}</div>
         </div>
       </div>
@@ -92,7 +91,7 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
                 className="w-full max-w-7 rounded-t-lg"
                 style={{
                   height: `${Math.max(2, (d.total / max) * 100)}%`,
-                  background: d.total > trip.dailyBudget ? 'var(--color-gold)' : i === 0 ? 'var(--color-mint)' : 'var(--color-sky)',
+                  background: d.total > trip.dailyBudget ? 'var(--color-warn)' : i === 0 ? 'var(--color-mint)' : '#4a5750',
                   opacity: d.total ? 1 : 0.25,
                 }}
                 title={money(d.total)}
@@ -107,8 +106,8 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">הוצאות אחרונות</h2>
-          <button className="text-sm text-sky" onClick={onSummary}>
-            סיכום מלא ›
+          <button className="flex items-center gap-1 text-sm text-mint" onClick={onSummary}>
+            סיכום מלא <Icon name="back" size={16} />
           </button>
         </div>
         {recent.length ? recent.map((e) => <ExpenseRow key={e.id} id={e.id} onOpen={onOpenExpense} />) : <div className="glass p-6 text-center text-mute">עוד אין הוצאות. לחץ על + כדי להוסיף הוצאה ראשונה.</div>}

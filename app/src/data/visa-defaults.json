@@ -1,17 +1,77 @@
 {
   "_note": "ברירות מחדל בלבד. חוקי ויזה משתנים, יש לאמת באתר הרשמי של המדינה לפני כל החלטה.",
   "countries": [
-    { "country": "תאילנד", "flag": "🇹🇭", "visaType": "פטור מוויזה לתיירים", "allowedDays": 30 },
-    { "country": "וייטנאם", "flag": "🇻🇳", "visaType": "E-Visa", "allowedDays": 30 },
-    { "country": "נפאל", "flag": "🇳🇵", "visaType": "ויזה בהגעה", "allowedDays": 30 },
-    { "country": "יפן", "flag": "🇯🇵", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 },
-    { "country": "טייוואן", "flag": "🇹🇼", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 },
-    { "country": "הודו", "flag": "🇮🇳", "visaType": "e-Tourist Visa", "allowedDays": 90 },
-    { "country": "קמבודיה", "flag": "🇰🇭", "visaType": "ויזה בהגעה", "allowedDays": 30 },
-    { "country": "לאוס", "flag": "🇱🇦", "visaType": "ויזה בהגעה", "allowedDays": 30 },
-    { "country": "פרו", "flag": "🇵🇪", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 },
-    { "country": "קולומביה", "flag": "🇨🇴", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 },
-    { "country": "ארגנטינה", "flag": "🇦🇷", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 },
-    { "country": "ברזיל", "flag": "🇧🇷", "visaType": "פטור מוויזה לתיירים", "allowedDays": 90 }
+    {
+      "country": "תאילנד",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 30,
+      "code": "TH"
+    },
+    {
+      "country": "וייטנאם",
+      "visaType": "E-Visa",
+      "allowedDays": 30,
+      "code": "VN"
+    },
+    {
+      "country": "נפאל",
+      "visaType": "ויזה בהגעה",
+      "allowedDays": 30,
+      "code": "NP"
+    },
+    {
+      "country": "יפן",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "JP"
+    },
+    {
+      "country": "טייוואן",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "TW"
+    },
+    {
+      "country": "הודו",
+      "visaType": "e-Tourist Visa",
+      "allowedDays": 90,
+      "code": "IN"
+    },
+    {
+      "country": "קמבודיה",
+      "visaType": "ויזה בהגעה",
+      "allowedDays": 30,
+      "code": "KH"
+    },
+    {
+      "country": "לאוס",
+      "visaType": "ויזה בהגעה",
+      "allowedDays": 30,
+      "code": "LA"
+    },
+    {
+      "country": "פרו",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "PE"
+    },
+    {
+      "country": "קולומביה",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "CO"
+    },
+    {
+      "country": "ארגנטינה",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "AR"
+    },
+    {
+      "country": "ברזיל",
+      "visaType": "פטור מוויזה לתיירים",
+      "allowedDays": 90,
+      "code": "BR"
+    }
   ]
 }

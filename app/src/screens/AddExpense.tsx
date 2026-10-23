@@ -7,6 +7,7 @@ import { computeSplits, exactRemainder } from '../logic/split';
 import { effectiveRate, toHome } from '../logic/rates';
 import type { SplitType } from '../types';
 import { fmt, fmt2 } from '../ui/format';
+import { Icon } from '../ui/icons';
 import { Chip, Sheet } from '../ui/kit';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
@@ -69,15 +70,15 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg px-4 pb-4 pt-3" style={{ background: 'var(--color-bg)' }}>
       <div className="mb-2 flex items-center justify-between">
-        <button className="pill px-4 py-2 text-sm" onClick={onClose}>
-          ✕ סגור
+        <button className="pill flex items-center gap-2 px-4 py-2 text-sm" onClick={onClose}>
+          <Icon name="close" size={16} />סגור
         </button>
         <span className="text-sm text-mute">הוצאה חדשה</span>
       </div>
 
       <div className="glass mb-3 p-5 text-center">
         <div className="num flex items-baseline justify-center gap-2" dir="ltr">
-          <span className="text-xl text-sky">{info.code}</span>
+          <span className="text-xl text-mint">{info.code}</span>
           <span className={`text-5xl font-bold ${raw ? '' : 'text-white/25'}`}>{raw || '0'}</span>
         </div>
         {currency !== home && (
@@ -92,7 +93,7 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
               1 {currency} = ₪{Number(rate.toPrecision(3))}
             </span>
             <span className="text-mint">₪{fmt2(amountHome)} ≈</span>
-            <span>✎</span>
+            <Icon name="pencil" size={14} />
           </button>
         )}
       </div>
@@ -110,9 +111,9 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
           <button
             key={c.id}
             onClick={() => setCategoryId(c.id)}
-            className={`flex flex-col items-center gap-1 rounded-2xl border py-2 text-[11px] ${categoryId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-line bg-white/5 text-mute'}`}
+            className={`flex flex-col items-center gap-1 rounded-2xl border px-0 py-2 text-[10.5px] ${categoryId === c.id ? 'border-mint/70 bg-mint/15 text-mint' : 'border-line bg-white/5 text-mute'}`}
           >
-            <span className="text-xl">{c.icon}</span>
+            <Icon name={c.icon} size={22} />
             {c.name}
           </button>
         ))}
@@ -125,13 +126,13 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
           <div className="text-sm font-semibold">שולם ע״י: {payer?.name}</div>
           <div className="text-xs text-mint">{splitLabel}</div>
         </div>
-        <span className="text-mute">‹</span>
+        <Icon name="back" size={18} className="text-mute" />
       </button>
 
       <div className="mb-3 grid grid-cols-3 gap-2" dir="ltr">
         {KEYS.map((k) => (
           <button key={k} onClick={() => press(k)} className="rounded-2xl border border-line bg-white/5 py-3.5 text-2xl font-semibold active:bg-white/15" aria-label={k === '⌫' ? 'מחק' : k}>
-            {k}
+            {k === '⌫' ? <Icon name="backspace" size={26} className="mx-auto" /> : k}
           </button>
         ))}
       </div>
@@ -208,8 +209,8 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
                   />
                 </div>
               ))}
-              <p className={`text-xs ${exactOk ? 'text-mint' : 'text-rose'}`}>
-                {exactOk ? 'הסכומים תואמים ✓' : `חסר ₪${fmt2(exactRemainder(amountHome, exact))} מתוך ₪${fmt2(amountHome)}`}
+              <p className={`text-xs ${exactOk ? 'text-mint' : 'text-warn'}`}>
+                {exactOk ? 'הסכומים תואמים' : `חסר ₪${fmt2(exactRemainder(amountHome, exact))} מתוך ₪${fmt2(amountHome)}`}
               </p>
             </div>
           )}
