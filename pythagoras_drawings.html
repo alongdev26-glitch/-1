@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>תרגול פיתגורס ויחס - איורים</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; background: #fff; color: #111; }
+  h1 { font-size: 22px; } h2 { font-size: 18px; margin-top: 28px; border-bottom: 1px solid #999; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { border: 1px solid #bbb; border-radius: 6px; padding: 6px; text-align: center; width: 190px; }
+  .card b { display: block; margin-bottom: 2px; }
+  svg { width: 100%; height: auto; }
+  .wide { width: 280px; }
+  @media print { .card { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<h1>תרגול פיתגורס ויחס - איורים</h1>
+
+<h2>1. חשבו את הצלע החסרה (א-ח)</h2>
+<div class="grid" id="q1"></div>
+
+<h2>3. האם המשולש ישר-זווית? (א-ג)</h2>
+<div class="grid" id="q3"></div>
+
+<h2>4-7, 12. איורים לשאלות</h2>
+<div class="grid" id="q4"></div>
+
+<h2>8-9, 13. משולשים עם יחס</h2>
+<div class="grid" id="q8"></div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function card(parent, title, w) {
+  const c = document.createElement('div');
+  c.className = 'card' + (w ? ' wide' : '');
+  c.innerHTML = '<b>' + title + '</b>';
+  const s = el('svg', { viewBox: '0 0 190 160' });
+  c.appendChild(s);
+  parent.appendChild(c);
+  return s;
+}
+const T = (s, x, y, t, anchor) => s.appendChild(el('text', { x, y, 'text-anchor': anchor || 'middle', 'font-size': 14, fill: '#111', direction: 'ltr' }, t));
+const L = (s, x1, y1, x2, y2, extra) => s.appendChild(el('line', Object.assign({ x1, y1, x2, y2, stroke: '#111', 'stroke-width': 2 }, extra || {})));
+
+// right triangle: right angle bottom-left; hLen = horizontal leg, vLen = vertical leg
+function rightTri(s, hLen, vLen, labH, labV, labHyp) {
+  const k = 110 / Math.max(hLen, vLen);
+  const w = Math.max(hLen * k, 40), h = Math.max(vLen * k, 40);
+  const x0 = (190 - w) / 2, y0 = 140;
+  s.appendChild(el('polygon', { points: `${x0},${y0} ${x0 + w},${y0} ${x0},${y0 - h}`, fill: '#eef3fb', stroke: '#111', 'stroke-width': 2 }));
+  s.appendChild(el('rect', { x: x0, y: y0 - 10, width: 10, height: 10, fill: 'none', stroke: '#111' }));
+  T(s, x0 + w / 2, y0 + 15, labH);
+  T(s, x0 - 6, y0 - h / 2 + 5, labV, 'end');
+  T(s, x0 + w / 2 + 14, y0 - h / 2 - 6, labHyp, 'start');
+}
+
+// Q1
+const q1 = document.getElementById('q1');
+[
+  ['א', 8, 6, '8', '6', '?'],
+  ['ב', 12, 5, '12', '5', '?'],
+  ['ג', 5, 2, '5', '2', '?'],
+  ['ד', 24, 7, '?', '7', '25'],
+  ['ה', 12, 9, '?', '9', '15'],
+  ['ו', 24, 10, '?', '10', '26'],
+  ['ז', 2, 1.5, '2', '1.5', '?'],
+  ['ח', 3, 1, '3a', 'a', '?'],
+].forEach(([n, h, v, a, b, c]) => rightTri(card(q1, n), h, v, a, b, c));
+
+// Q3: no right-angle mark, general triangle with three sides (sides drawn by law of cosines)
+function genTri(s, a, b, c, la, lb, lc) {
+  // base a at bottom, sides b (left) and c (right)
+  const k = 130 / Math.max(a, b, c);
+  const A = a * k, B = b * k, C = c * k;
+  const px = (B * B + A * A - C * C) / (2 * A);
+  const py = Math.sqrt(Math.max(B * B - px * px, 0));
+  const x0 = (190 - A) / 2, y0 = 135;
+  const P = [x0 + px, y0 - py];
+  s.appendChild(el('polygon', { points: `${x0},${y0} ${x0 + A},${y0} ${P[0]},${P[1]}`, fill: '#fdf3e6', stroke: '#111', 'stroke-width': 2 }));
+  T(s, x0 + A / 2, y0 + 16, la);
+  T(s, (x0 + P[0]) / 2 - 8, (y0 + P[1]) / 2, lb, 'end');
+  T(s, (x0 + A + P[0]) / 2 + 8, (y0 + P[1]) / 2, lc, 'start');
+}
+const q3 = document.getElementById('q3');
+[['א', 40, 9, 41], ['ב', 24, 10, 27], ['ג', 0.8, 0.6, 1]].forEach(([n, a, b, c]) =>
+  genTri(card(q3, n), a, b, c, String(a), String(b), String(c)));
+
+// Q4 rectangle with diagonal
+const q4 = document.getElementById('q4');
+(function () {
+  const s = card(q4, 'שאלה 4: מלבן', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  s.appendChild(el('rect', { x: 60, y: 30, width: 150, height: 80, fill: '#eef3fb', stroke: '#111', 'stroke-width': 2 }));
+  L(s, 60, 110, 210, 30, { 'stroke-dasharray': '5 4' });
+  T(s, 135, 130, '15');
+  T(s, 52, 75, '?', 'end');
+  T(s, 150, 62, '17', 'start');
+})();
+// Q5 ladder
+(function () {
+  const s = card(q4, 'שאלה 5: סולם', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  L(s, 70, 20, 70, 140); L(s, 70, 140, 230, 140);
+  s.appendChild(el('line', { x1: 70, y1: 20, x2: 230, y2: 140, stroke: '#8a5a1a', 'stroke-width': 4 }));
+  s.appendChild(el('rect', { x: 70, y: 130, width: 10, height: 10, fill: 'none', stroke: '#111' }));
+  T(s, 150, 156, '5 מ\'');
+  T(s, 62, 85, '?', 'end');
+  T(s, 160, 72, '13 מ\'', 'start');
+})();
+// Q6 isosceles right
+(function () {
+  const s = card(q4, 'שאלה 6: ישר-שוקיים', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  rightTri(s, 100, 100, '6', '6', '?');
+  s.lastChild; // keep
+  s.setAttribute('viewBox', '-45 0 280 160');
+})();
+// Q7 isosceles
+(function () {
+  const s = card(q4, 'שאלה 7: שווה-שוקיים', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  s.appendChild(el('polygon', { points: '60,135 220,135 140,20', fill: '#fdf3e6', stroke: '#111', 'stroke-width': 2 }));
+  L(s, 140, 20, 140, 135, { 'stroke-dasharray': '5 4' });
+  s.appendChild(el('rect', { x: 140, y: 125, width: 10, height: 10, fill: 'none', stroke: '#111' }));
+  T(s, 140, 152, '16');
+  T(s, 92, 72, '17', 'end');
+  T(s, 188, 72, '17', 'start');
+  T(s, 134, 85, 'h', 'end');
+})();
+// Q12 trapezoid
+(function () {
+  const s = card(q4, 'שאלה 12: טרפז ישר-זווית', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  s.appendChild(el('polygon', { points: '40,130 240,130 140,30 40,30', fill: '#eef3fb', stroke: '#111', 'stroke-width': 2 }));
+  s.appendChild(el('rect', { x: 40, y: 120, width: 10, height: 10, fill: 'none', stroke: '#111' }));
+  s.appendChild(el('rect', { x: 40, y: 30, width: 10, height: 10, fill: 'none', stroke: '#111' }));
+  T(s, 90, 22, '6');
+  T(s, 140, 148, '14');
+  T(s, 32, 85, 'h', 'end');
+  T(s, 205, 75, '10', 'start');
+})();
+
+// Q8-9, 13
+const q8 = document.getElementById('q8');
+rightTri(card(q8, 'שאלה 8: ניצבים 3:4, יתר 20'), 4, 3, '4x', '3x', '20');
+rightTri(card(q8, 'שאלה 9: ניצבים 5:12, היקף 60'), 12, 5, '12x', '5x', '13x');
+genTri(card(q8, 'שאלה 10: צלעות 8:15:17, היקף 120'), 15, 8, 17, '15x', '8x', '17x');
+(function () {
+  const s = card(q8, 'שאלה 13: מלבן קטן', true);
+  s.setAttribute('viewBox', '0 0 280 160');
+  s.appendChild(el('rect', { x: 60, y: 30, width: 150, height: 90, fill: '#eef3fb', stroke: '#111', 'stroke-width': 2 }));
+  L(s, 60, 120, 210, 30, { 'stroke-dasharray': '5 4' });
+  T(s, 135, 140, '?');
+  T(s, 52, 80, '6', 'end');
+  T(s, 150, 70, '10', 'start');
+})();
+</script>
+</body>
+</html>
