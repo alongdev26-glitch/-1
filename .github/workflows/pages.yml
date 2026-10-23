@@ -29,6 +29,14 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx vite build
+      - name: Build kupat-tayul (trip budget app)
+        working-directory: app
+        run: |
+          npm ci
+          npm test
+          npx vite build
+          mkdir -p ../dist/kupat-tayul
+          cp -r dist/. ../dist/kupat-tayul/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
