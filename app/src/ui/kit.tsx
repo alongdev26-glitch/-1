@@ -10,7 +10,7 @@ export function Sheet({ onClose, title, children }: { onClose: () => void; title
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div
-        className="rise safe-b max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-line bg-panel p-5"
+        className="rise safe-b max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[2rem] border border-line bg-panel p-6"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={title}

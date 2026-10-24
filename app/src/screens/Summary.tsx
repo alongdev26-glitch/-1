@@ -28,12 +28,12 @@ export function Summary({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 mx-auto max-w-md overflow-y-auto px-4 pb-10 pt-3" style={{ background: 'var(--color-bg)' }}>
+    <div className="fixed inset-0 z-50 mx-auto max-w-md overflow-y-auto px-5 pb-12 pt-4" style={{ background: 'var(--color-bg)' }}>
       <div className="mb-3 flex items-center justify-between">
         <button className="pill flex items-center gap-1 px-4 py-2 text-sm" onClick={onClose}><Icon name="forward" size={16} />חזרה</button>
         <h1 className="font-bold">סיכום הטיול</h1>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <section className="glass p-5">
           <div className="text-xs text-mute">סה״כ הוצאות</div>
           <div className="num text-4xl font-bold">{money(s.total)}</div>

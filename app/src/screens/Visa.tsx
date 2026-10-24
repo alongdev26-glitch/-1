@@ -49,7 +49,7 @@ export function Visa() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-xl font-bold"><Icon name="passport" size={24} className="text-mint" />מעקב ימי שהייה וויזה</h1>
         <p className="mt-1 text-sm text-mute">ניהול ימי ויזה והגבלות שהייה, כדי להימנע משהייה יתר (Overstay) וקנסות מיותרים.</p>
@@ -62,7 +62,7 @@ export function Visa() {
         const code = defaults.countries.find((c) => c.country === stay.country)?.code ?? '';
         const color = LEVEL_COLOR[st.level];
         return (
-          <section key={stay.id} className="glass space-y-4 p-5">
+          <section key={stay.id} className="glass space-y-5 p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="grid h-14 w-14 place-items-center rounded-full border border-line bg-white/5 text-sm font-semibold tracking-widest text-mint">{code || <Icon name="globe" size={24} />}</div>
