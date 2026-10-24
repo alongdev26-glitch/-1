@@ -42,8 +42,8 @@ export function Group() {
   };
 
   return (
-    <div className="space-y-4">
-      <section className="glass p-5">
+    <div className="space-y-6">
+      <section className="glass p-6">
         <div className="text-sm text-mute">{myBal >= 0 ? 'מאזן נוכחי בטיול (מגיע לך)' : 'מאזן נוכחי בטיול (אתה חייב)'}</div>
         <div className={`num text-5xl font-bold ${myBal >= 0 ? 'text-mint' : 'text-warn'}`}>{money(myBal, '₪', true)}</div>
         <p className="mt-2 text-sm text-mute">
@@ -51,7 +51,7 @@ export function Group() {
         </p>
       </section>
 
-      <section className="glass p-5">
+      <section className="glass p-6">
         <div className="mb-3 flex items-center gap-2">
           <h2 className="font-semibold">איזון מהיר וחכם</h2>
           <span className="pill px-2 py-0.5 text-xs text-mint">{transfers.length} העברות בלבד</span>
@@ -60,7 +60,7 @@ export function Group() {
         {transfers.length === 0 && <p className="py-3 text-center text-mint">הכל מסודר</p>}
         <div className="space-y-3">
           {transfers.map((t, i) => (
-            <div key={i} className="rounded-2xl bg-white/5 p-3">
+            <div key={i} className="rounded-3xl bg-white/5 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Avatar name={nameOf(t.fromId)} color={memberOf(t.fromId)?.color ?? '#888'} size={32} />
@@ -69,21 +69,21 @@ export function Group() {
                 <span className="num text-xl font-bold text-mint">{money(t.amount)}</span>
               </div>
               <div className="mt-3 flex gap-2">
-                <button className="btn-soft flex-1 text-sm" onClick={() => remind(t)}><span className="flex items-center justify-center gap-2"><Icon name="message" size={16} />תזכורת בוואטסאפ</span></button>
-                <button className="btn-soft flex-1 text-sm text-mint" onClick={() => settle(t)}><span className="flex items-center justify-center gap-2"><Icon name="check" size={16} />סומן כשולם</span></button>
+                <button className="btn-soft flex-1 text-sm" onClick={() => remind(t)}><span className="flex items-center justify-center gap-2"><Icon name="message" size={16} />תזכורת</span></button>
+                <button className="btn-soft flex-1 text-sm text-mint" onClick={() => settle(t)}><span className="flex items-center justify-center gap-2"><Icon name="check" size={16} />שולם</span></button>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-3">
         <h2 className="font-semibold">חברי הקבוצה ({members.length})</h2>
         {members.map((m, i) => {
           const b = balances[m.id] ?? 0;
           const t = totals[m.id];
           return (
-            <div key={m.id} className="glass flex items-center gap-3 p-3">
+            <div key={m.id} className="glass flex items-center gap-4 p-4">
               <Avatar name={m.name} color={m.color} />
               <div className="flex-1">
                 <div className="flex items-center gap-2 font-semibold">

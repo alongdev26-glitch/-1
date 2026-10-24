@@ -14,7 +14,7 @@ export function ExpenseRow({ id, onOpen }: { id: string; onOpen?: (id: string) =
   const cat = categoryById(e.categoryId);
   const payer = members.find((m) => m.id === e.paidById);
   return (
-    <button className="glass flex w-full items-center gap-3 p-3 text-start" onClick={() => onOpen?.(id)}>
+    <button className="glass flex w-full items-center gap-4 p-4 text-start" onClick={() => onOpen?.(id)}>
       <IconBadge name={cat.icon} size={48} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{e.note || cat.name}</div>
@@ -41,8 +41,8 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
   const over = left < 0;
 
   return (
-    <div className="space-y-4">
-      <section className="glass p-6 text-center">
+    <div className="space-y-6">
+      <section className="glass p-8 text-center">
         <div className="text-sm text-mute">נשאר להיום</div>
         <div className={`num my-1 text-6xl font-bold ${over ? 'text-warn' : 'text-white'}`}>{money(left)}</div>
         <div className="text-xs text-mute">
@@ -51,7 +51,7 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
         <Bar className="mt-4" value={(spent / trip.dailyBudget) * 100} color={over ? 'var(--color-warn)' : 'var(--color-mint)'} />
       </section>
 
-      <section className="glass p-5">
+      <section className="glass p-6">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-mute">סה״כ הוצאות עד כה</span>
           <span className="text-xs text-mute">נותרו {s.daysLeft} ימים</span>
@@ -68,27 +68,27 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="glass p-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="glass p-5">
           <div className="text-xs text-mute">ממוצע יומי</div>
           <div className="num text-2xl font-bold">{money(s.avgPerDay)}</div>
           <div className={`text-xs ${s.avgPerDay <= trip.dailyBudget ? 'text-mint' : 'text-warn'}`}>יעד: {money(trip.dailyBudget)}</div>
         </div>
-        <div className="glass p-4">
+        <div className="glass p-5">
           <div className="text-xs text-mute">היום הכי יקר</div>
           <div className="num text-2xl font-bold text-warn">{s.priciest ? money(s.priciest.total) : '—'}</div>
           <div className="text-xs text-mute">{s.priciest ? s.priciest.date.split('-').reverse().slice(0, 2).join('/') : 'אין עדיין'}</div>
         </div>
       </div>
 
-      <section className="glass p-5">
-        <div className="mb-3 text-sm font-semibold">7 ימים אחרונים</div>
-        <div className="relative flex h-36 items-end justify-between gap-2" dir="rtl">
+      <section className="glass p-6">
+        <div className="mb-4 text-sm font-semibold">7 ימים אחרונים</div>
+        <div className="relative flex h-40 items-end justify-between gap-3" dir="rtl">
           <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-mint/50" style={{ bottom: `${(trip.dailyBudget / max) * 100}%` }} />
           {[...week].reverse().map((d, i) => (
             <div key={d.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
               <div
-                className="w-full max-w-7 rounded-t-lg"
+                className="w-full max-w-6 rounded-t-xl"
                 style={{
                   height: `${Math.max(2, (d.total / max) * 100)}%`,
                   background: d.total > trip.dailyBudget ? 'var(--color-warn)' : i === 0 ? 'var(--color-mint)' : '#4a5750',
@@ -103,7 +103,7 @@ export function Home({ onSummary, onOpenExpense }: { onSummary: () => void; onOp
         <div className="mt-1 text-end text-[10px] text-mint">יעד {money(trip.dailyBudget)}</div>
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">הוצאות אחרונות</h2>
           <button className="flex items-center gap-1 text-sm text-mint" onClick={onSummary}>
