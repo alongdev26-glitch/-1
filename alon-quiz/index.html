@@ -1,0 +1,194 @@
+<title>שאלון הוגנות גברית</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Secular+One&display=swap">
+<style>
+/* Layout: one-column phone flow, a single card per step, yellow referee card as the only loud accent */
+:root {
+  --bg: #eef2ea;
+  --card: #ffffff;
+  --fg: #14231a;
+  --muted: #5b6b60;
+  --line: #d3ddd0;
+  --pitch: #1f6b3a;
+  --pitch-ink: #ffffff;
+  --yellow: #ffd400;
+  --yellow-ink: #1a1500;
+  --bar-bg: #dfe7dc;
+  --bar-other: #9fb3a5;
+  --font-display: "Secular One", "Heebo", system-ui, sans-serif;
+  --font-body: "Heebo", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1a12; --card: #16261b; --fg: #eaf3ec; --muted: #9db2a3; --line: #263a2c;
+    --pitch: #3fae67; --pitch-ink: #07140b; --bar-bg: #203126; --bar-other: #4d6655;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1a12; --card: #16261b; --fg: #eaf3ec; --muted: #9db2a3; --line: #263a2c;
+  --pitch: #3fae67; --pitch-ink: #07140b; --bar-bg: #203126; --bar-other: #4d6655;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.55; }
+.wrap {
+  max-width: 560px; margin: 0 auto; min-height: 100vh;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 18px;
+}
+.brand { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; letter-spacing: .02em; }
+.card-icon { width: 14px; height: 20px; background: var(--yellow); border-radius: 2px; transform: rotate(8deg); flex: none; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 38px; }
+h2 { font-size: 26px; }
+p { margin: 0; }
+.lead { color: var(--muted); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 10px;
+  padding: 14px 18px; background: var(--pitch); color: var(--pitch-ink); text-align: center; text-decoration: none; display: block;
+}
+.btn.alt { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.yellow { background: var(--yellow); color: var(--yellow-ink); }
+.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.progress { height: 6px; background: var(--bar-bg); border-radius: 3px; overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--pitch); transition: width .3s; }
+.meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 14px; }
+.opts { display: flex; flex-direction: column; gap: 10px; }
+.opt {
+  font: inherit; text-align: start; cursor: pointer; color: var(--fg); background: transparent;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 14px 16px;
+}
+.opt:hover { border-color: var(--pitch); }
+.who { color: var(--muted); font-size: 14px; }
+.big { font-family: var(--font-display); font-size: 46px; line-height: 1.1; }
+.pct { display: inline-block; background: var(--yellow); color: var(--yellow-ink); font-family: var(--font-display); font-size: 28px; padding: 2px 12px; border-radius: 6px; transform: rotate(-2deg); }
+.reasons { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.reasons li { display: flex; gap: 10px; }
+.reasons li::before { content: ""; flex: none; width: 10px; height: 14px; margin-top: 6px; background: var(--yellow); border-radius: 2px; }
+.bars { display: flex; flex-direction: column; gap: 12px; }
+.bar { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 15px; }
+.bar .track { grid-column: 1 / -1; height: 10px; border-radius: 5px; background: var(--bar-bg); overflow: hidden; }
+.bar .track i { display: block; height: 100%; background: var(--bar-other); border-radius: 5px; }
+.bar.win .track i { background: var(--pitch); }
+.bar.win { font-weight: 700; }
+.bar b { font-variant-numeric: tabular-nums; }
+.stamp { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 12px; }
+.row { display: flex; flex-direction: column; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .progress > i { transition: none; } }
+</style>
+
+<div class="wrap" dir="rtl" lang="he" id="app"></div>
+
+<script>
+var QUESTIONS = [
+  { q: "מישהו כותב \"אין לי כוח\" בפעם הרביעית החודש. מה עושים?", o: [
+    { t: "לוקחים לו את הזכות", r: "אלון לא מעניש. חוק ברור וידוע מראש, והוא חל על כולם באותה מידה." },
+    { t: "3 פעמים בחודש לכולם", r: "המספר 3 נשמע הוגן, אבל רק אלון יקבע אותו בשקיפות ולא ישנה אותו באמצע החודש." },
+    { t: "אפשר, אבל אם הוא לא בא הוא משלם על 3 על 3", r: "הוגנות גברית בקיצור: לא באת, משלמים. אלון הוא היחיד שאומר את זה בקול." }
+  ]},
+  { q: "מי משלם על 3 על 3?", o: [
+    { t: "המפסיד", r: "אלון: מי שגבר משלם, לפי הכללים, בלי תירוצים ובלי סיבובים." },
+    { t: "מי שהזמין", r: "אלון יסביר למה זה לא הוגן ויציע במקום זה מנגנון תורנות שכולם מבינים." },
+    { t: "מחלקים שווה בשווה", r: "חלוקה שווה היא בדיוק הוגנות גברית. אלון כבר חישב, זה יוצא בול." }
+  ]},
+  { q: "כמה אנשים צריכים להיות בקבוצה?", o: [
+    { t: "10, לא יותר", r: "10 זה מספר שאפשר לארגן. אלון לא מבטיח 12 בעוד חודש ואז מתנצל." },
+    { t: "11", r: "11 זה מספר מעניין. אלון יסביר אותו בנאום ואף אחד לא יצטרך להאריך." },
+    { t: "12 ומעלה", r: "אלון לא מפיל אף אחד מהקבוצה, וגם לא מבטיח מקומות שאין." }
+  ]},
+  { q: "מה עם חטיפים?", o: [
+    { t: "גרעינים כל שבוע", r: "אלון לא יבטיח מה שהוא לא יכול לספק. גרעינים כל שבוע זה מחויבות, ולכן הוא יתעקש על רוטציה הוגנת." },
+    { t: "ערב חטיפים פעם בחודש", r: "בערב חטיפים כל אחד מביא משהו, ואלון יוודא שלא יהיה מישהו שרק אוכל." },
+    { t: "כל אחד מביא לעצמו", r: "אלון מאמין באחריות אישית. מביאים לעצמכם, אף אחד לא נפגע." }
+  ]},
+  { q: "מלחמת סטיקרים נפתחה בקבוצה. תגובה?", o: [
+    { t: "מוחקים הכל", r: "אלון מכבד את חופש הסטיקרים, אבל יציב גבול ברור שכולם מכירים מראש." },
+    { t: "מתעלמים", r: "אלון לא נגרר. הוא יפעל אחרי שהכללים יהיו כתובים." },
+    { t: "מעיפים מי שמתחיל", r: "הרחקה רק אחרי אזהרה, הצבעה, וקול נוסף. תהליך הוגן הוא כל העניין." }
+  ]},
+  { q: "מישהו מאחר למשחק. כרטיס צהוב?", o: [
+    { t: "כן, ישר", r: "הכרטיס הצהוב כבר אצל אלון. הוא פשוט מחכה לשימוש הוגן." },
+    { t: "אזהרה ראשונה", r: "אזהרה לפני כרטיס, כמו בכל ליגה מסודרת. אלון מכיר את הספר." },
+    { t: "לא, זה הכל בצחוק", r: "אלון יכול לצחוק, אבל גם הוא יודע שחייבים מי ששומר על הסדר." }
+  ]},
+  { q: "איך עושים קמפיין?", o: [
+    { t: "פוסטרים וג'מיני", r: "פוסטר יפה זה נחמד, אבל אלון מעדיף תוכנית. ואם צריך פוסטר, הוא יהיה הוגן." },
+    { t: "חטיפים לתומכים", r: "אלון לא קונה קולות. הוא מרוויח אותם, וגם משלם על חצי מהגרעינים." },
+    { t: "סתם נדבר", r: "בדיוק כך. אלון מדבר בלי הבטחות מנופחות ובלי תמונה עם כלב." }
+  ]},
+  { q: "מרגע שהצבעת, מותר להחליף הצבעה?", o: [
+    { t: "אסור", r: "אסור להחליף, וגם זה אלון. עקביות היא הוגנות." },
+    { t: "מותר", r: "מותר, בשביל זה יש הצבעה חוזרת. אלון מוכן לקבל את זה, כי הוא בטוח בתוצאה." },
+    { t: "יש לי 2 קולות", r: "2 קולות לא עוברים. אלון מבקש רק קול אחד, אבל קול שמרגיש." }
+  ]}
+];
+var OTHERS = [
+  { n: "לביא מויאל · זריפה", base: 38 },
+  { n: "צורי ויסברג · נפגשים במגרש", base: 31 },
+  { n: "נבו · מפלגת הגרעינים", base: 26 }
+];
+var step = -1, answers = [];
+var app = document.getElementById("app");
+
+function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+function head() {
+  return '<div class="brand"><span class="card-icon"></span><span>זריפה 2026 · מצביעים נכון</span></div>';
+}
+
+function start() {
+  app.innerHTML = head() +
+    '<h1>שאלון ההתאמה לבחירות</h1>' +
+    '<p class="lead">8 שאלות שמחשבות בצורה מדעית ללא משוא פנים מי המועמד שהכי מתאים לך. התוצאה מחושבת על ידי מחשבון הוגנות גברית™.</p>' +
+    '<div class="panel"><p>הכלי עבר בדיקת הוגנות. התוצאה של כולם נקבעת לפי התשובות שלהם בלבד, ובמקרה היא יוצאת אותו דבר לכולם.</p>' +
+    '<button class="btn" id="go">מתחילים</button></div>';
+  document.getElementById("go").onclick = function () { step = 0; answers = []; question(); };
+}
+
+function question() {
+  var Q = QUESTIONS[step];
+  var html = head() +
+    '<div class="meta"><span>שאלה ' + (step + 1) + ' מתוך ' + QUESTIONS.length + '</span></div>' +
+    '<div class="progress"><i style="width:' + (step / QUESTIONS.length * 100) + '%"></i></div>' +
+    '<div class="panel"><h2>' + esc(Q.q) + '</h2><div class="opts">';
+  Q.o.forEach(function (o, i) { html += '<button class="opt" data-i="' + i + '">' + esc(o.t) + '</button>'; });
+  html += '</div></div>';
+  app.innerHTML = html;
+  app.querySelectorAll(".opt").forEach(function (b) {
+    b.onclick = function () { answers.push(+b.dataset.i); step++; step < QUESTIONS.length ? question() : result(); };
+  });
+}
+
+function result() {
+  var seed = answers.reduce(function (a, v, i) { return a + (v + 1) * (i + 3); }, 0);
+  var alon = 91 + (seed % 9);
+  var others = OTHERS.map(function (c, i) { return { n: c.n, v: Math.max(12, c.base - ((seed * (i + 2)) % 17)) }; });
+  var reasons = answers.map(function (a, i) { return QUESTIONS[i].o[a].r; });
+  var bars = '<div class="bar win"><span>אלון גלסנר · ה"ג</span><b>' + alon + '%</b><div class="track"><i style="width:' + alon + '%"></i></div></div>';
+  others.forEach(function (o) { bars += '<div class="bar"><span>' + esc(o.n) + '</span><b>' + o.v + '%</b><div class="track"><i style="width:' + o.v + '%"></i></div></div>'; });
+  var shareText = 'עשיתי את שאלון ההתאמה של זריפה 2026 וקיבלתי ' + alon + '% התאמה לאלון גלסנר, ה"ג - הוגנות גברית. תצביעו קל בקלפי.';
+  app.innerHTML = head() +
+    '<p class="who">המועמד שמתאים לך ביותר</p>' +
+    '<div class="big">אלון גלסנר</div>' +
+    '<div><span class="pct">' + alon + '% התאמה</span></div>' +
+    '<div class="panel"><h3>למה אלון?</h3><ul class="reasons">' + reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul></div>' +
+    '<div class="panel"><h3>כל התוצאות</h3><div class="bars">' + bars + '</div>' +
+    '<p class="stamp">נבדק ואושר על ידי מחשבון הוגנות גברית™. כל הדמיון למציאות מקרי לחלוטין.</p></div>' +
+    '<div class="row">' +
+    '<a class="btn yellow" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(shareText) + '">שולחים לקבוצה בוואטסאפ</a>' +
+    '<button class="btn alt" id="copy">העתקת התוצאה</button>' +
+    '<button class="btn alt" id="again">מתחילים מחדש</button></div>';
+  document.getElementById("again").onclick = start;
+  var cp = document.getElementById("copy");
+  cp.onclick = function () {
+    function done(ok) { cp.textContent = ok ? "הועתק" : "לא הצלחתי להעתיק, סמנו ידנית"; }
+    try { navigator.clipboard.writeText(shareText).then(function () { done(true); }, function () { done(false); }); }
+    catch (e) { done(false); }
+  };
+  window.scrollTo(0, 0);
+}
+start();
+</script>
