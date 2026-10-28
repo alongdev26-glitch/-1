@@ -210,14 +210,14 @@ export default function Avatar({ seed, kind = 'innocent', size = 96 }: { seed: n
     case 'bodyguard':
       body = (
         <>
-          <Body suit="#2f2a6b" tie="#8f86ff" />
-          <path d="M26 70 L40 66 M74 70 L60 66" stroke="#8f86ff" strokeWidth="2" />
+          <Body suit="#1f3250" tie="#8fb4e3" />
+          <path d="M26 70 L40 66 M74 70 L60 66" stroke="#8fb4e3" strokeWidth="2" />
         </>
       );
       face = (
         <>
           <Sunglasses />
-          <path d="M26 46 C20 46 20 56 26 58" fill="none" stroke="#8f86ff" strokeWidth="2.5" />
+          <path d="M26 46 C20 46 20 56 26 58" fill="none" stroke="#8fb4e3" strokeWidth="2.5" />
         </>
       );
       break;

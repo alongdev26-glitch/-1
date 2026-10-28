@@ -1,11 +1,8 @@
+import { load, save } from '../storage';
+
 const KEY = 'imposter.sound';
 
-let enabled = true;
-try {
-  enabled = localStorage.getItem(KEY) !== 'off';
-} catch {
-  /* storage unavailable */
-}
+let enabled = load(KEY) !== 'off';
 
 export function isSoundOn() {
   return enabled;
@@ -13,11 +10,7 @@ export function isSoundOn() {
 
 export function setSoundOn(on: boolean) {
   enabled = on;
-  try {
-    localStorage.setItem(KEY, on ? 'on' : 'off');
-  } catch {
-    /* storage unavailable */
-  }
+  save(KEY, on ? 'on' : 'off');
 }
 
 export function vibrate(pattern: number | number[]) {

@@ -2,7 +2,7 @@ import type { Lang } from '../i18n';
 
 export interface Pack {
   id: string;
-  emoji: string;
+  icon: string;
   name: Record<Lang, string>;
   words: Record<Lang, string[]>;
 }
@@ -10,7 +10,7 @@ export interface Pack {
 export const PACKS: Pack[] = [
   {
     id: 'animals',
-    emoji: '🐕',
+    icon: 'animals',
     name: { en: 'Animals', he: 'חיות', ar: 'حيوانات', ru: 'Животные', es: 'Animales', fr: 'Animaux' },
     words: {
       en: ['Dog', 'Cat', 'Elephant', 'Giraffe', 'Lion', 'Dolphin', 'Penguin', 'Monkey', 'Snake', 'Owl', 'Crocodile', 'Horse', 'Cow', 'Sheep', 'Rabbit', 'Turtle', 'Bat', 'Shark', 'Parrot', 'Kangaroo'],
@@ -23,7 +23,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'food',
-    emoji: '🍔',
+    icon: 'food',
     name: { en: 'Food', he: 'אוכל', ar: 'طعام', ru: 'Еда', es: 'Comida', fr: 'Cuisine' },
     words: {
       en: ['Pizza', 'Burger', 'Sushi', 'Tacos', 'Falafel', 'Hummus', 'Schnitzel', 'Pasta', 'Salad', 'Ice cream', 'Chocolate', 'Pancakes', 'Pretzel', 'Soup', 'Steak', 'Popcorn', 'Bread', 'Sandwich', 'Fries', 'Omelette'],
@@ -36,7 +36,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'places',
-    emoji: '🏙️',
+    icon: 'places',
     name: { en: 'Places', he: 'מקומות', ar: 'أماكن', ru: 'Места', es: 'Lugares', fr: 'Lieux' },
     words: {
       en: ['Beach', 'Hospital', 'Airport', 'Mall', 'School', 'Library', 'Cinema', 'Restaurant', 'Zoo', 'Museum', 'Train station', 'Stadium', 'Desert', 'Forest', 'Volcano', 'Swimming pool', 'Bank', 'Gym', 'Hotel', 'Market'],
@@ -49,7 +49,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'jobs',
-    emoji: '💼',
+    icon: 'jobs',
     name: { en: 'Jobs', he: 'מקצועות', ar: 'مهن', ru: 'Профессии', es: 'Profesiones', fr: 'Métiers' },
     words: {
       en: ['Doctor', 'Teacher', 'Pilot', 'Police officer', 'Firefighter', 'Chef', 'Taxi driver', 'Engineer', 'Lawyer', 'Photographer', 'Singer', 'Actor', 'Farmer', 'Barber', 'Programmer', 'Astronaut', 'Baker', 'Plumber', 'Painter', 'Lifeguard'],
@@ -62,7 +62,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'objects',
-    emoji: '📓',
+    icon: 'objects',
     name: { en: 'Objects', he: 'חפצים', ar: 'أغراض', ru: 'Предметы', es: 'Objetos', fr: 'Objets' },
     words: {
       en: ['Umbrella', 'Key', 'Phone', 'Glasses', 'Suitcase', 'Clock', 'Chair', 'Mirror', 'Camera', 'Candle', 'Scissors', 'Ball', 'Battery', 'Headphones', 'Toothbrush', 'Laptop', 'Lock', 'Balloon', 'Flashlight', 'Blanket'],
@@ -75,7 +75,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'sports',
-    emoji: '⚽',
+    icon: 'sports',
     name: { en: 'Sports', he: 'ספורט', ar: 'رياضة', ru: 'Спорт', es: 'Deportes', fr: 'Sports' },
     words: {
       en: ['Soccer', 'Basketball', 'Tennis', 'Swimming', 'Judo', 'Cycling', 'Running', 'Surfing', 'Skiing', 'Boxing', 'Volleyball', 'Gymnastics', 'Golf', 'Ping pong', 'Pole vault', 'Chess', 'Climbing', 'Hockey', 'Snorkeling', 'Karate'],
@@ -88,7 +88,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'countries',
-    emoji: '🌍',
+    icon: 'countries',
     name: { en: 'Countries', he: 'מדינות', ar: 'دول', ru: 'Страны', es: 'Países', fr: 'Pays' },
     words: {
       en: ['France', 'Japan', 'Brazil', 'Egypt', 'Italy', 'Mexico', 'India', 'Canada', 'Greece', 'Spain', 'Germany', 'Australia', 'Turkey', 'Thailand', 'Argentina', 'Norway', 'Morocco', 'Peru', 'Kenya', 'Iceland'],
@@ -101,7 +101,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'movies',
-    emoji: '🎬',
+    icon: 'movies',
     name: { en: 'Movies', he: 'סרטים', ar: 'أفلام', ru: 'Фильмы', es: 'Películas', fr: 'Films' },
     words: {
       en: ['Titanic', 'Jaws', 'Shrek', 'Frozen', 'Inception', 'Avatar', 'Matrix', 'Gladiator', 'Joker', 'Rocky', 'Alien', 'Psycho', 'Casablanca', 'Up', 'Coco', 'Bambi', 'Skyfall', 'Grease', 'Zorro', 'Dune'],
@@ -114,7 +114,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'music',
-    emoji: '🎵',
+    icon: 'music',
     name: { en: 'Music', he: 'מוזיקה', ar: 'موسيقى', ru: 'Музыка', es: 'Música', fr: 'Musique' },
     words: {
       en: ['Guitar', 'Piano', 'Drums', 'Violin', 'Concert', 'Microphone', 'Opera', 'Jazz', 'Rap', 'Choir', 'Saxophone', 'Trumpet', 'Festival', 'DJ', 'Orchestra', 'Lyrics', 'Headphones', 'Vinyl', 'Harmonica', 'Karaoke'],
@@ -127,7 +127,7 @@ export const PACKS: Pack[] = [
   },
   {
     id: 'tech',
-    emoji: '💻',
+    icon: 'tech',
     name: { en: 'Tech', he: 'טכנולוגיה', ar: 'تقنية', ru: 'Технологии', es: 'Tecnología', fr: 'Technologie' },
     words: {
       en: ['Robot', 'Satellite', 'Drone', 'Password', 'Wi-Fi', 'Server', 'Keyboard', 'Charger', 'Bluetooth', 'Hacker', 'Algorithm', 'Browser', 'Camera', 'Database', 'Router', 'Hologram', 'Battery', 'Cloud', 'Firewall', 'Emoji'],

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Role } from './engine/game';
+import { load, save } from './storage';
 
 export type Lang = 'en' | 'he' | 'ar' | 'ru' | 'es' | 'fr';
 
@@ -65,6 +66,17 @@ export interface Strings {
   backToSetup: string;
   arrow: string;
   o: OnlineStrings;
+  legal: LegalStrings;
+}
+
+export interface LegalStrings {
+  notice: string;
+  accept: string;
+  decline: string;
+  privacy: string;
+  title: string;
+  close: string;
+  points: string[];
 }
 
 export interface OnlineStrings {
@@ -148,15 +160,30 @@ const en: Strings = {
   voteLocked: 'Vote (after everyone speaks)',
   allSpoke: 'Everyone has spoken. You can vote now.',
   whoImposter: 'Who do you think is the imposter?',
-  crewWins: 'The crew wins! 🎉',
-  imposterWins: 'The imposter wins! 😈',
-  jesterWins: 'The jester wins! 🃏',
+  crewWins: 'The crew wins!',
+  imposterWins: 'The imposter wins!',
+  jesterWins: 'The jester wins!',
   tie: 'The vote was tied, so nobody was caught.',
   votedOut: (n) => `The group voted out ${n}.`,
   wordWas: 'The word was',
   playAgain: 'Play again',
   backToSetup: 'Back to setup',
   arrow: '→',
+  legal: {
+    notice: 'This game can remember your names, categories and language on this device.',
+    accept: 'Accept',
+    decline: 'Decline',
+    privacy: 'Privacy',
+    title: 'Privacy',
+    close: 'Close',
+    points: [
+      'If you accept, your names, chosen categories, mode, language and sound setting are saved in this browser only. If you decline, nothing is saved and it is all forgotten when you close the page.',
+      'There is no account, no ads, no tracking and no analytics.',
+      'A game on one phone never leaves that phone.',
+      'In an online room your name and your actions (ready, vote) are sent to the other players in the same room. We do not store them.',
+      'To erase what was saved, press Decline or clear this site\'s data in your browser.',
+    ],
+  },
   o: {
     howPlay: 'How do you want to play?',
     onePhone: 'One phone',
@@ -239,15 +266,30 @@ const he: Strings = {
   voteLocked: 'הצבעה (אחרי שכולם מדברים)',
   allSpoke: 'כולם דיברו. אפשר להצביע.',
   whoImposter: 'מי לדעתך המתחזה?',
-  crewWins: 'הצוות ניצח! 🎉',
-  imposterWins: 'המתחזה ניצח! 😈',
-  jesterWins: 'הליצן ניצח! 🃏',
+  crewWins: 'הצוות ניצח!',
+  imposterWins: 'המתחזה ניצח!',
+  jesterWins: 'הליצן ניצח!',
   tie: 'תיקו בהצבעה, אף אחד לא נתפס.',
   votedOut: (n) => `הקבוצה הצביעה נגד ${n}.`,
   wordWas: 'המילה הייתה',
   playAgain: 'סיבוב נוסף',
   backToSetup: 'חזרה להגדרות',
   arrow: '←',
+  legal: {
+    notice: 'המשחק יכול לזכור את השמות, הקטגוריות והשפה במכשיר הזה.',
+    accept: 'מאשר',
+    decline: 'לא מאשר',
+    privacy: 'פרטיות',
+    title: 'מדיניות פרטיות',
+    close: 'סגור',
+    points: [
+      'אם תאשרו, השמות, הקטגוריות שנבחרו, המצב, השפה והגדרת הצליל יישמרו בדפדפן הזה בלבד. אם לא תאשרו, שום דבר לא נשמר והכול נשכח כשסוגרים את הדף.',
+      'אין חשבון, אין פרסומות, אין מעקב ואין ניתוח נתונים.',
+      'משחק על טלפון אחד לא יוצא מהטלפון הזה.',
+      'בחדר אונליין השם והפעולות שלכם (מוכן, הצבעה) נשלחים לשחקנים האחרים באותו חדר. אנחנו לא שומרים אותם.',
+      'כדי למחוק את מה שנשמר, לחצו על "לא מאשר" או נקו את נתוני האתר בדפדפן.',
+    ],
+  },
   o: {
     howPlay: 'איך רוצים לשחק?',
     onePhone: 'טלפון אחד',
@@ -330,15 +372,30 @@ const ar: Strings = {
   voteLocked: 'التصويت (بعد أن يتكلم الجميع)',
   allSpoke: 'تكلم الجميع. يمكنكم التصويت الآن.',
   whoImposter: 'من برأيك المحتال؟',
-  crewWins: 'فاز الفريق! 🎉',
-  imposterWins: 'فاز المحتال! 😈',
-  jesterWins: 'فاز المهرج! 🃏',
+  crewWins: 'فاز الفريق!',
+  imposterWins: 'فاز المحتال!',
+  jesterWins: 'فاز المهرج!',
   tie: 'تعادل في التصويت، لم يُكشف أحد.',
   votedOut: (n) => `صوتت المجموعة ضد ${n}.`,
   wordWas: 'الكلمة كانت',
   playAgain: 'جولة جديدة',
   backToSetup: 'العودة للإعدادات',
   arrow: '←',
+  legal: {
+    notice: 'يمكن للعبة تذكّر الأسماء والفئات واللغة على هذا الجهاز.',
+    accept: 'موافق',
+    decline: 'رفض',
+    privacy: 'الخصوصية',
+    title: 'سياسة الخصوصية',
+    close: 'إغلاق',
+    points: [
+      'إذا وافقت، تُحفظ الأسماء والفئات المختارة والوضع واللغة وإعداد الصوت في هذا المتصفح فقط. وإذا رفضت فلا يُحفظ شيء وينسى كل ذلك عند إغلاق الصفحة.',
+      'لا حساب ولا إعلانات ولا تتبع ولا تحليلات.',
+      'اللعبة على هاتف واحد لا تغادر ذلك الهاتف.',
+      'في الغرفة عبر الإنترنت يُرسل اسمك وأفعالك (جاهز، تصويت) إلى اللاعبين الآخرين في الغرفة نفسها. نحن لا نخزنها.',
+      'لمسح ما حُفظ اضغط رفض أو امسح بيانات هذا الموقع من المتصفح.',
+    ],
+  },
   o: {
     howPlay: 'كيف تريدون اللعب؟',
     onePhone: 'هاتف واحد',
@@ -421,15 +478,30 @@ const ru: Strings = {
   voteLocked: 'Голосование (когда все скажут)',
   allSpoke: 'Все высказались. Можно голосовать.',
   whoImposter: 'Кто, по-вашему, самозванец?',
-  crewWins: 'Команда победила! 🎉',
-  imposterWins: 'Самозванец победил! 😈',
-  jesterWins: 'Шут победил! 🃏',
+  crewWins: 'Команда победила!',
+  imposterWins: 'Самозванец победил!',
+  jesterWins: 'Шут победил!',
   tie: 'Голоса разделились, никого не поймали.',
   votedOut: (n) => `Группа проголосовала против: ${n}.`,
   wordWas: 'Слово было',
   playAgain: 'Сыграть ещё',
   backToSetup: 'К настройкам',
   arrow: '→',
+  legal: {
+    notice: 'Игра может запомнить имена, категории и язык на этом устройстве.',
+    accept: 'Принять',
+    decline: 'Отклонить',
+    privacy: 'Конфиденциальность',
+    title: 'Политика конфиденциальности',
+    close: 'Закрыть',
+    points: [
+      'Если вы согласитесь, имена, выбранные категории, режим, язык и настройка звука сохранятся только в этом браузере. Если откажетесь, ничего не сохраняется, и всё забудется при закрытии страницы.',
+      'Нет аккаунтов, рекламы, слежки и аналитики.',
+      'Игра на одном телефоне не покидает этот телефон.',
+      'В онлайн-комнате ваше имя и действия (готов, голос) отправляются другим игрокам в той же комнате. Мы их не храним.',
+      'Чтобы стереть сохранённое, нажмите «Отклонить» или очистите данные сайта в браузере.',
+    ],
+  },
   o: {
     howPlay: 'Как будете играть?',
     onePhone: 'Один телефон',
@@ -512,15 +584,30 @@ const es: Strings = {
   voteLocked: 'Votar (cuando todos hablen)',
   allSpoke: 'Todos han hablado. Ya se puede votar.',
   whoImposter: '¿Quién crees que es el impostor?',
-  crewWins: '¡Gana el equipo! 🎉',
-  imposterWins: '¡Gana el impostor! 😈',
-  jesterWins: '¡Gana el bufón! 🃏',
+  crewWins: '¡Gana el equipo!',
+  imposterWins: '¡Gana el impostor!',
+  jesterWins: '¡Gana el bufón!',
   tie: 'Empate en la votación, nadie fue descubierto.',
   votedOut: (n) => `El grupo votó contra ${n}.`,
   wordWas: 'La palabra era',
   playAgain: 'Jugar otra vez',
   backToSetup: 'Volver a ajustes',
   arrow: '→',
+  legal: {
+    notice: 'El juego puede recordar tus nombres, categorías e idioma en este dispositivo.',
+    accept: 'Aceptar',
+    decline: 'Rechazar',
+    privacy: 'Privacidad',
+    title: 'Política de privacidad',
+    close: 'Cerrar',
+    points: [
+      'Si aceptas, tus nombres, categorías elegidas, modo, idioma y ajuste de sonido se guardan solo en este navegador. Si rechazas, no se guarda nada y todo se olvida al cerrar la página.',
+      'No hay cuentas, anuncios, seguimiento ni analítica.',
+      'Una partida en un solo teléfono nunca sale de ese teléfono.',
+      'En una sala en línea, tu nombre y tus acciones (listo, voto) se envían a los demás jugadores de la sala. No los almacenamos.',
+      'Para borrar lo guardado, pulsa Rechazar o borra los datos de este sitio en tu navegador.',
+    ],
+  },
   o: {
     howPlay: '¿Cómo queréis jugar?',
     onePhone: 'Un teléfono',
@@ -603,15 +690,30 @@ const fr: Strings = {
   voteLocked: 'Voter (quand tout le monde a parlé)',
   allSpoke: 'Tout le monde a parlé. Vous pouvez voter.',
   whoImposter: 'Qui est l\'imposteur selon vous ?',
-  crewWins: 'L\'équipe gagne ! 🎉',
-  imposterWins: 'L\'imposteur gagne ! 😈',
-  jesterWins: 'Le bouffon gagne ! 🃏',
+  crewWins: 'L\'équipe gagne !',
+  imposterWins: 'L\'imposteur gagne !',
+  jesterWins: 'Le bouffon gagne !',
   tie: 'Égalité au vote, personne n\'est démasqué.',
   votedOut: (n) => `Le groupe a voté contre ${n}.`,
   wordWas: 'Le mot était',
   playAgain: 'Rejouer',
   backToSetup: 'Retour aux réglages',
   arrow: '→',
+  legal: {
+    notice: 'Le jeu peut mémoriser vos noms, catégories et langue sur cet appareil.',
+    accept: 'Accepter',
+    decline: 'Refuser',
+    privacy: 'Confidentialité',
+    title: 'Politique de confidentialité',
+    close: 'Fermer',
+    points: [
+      'Si vous acceptez, vos noms, catégories choisies, mode, langue et réglage du son sont enregistrés dans ce navigateur uniquement. Si vous refusez, rien n\'est enregistré et tout est oublié à la fermeture de la page.',
+      'Pas de compte, pas de publicité, pas de suivi, pas de statistiques.',
+      'Une partie sur un seul téléphone ne quitte jamais ce téléphone.',
+      'Dans un salon en ligne, votre nom et vos actions (prêt, vote) sont envoyés aux autres joueurs du salon. Nous ne les conservons pas.',
+      'Pour effacer ce qui a été enregistré, appuyez sur Refuser ou effacez les données du site dans votre navigateur.',
+    ],
+  },
   o: {
     howPlay: 'Comment voulez-vous jouer ?',
     onePhone: 'Un seul téléphone',
@@ -661,12 +763,8 @@ const LangContext = createContext<Ctx>({ lang: 'en', setLang: () => {}, t: en })
 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
-    try {
-      const saved = localStorage.getItem(KEY);
-      return LANG_OPTIONS.some((l) => l.id === saved) ? (saved as Lang) : 'en';
-    } catch {
-      return 'en';
-    }
+    const saved = load(KEY);
+    return LANG_OPTIONS.some((l) => l.id === saved) ? (saved as Lang) : 'en';
   });
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -674,11 +772,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
   }, [lang]);
   const setLang = (l: Lang) => {
     setLangState(l);
-    try {
-      localStorage.setItem(KEY, l);
-    } catch {
-      /* storage unavailable */
-    }
+    save(KEY, l);
   };
   return <LangContext.Provider value={{ lang, setLang, t: STRINGS[lang] }}>{children}</LangContext.Provider>;
 }

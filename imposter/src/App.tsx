@@ -4,10 +4,13 @@ import { MAX_PLAYERS, MIN_PLAYERS, ROLE_MIN_PLAYERS, createRound, maxImposters, 
 import type { Round } from './engine/game';
 import { LANG_OPTIONS, LangProvider, useLang } from './i18n';
 import Avatar from './ui/Avatar';
+import Icon from './ui/icons';
 import HoldCard from './ui/HoldCard';
 import Online from './screens/Online';
 import { cleanCode } from './online/room';
 import { play, vibrate } from './ui/fx';
+import { ConsentBar, PrivacyScreen } from './ui/legal';
+import { load, save } from './storage';
 import { Confetti, SoundToggle } from './ui/shared';
 
 type Phase = 'setup' | 'reveal' | 'discuss' | 'vote' | 'result';
@@ -32,7 +35,7 @@ const SAVE_KEY = 'imposter.setup';
 /** Last setup, so a group does not have to retype names every round. */
 function loadSaved(): Partial<Saved> {
   try {
-    const raw = JSON.parse(localStorage.getItem(SAVE_KEY) ?? '{}') as Partial<Saved>;
+    const raw = JSON.parse(load(SAVE_KEY) ?? '{}') as Partial<Saved>;
     const names = Array.isArray(raw.names) ? raw.names.slice(0, MAX_PLAYERS).map((n) => String(n).slice(0, 14)) : undefined;
     return {
       names: names && names.length >= MIN_PLAYERS ? names : undefined,
@@ -46,6 +49,16 @@ function loadSaved(): Partial<Saved> {
 }
 
 function Game() {
+  const [privacy, setPrivacy] = useState(false);
+  return (
+    <>
+      <ConsentBar onPrivacy={() => setPrivacy(true)} />
+      {privacy ? <PrivacyScreen onClose={() => setPrivacy(false)} /> : <Screens onPrivacy={() => setPrivacy(true)} />}
+    </>
+  );
+}
+
+function Screens({ onPrivacy }: { onPrivacy: () => void }) {
   const { lang, t } = useLang();
   const [saved] = useState(loadSaved);
   const [phase, setPhase] = useState<Phase>('setup');
@@ -58,11 +71,7 @@ function Game() {
   const [rolesMode, setRolesMode] = useState(saved.rolesMode ?? false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ names, packIds, imposters, rolesMode }));
-    } catch {
-      /* storage unavailable */
-    }
+    save(SAVE_KEY, JSON.stringify({ names, packIds, imposters, rolesMode }));
   }, [names, packIds, imposters, rolesMode]);
   const [online, setOnline] = useState<{ mode: 'host' | 'join'; code: string } | null>(() => {
     const code = cleanCode(new URLSearchParams(location.search).get('room') ?? '');
@@ -112,6 +121,7 @@ function Game() {
         setRolesMode={setRolesMode}
         onStart={start}
         onOnline={(mode) => setOnline({ mode, code: '' })}
+        onPrivacy={onPrivacy}
       />
     );
   }
@@ -142,11 +152,12 @@ interface SetupProps {
   setRolesMode: (v: boolean) => void;
   onStart: () => void;
   onOnline: (mode: 'host' | 'join') => void;
+  onPrivacy: () => void;
 }
 
 const MIN_PACKS = 3;
 
-function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart, onOnline }: SetupProps) {
+function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, rolesMode, setRolesMode, onStart, onOnline, onPrivacy }: SetupProps) {
   const { lang, setLang, t } = useLang();
   const [step, setStep] = useState(0);
   const [where, setWhere] = useState<'phone' | 'host' | 'join'>('phone');
@@ -201,6 +212,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
               </button>
             ))}
           </div>
+          <button className="link" onClick={onPrivacy}>{t.legal.privacy}</button>
         </>
       )}
 
@@ -264,7 +276,7 @@ function Setup({ names, setNames, packIds, setPackIds, imposters, setImposters, 
                 className={'pack' + (packIds.includes(p.id) ? ' on' : '')}
                 onClick={() => togglePack(p.id)}
               >
-                <span className="emoji">{p.emoji}</span>
+                <Icon name={p.icon} />
                 {p.name[lang]}
                 <small>{t.words(p.words[lang].length)}</small>
               </button>

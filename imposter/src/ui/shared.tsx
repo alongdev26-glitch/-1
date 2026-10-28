@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLang } from '../i18n';
+import Icon from './icons';
 import { isSoundOn, play, setSoundOn } from './fx';
 
 export function SoundToggle() {
@@ -15,13 +16,13 @@ export function SoundToggle() {
         if (!on) play('tap');
       }}
     >
-      {on ? '🔊' : '🔇'}
+      <Icon name={on ? 'sound' : 'mute'} size={20} />
     </button>
   );
 }
 
 export function Confetti() {
-  const colors = ['#e5242b', '#2ecc71', '#f1c40f', '#3498db', '#9b59b6'];
+  const colors = ['#e5242b', '#2ecc71', '#f1c40f', '#3498db', '#bdbdc6'];
   return (
     <div className="confetti" aria-hidden="true">
       {Array.from({ length: 36 }, (_, i) => (

@@ -8,6 +8,7 @@ import { cleanCode } from '../online/room';
 import type { Settings, View } from '../online/room';
 import Avatar from '../ui/Avatar';
 import HoldCard from '../ui/HoldCard';
+import Icon from '../ui/icons';
 import { play, vibrate } from '../ui/fx';
 import { Confetti, SoundToggle } from '../ui/shared';
 
@@ -165,7 +166,7 @@ function Lobby({ view, session, onLeave }: { view: View; session: Session; onLea
           <div className="packs">
             {PACKS.map((p) => (
               <button key={p.id} className={'pack' + (st.packIds.includes(p.id) ? ' on' : '')} onClick={() => toggle(p.id)}>
-                <span className="emoji">{p.emoji}</span>
+                <Icon name={p.icon} />
                 {p.name[lang]}
               </button>
             ))}

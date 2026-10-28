@@ -1,4 +1,5 @@
 import Peer from 'peerjs';
+import { load, save } from '../storage';
 import type { DataConnection, PeerOptions } from 'peerjs';
 import { joinError, newCode, newRoom, reduce, viewFor } from './room';
 import type { Action, Settings, View } from './room';
@@ -42,16 +43,12 @@ export interface Callbacks {
 }
 
 export function myUid(): string {
-  try {
-    let id = localStorage.getItem(UID_KEY);
-    if (!id) {
-      id = Math.random().toString(36).slice(2, 12);
-      localStorage.setItem(UID_KEY, id);
-    }
-    return id;
-  } catch {
-    return Math.random().toString(36).slice(2, 12);
+  let id = load(UID_KEY);
+  if (!id) {
+    id = Math.random().toString(36).slice(2, 12);
+    save(UID_KEY, id);
   }
+  return id;
 }
 
 /** `?peer=host:port` points at a private PeerJS server (used for testing); otherwise the free public one. */
