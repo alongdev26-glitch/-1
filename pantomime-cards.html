@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>פתקי פנטומימה משפחתית</title>
+<style>
+  @page { size: A4; margin: 10mm; }
+  body { font-family: "Arial", "Heebo", sans-serif; margin: 0; padding: 16px; background: #fff; }
+  h1 { text-align: center; color: #7a4b00; margin: 0 0 4px; }
+  p.sub { text-align: center; margin: 0 0 16px; color: #555; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .card { border: 3px dashed #c9a227; border-radius: 16px; padding: 14px; text-align: center;
+          min-height: 150px; display: flex; flex-direction: column; justify-content: space-between;
+          break-inside: avoid; background: #fffdf5; }
+  .badge { align-self: center; padding: 4px 18px; border-radius: 999px; color: #fff; font-weight: bold; font-size: 15px; }
+  .word { font-size: 32px; font-weight: bold; margin: 10px 0; color: #222; min-height: 40px; }
+  .foot { font-size: 13px; color: #777; }
+  .char .badge { background: #d9534f; }
+  .movie .badge { background: #5b6fd6; }
+  .custom .badge { background: #2e9c6a; }
+  .food .badge { background: #e08a1e; }
+  .tip { border-top: 1px dotted #bbb; padding-top: 6px; font-size: 13px; color: #666; }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media print { .grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<h1>🎭 פנטומימה משפחתית 🎭</h1>
+<p class="sub">יום הנישואים ה-48 של סבא וסבתא · דקה לקבוצה · בלי מילים!</p>
+<div class="grid">
+
+  <div class="card char"><span class="badge">👤 דמות</span><div class="word">סבתא בקייטנה</div><div class="tip">אסור לדבר · אסור להצביע על חפצים</div></div>
+  <div class="card char"><span class="badge">👤 דמות</span><div class="word">סבא בקריאה בתורה</div><div class="tip">אסור לדבר · אסור להצביע על חפצים</div></div>
+  <div class="card movie"><span class="badge">🎬 סרט</span><div class="word"></div><div class="tip">כתבו כאן שם סרט שכולם מכירים</div></div>
+  <div class="card custom"><span class="badge">🕯️ מנהג</span><div class="word">קידוש בליל שבת</div><div class="tip">אסור לדבר · אסור להצביע על חפצים</div></div>
+  <div class="card food"><span class="badge">🍲 מאכל</span><div class="word"></div><div class="tip">כתבו כאן מאכל משפחתי אהוב</div></div>
+  <div class="card custom"><span class="badge">🕯️ מנהג</span><div class="word"></div><div class="tip">כתבו כאן מנהג של המשפחה</div></div>
+
+  <div class="card char"><span class="badge">👤 דמות</span><div class="word"></div><div class="tip">כתבו כאן דמות מוכרת במשפחה</div></div>
+  <div class="card movie"><span class="badge">🎬 סרט</span><div class="word"></div><div class="tip">כתבו כאן שם סרט שכולם מכירים</div></div>
+  <div class="card food"><span class="badge">🍲 מאכל</span><div class="word"></div><div class="tip">כתבו כאן מאכל משפחתי אהוב</div></div>
+</div>
+<p class="sub" style="margin-top:16px">להדפסה: Ctrl+P · לגזור לאורך הקו המקווקו · לקפל ולהכניס לקערה</p>
+</body>
+</html>
