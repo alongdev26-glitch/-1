@@ -11,9 +11,9 @@
     --ink: #1f2937;
     --paper: #faf7f0;
     --line: #d9d2c0;
-    --char: #b4472f;
+    --no: #b4472f;
     --movie: #34548a;
-    --custom: #2f6f55;
+    --yes: #2f6f55;
     --food: #b9791f;
   }
   * { box-sizing: border-box; }
@@ -29,10 +29,8 @@
   .mark { width: 28px; height: 28px; color: var(--c); margin-top: 6px; }
   .word { font-size: 28px; font-weight: 700; line-height: 1.15; min-height: 34px; }
   .rule { height: 1px; background: var(--line); }
-  .char   { --c: var(--char); }
-  .movie  { --c: var(--movie); }
-  .custom { --c: var(--custom); }
-  .food   { --c: var(--food); }
+  .no  { --c: var(--no); }
+  .yes { --c: var(--yes); }
   @media print {
     body { background: #fff; padding: 0; }
     .grid { grid-template-columns: repeat(2, 1fr); max-width: none; }
@@ -42,49 +40,84 @@
 <body>
 <main class="grid">
 
-  <article class="card char">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="9" r="5"/><path d="M4 26c0-6 4.5-9 10-9s10 3 10 9"/></svg>
-    <div class="word">סבתא בקייטנה</div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">אימוג'ים</div><div class="rule"></div>
   </article>
 
-  <article class="card char">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="9" r="5"/><path d="M4 26c0-6 4.5-9 10-9s10 3 10 9"/></svg>
-    <div class="word">סבא בקריאה בתורה</div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">כפתורים עגולים</div><div class="rule"></div>
   </article>
 
-  <article class="card custom">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5M9 26h10M11 26V14h6v12M14 8c-2 2-2 4 0 6 2-2 2-4 0-6z"/></svg>
-    <div class="word">קידוש בליל שבת</div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">יותר מדי אנימציות גלילה</div><div class="rule"></div>
   </article>
 
-  <article class="card movie">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="22" height="16"/><path d="M12 11l6 3-6 3z"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card yes">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15l7 7L24 6"/></svg>
+    <div class="word">להסיר את תג "נוצר עם AI"</div><div class="rule"></div>
   </article>
 
-  <article class="card food">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h20c0 6-4 10-10 10S4 18 4 12zM9 8c0-2 2-2 2-4M15 8c0-2 2-2 2-4"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">קופי סלופ</div><div class="rule"></div>
   </article>
 
-  <article class="card custom">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5M9 26h10M11 26V14h6v12M14 8c-2 2-2 4 0 6 2-2 2-4 0-6z"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card yes">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15l7 7L24 6"/></svg>
+    <div class="word">אנימציות עכבר</div><div class="rule"></div>
   </article>
 
-  <article class="card char">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="9" r="5"/><path d="M4 26c0-6 4.5-9 10-9s10 3 10 9"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">ספירת לקוחות לא עקבית</div><div class="rule"></div>
   </article>
 
-  <article class="card movie">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="22" height="16"/><path d="M12 11l6 3-6 3z"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">תמונות AI</div><div class="rule"></div>
   </article>
 
-  <article class="card food">
-    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h20c0 6-4 10-10 10S4 18 4 12zM9 8c0-2 2-2 2-4M15 8c0-2 2-2 2-4"/></svg>
-    <div class="word"></div><div class="rule"></div>
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">em dash</div><div class="rule"></div>
+  </article>
+
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">כותרות עם טקסט כללי</div><div class="rule"></div>
+  </article>
+
+  <article class="card yes">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15l7 7L24 6"/></svg>
+    <div class="word">favicon</div><div class="rule"></div>
+  </article>
+
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">ביקורות מזויפות</div><div class="rule"></div>
+  </article>
+
+  <article class="card yes">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15l7 7L24 6"/></svg>
+    <div class="word">דף מדיניות פרטיות</div><div class="rule"></div>
+  </article>
+
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">סגול בוהק</div><div class="rule"></div>
+  </article>
+
+  <article class="card no">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+    <div class="word">נתונים מזויפים</div><div class="rule"></div>
+  </article>
+
+  <article class="card yes">
+    <svg class="mark" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15l7 7L24 6"/></svg>
+    <div class="word">דומיין אישי</div><div class="rule"></div>
   </article>
 
 </main>
