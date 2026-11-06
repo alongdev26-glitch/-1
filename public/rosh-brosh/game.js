@@ -1,23 +1,25 @@
-import { QUESTIONS } from './questions.js?v=4';
-import { matchAnswer } from './checker.js?v=4';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=4';
+import { QUESTIONS } from './questions.js?v=5';
+import { matchAnswer } from './checker.js?v=5';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=5';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
-} from './economy.js?v=4';
+} from './economy.js?v=5';
+import { I } from './icons.js?v=5';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=5';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
 const WINS_NEEDED = 2;
 const MAX_ROUNDS = 5;
 
-// תמונות הפרופיל מ-Stitch (אם לא נטענות, מוצג האימוג'י)
+// תמונות הפרופיל מ-Stitch (אם לא נטענות, מוצגת האות הראשונה של השם)
 const IMG = 'https://lh3.googleusercontent.com/aida-public/';
-const ME = { name: 'אופיר שאול', face: '🧑‍🦱', img: IMG + 'AB6AXuATPYsjSE1-MTMHgW2gZ20vtyVL3FGScRajsO48nTAySB0MBs1W_pBUz0IivL88IUU_pt8jqgffQReIMZKp5yq7axbDaccW7NoBIIgwoT2oqtUfsH19nGR8gyJqGjyMObu71XqUgt6EX6PowhdrsXwnp_Gqv25GA---bP8v3W85XWUm_eFUOtej7xrGvVJDONi2NWMs7RJh-d3mXEvHsYYWltmpkkowdRczmURey1Y' };
+const ME = { name: 'אופיר שאול', img: IMG + 'AB6AXuATPYsjSE1-MTMHgW2gZ20vtyVL3FGScRajsO48nTAySB0MBs1W_pBUz0IivL88IUU_pt8jqgffQReIMZKp5yq7axbDaccW7NoBIIgwoT2oqtUfsH19nGR8gyJqGjyMObu71XqUgt6EX6PowhdrsXwnp_Gqv25GA---bP8v3W85XWUm_eFUOtej7xrGvVJDONi2NWMs7RJh-d3mXEvHsYYWltmpkkowdRczmURey1Y' };
 const FRIENDS = [
-  { name: 'שימי ביטון', face: '👨‍🦳', trophies: 68, img: IMG + 'AB6AXuCmP_6xbAO0Ruz6_fEtqzKcOfG-rzoJimMY1e67sC75yxt864CGtt333uxlMQZ9OLvt8HUz2c2ehZCA8DITNoGBUhQwyXPHS-pZUyNMcZa6bul3MNXOykm5SPggr2KSgi4kcBh6xuB4xS0KcuZpFrfDUF8r7BKxk5vdDg0SM1fWY4XkjRxjZxVgHilSf6yOumP_vx0Ch1YDmTn3j_fuwnX2DTL0TW_VnrLmvgD1U3A' },
-  { name: 'יוני הררי', face: '🧔', trophies: 677, img: IMG + 'AB6AXuAumkutXBKtspkLtKHvqdwSUtBt3d7zv2VE_38RMKpGBCfsW6hUTpskLbVJkJGmzR7s-WEaP5FCEwfE4-07ntP5xhYKTDC_mu-60am0SsBOKtLFOdqeWCakj-B185q9ndtEgpXU3D6aM6hQBqYTJUu5giou_U10ZcAWz1o3TTFdkkQHUnVy4m0n-0H76XjiTfFtsEfZ6AA9wVos8VabTiJQEMLQ2xWQeNPY2LG48kw' },
-  { name: 'שמרית', face: '👩‍🦰', trophies: 989, img: IMG + 'AB6AXuCREPpx0ck0kwKhgnRRFq9zjfvSb4A6bnLo0ytKNz1RQfTAlgq-ouUmwxKjdPnAXMpXCJdHCR0RII2zE8YGGkBg0HVyU5D2dZ-src1tBSZYHelmsdcfb1J6cIy1NG6iGZ4UQXpCb3Hm7RbEhbehQ6CB2yiQ-mqBvZWp1SpdWwkpSFNvim_qdL6j_ECTwVmaFvgr7GrH7ahonwc2IfOPKy171sMvzvMGKkLo1JG39GE' },
+  { name: 'שימי ביטון', trophies: 68, img: IMG + 'AB6AXuCmP_6xbAO0Ruz6_fEtqzKcOfG-rzoJimMY1e67sC75yxt864CGtt333uxlMQZ9OLvt8HUz2c2ehZCA8DITNoGBUhQwyXPHS-pZUyNMcZa6bul3MNXOykm5SPggr2KSgi4kcBh6xuB4xS0KcuZpFrfDUF8r7BKxk5vdDg0SM1fWY4XkjRxjZxVgHilSf6yOumP_vx0Ch1YDmTn3j_fuwnX2DTL0TW_VnrLmvgD1U3A' },
+  { name: 'יוני הררי', trophies: 677, img: IMG + 'AB6AXuAumkutXBKtspkLtKHvqdwSUtBt3d7zv2VE_38RMKpGBCfsW6hUTpskLbVJkJGmzR7s-WEaP5FCEwfE4-07ntP5xhYKTDC_mu-60am0SsBOKtLFOdqeWCakj-B185q9ndtEgpXU3D6aM6hQBqYTJUu5giou_U10ZcAWz1o3TTFdkkQHUnVy4m0n-0H76XjiTfFtsEfZ6AA9wVos8VabTiJQEMLQ2xWQeNPY2LG48kw' },
+  { name: 'שמרית', trophies: 989, img: IMG + 'AB6AXuCREPpx0ck0kwKhgnRRFq9zjfvSb4A6bnLo0ytKNz1RQfTAlgq-ouUmwxKjdPnAXMpXCJdHCR0RII2zE8YGGkBg0HVyU5D2dZ-src1tBSZYHelmsdcfb1J6cIy1NG6iGZ4UQXpCb3Hm7RbEhbehQ6CB2yiQ-mqBvZWp1SpdWwkpSFNvim_qdL6j_ECTwVmaFvgr7GrH7ahonwc2IfOPKy171sMvzvMGKkLo1JG39GE' },
 ];
 
 // ---------- save ----------
@@ -38,73 +40,73 @@ const $ = (s) => document.querySelector(s);
 const screen = $('#screen');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-/** עיגול תמונה: האימוג'י מאחור, והתמונה מעליו (נעלמת אם לא נטענה). */
+/** עיגול תמונה: האות הראשונה מאחור, והתמונה מעליה (נעלמת אם לא נטענה). */
 const avatar = (p, size, extra = '') =>
-  `<div class="relative ${size} rounded-full overflow-hidden bg-amber-500 flex items-center justify-center shrink-0 ${extra}"><span class="text-[1.4em] leading-none">${p.face}</span>${p.img ? `<img alt="${esc(p.name)}" class="absolute inset-0 w-full h-full object-cover" src="${p.img}" onerror="this.remove()">` : ''}</div>`;
+  `<div class="relative ${size} rounded-full overflow-hidden flex items-center justify-center shrink-0 font-black text-white ${extra}" style="background:${p.color || '#a855f7'}"><span class="leading-none" style="font-size:1.1em">${esc([...p.name][0] || '')}</span>${p.img ? `<img alt="${esc(p.name)}" class="absolute inset-0 w-full h-full object-cover" src="${p.img}" onerror="this.remove()">` : ''}</div>`;
 
-const PLUS = (pos) => `<span class="absolute ${pos} text-[9px] bg-green-500 rounded-full w-3 h-3 flex items-center justify-center text-white font-extrabold leading-none">+</span>`;
+const PLUS = (pos) => `<span class="absolute ${pos} text-[9px] bg-green-500 rounded-sm w-3 h-3 flex items-center justify-center text-white font-extrabold leading-none">+</span>`;
 
 /** סרגל עליון של מסך הבית (stat-pill) */
 const homeHeader = () => `
 <header class="w-full pt-3 px-3 pb-1 z-20">
   <div class="flex items-start justify-between gap-1 w-full">
-    <button data-act="back" aria-label="חזור" class="w-10 h-10 rounded-full bg-[#3d0b6d]/80 border border-[#892ee3] flex items-center justify-center text-white active:scale-95 shadow-md flex-shrink-0">
+    <button data-act="back" aria-label="חזור" class="w-10 h-10 rounded-xl bg-[#3d0b6d]/80 border border-[#892ee3] flex items-center justify-center text-white active:scale-95 shadow-md flex-shrink-0">
       <svg class="w-6 h-6 rotate-180 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
     </button>
     <div class="flex items-center gap-1.5 flex-1 justify-end">
       <button data-act="energy" class="flex flex-col items-center">
-        <div class="stat-pill px-2 py-0.5 rounded-full flex items-center gap-1 min-w-[70px] justify-between h-7">
+        <div class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[70px] justify-between h-7">
           <span data-v="energy" class="font-bold text-xs tracking-tight text-white pl-0.5"></span>
-          <div class="relative flex items-center justify-center -mr-1"><span class="text-yellow-300 text-sm filter drop-shadow">⚡</span>${PLUS('-top-1 -right-1')}</div>
+          <div class="relative flex items-center justify-center -mr-1">${I.bolt('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
         </div>
         <span data-v="timer" class="text-[9px] font-semibold text-purple-200/90 mt-0.5 tracking-wider h-3"></span>
       </button>
-      <button data-act="gems" class="stat-pill px-2 py-0.5 rounded-full flex items-center gap-1 min-w-[76px] justify-between h-7">
+      <button data-act="gems" class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[76px] justify-between h-7">
         <span data-v="gems" class="font-bold text-xs tracking-tight text-white"></span>
-        <div class="relative flex items-center justify-center -mr-1"><span class="text-cyan-300 text-sm filter drop-shadow">💎</span>${PLUS('-top-1 -right-1')}</div>
+        <div class="relative flex items-center justify-center -mr-1">${I.gem('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
       </button>
-      <button data-act="coins" class="stat-pill px-2 py-0.5 rounded-full flex items-center gap-1 min-w-[68px] justify-between h-7">
+      <button data-act="coins" class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[68px] justify-between h-7">
         <span data-v="coins" class="font-bold text-xs tracking-tight text-white"></span>
-        <div class="relative flex items-center justify-center -mr-1"><span class="text-amber-400 text-base filter drop-shadow">🪙</span>${PLUS('-top-1 -right-1')}</div>
+        <div class="relative flex items-center justify-center -mr-1">${I.coin('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
       </button>
     </div>
   </div>
   <div class="flex items-center gap-2 mt-1 mr-1">
     ${avatar(ME, 'w-12 h-12', 'border-2 border-yellow-400 shadow-lg')}
-    <div class="stat-pill px-2.5 py-0.5 rounded-full flex items-center gap-1 h-6"><span class="text-xs font-bold text-white">${save.trophies}</span><span class="text-xs">🏆</span></div>
+    <div class="stat-pill px-2.5 py-0.5 rounded-lg flex items-center gap-1 h-6"><span class="text-xs font-bold text-white">${save.trophies}</span>${I.trophy('w-4 h-4')}</div>
   </div>
 </header>`;
 
 /** סרגל עליון של מסך הדו-קרב (פילים בלי מסגרת בהירה) */
-const gamePill = (act, key, icon, iconCls, heightCls = 'h-[32px]') => `
-<button data-act="${act}" class="bg-[#460f72] border border-white/25 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-inner ${heightCls}">
+const gamePill = (act, key, icon, heightCls = 'h-[32px]') => `
+<button data-act="${act}" class="bg-[#460f72] border border-white/25 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-inner ${heightCls}">
   <span data-v="${key}" class="font-extrabold text-sm tracking-wide text-white"></span>
-  <div class="relative flex items-center justify-center"><span class="${iconCls} leading-none">${icon}</span><span class="absolute -bottom-1.5 -left-1 text-[9px] font-black bg-white text-purple-900 rounded-full w-3 h-3 flex items-center justify-center leading-none">+</span></div>
+  <div class="relative flex items-center justify-center"><span class="leading-none">${icon}</span><span class="absolute -bottom-1.5 -left-1 text-[9px] font-black bg-white text-purple-900 rounded-sm w-3 h-3 flex items-center justify-center leading-none">+</span></div>
 </button>`;
 const gameHeader = () => `
 <header class="pt-3 px-3 pb-2 z-20 flex flex-col gap-1">
   <div class="flex items-center justify-between w-full">
-    <button data-act="back" aria-label="חזרה" class="w-10 h-10 rounded-full bg-[#460f72]/70 active:scale-95 transition-transform flex items-center justify-center border border-white/20 shadow-md" type="button">
+    <button data-act="back" aria-label="חזרה" class="w-10 h-10 rounded-xl bg-[#460f72]/70 active:scale-95 transition-transform flex items-center justify-center border border-white/20 shadow-md" type="button">
       <svg class="w-6 h-6 text-white stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     </button>
     <div class="flex items-center gap-2">
       <div class="flex flex-col items-center">
-        <button data-act="energy" class="bg-[#460f72] border border-white/25 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-inner">
+        <button data-act="energy" class="bg-[#460f72] border border-white/25 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-inner">
           <span data-v="energy" class="font-extrabold text-sm tracking-wide text-white"></span>
-          <div class="relative flex items-center justify-center"><span class="text-base leading-none text-yellow-400 drop-shadow">⚡</span><span class="absolute -bottom-1 -left-1 text-[9px] font-black bg-white text-purple-900 rounded-full w-3 h-3 flex items-center justify-center leading-none">+</span></div>
+          <div class="relative flex items-center justify-center">${I.bolt('w-4 h-4')}<span class="absolute -bottom-1 -left-1 text-[9px] font-black bg-white text-purple-900 rounded-sm w-3 h-3 flex items-center justify-center leading-none">+</span></div>
         </button>
         <span data-v="timer" class="text-[10px] text-white/90 font-medium tracking-tight mt-0.5 h-3"></span>
       </div>
-      ${gamePill('gems', 'gems', '💎', 'text-xs')}
-      ${gamePill('coins', 'coins', '🪙', 'text-sm')}
+      ${gamePill('gems', 'gems', I.gem('w-4 h-4'))}
+      ${gamePill('coins', 'coins', I.coin('w-4 h-4'))}
     </div>
   </div>
 </header>`;
 
 const SCREEN_BG = 'bg-gradient-to-b from-[#6e18af] via-[#6616a5] to-[#400e6c]';
-const cost = (n) => `<div class="flex items-center bg-[#3c0f5e] px-1.5 py-0.5 rounded-full text-xs font-bold text-yellow-300 gap-1 border border-yellow-500/30"><span>${n}</span><span>🪙</span></div>`;
-const darkBtn = (act, cls, inner) => `<button data-act="${act}" type="button" class="${cls} bg-[#52177c] hover:bg-[#5f1c90] active:scale-95 transition-all text-white py-2 rounded-2xl flex items-center justify-center gap-1.5 btn-3d-dark border border-white/20">${inner}</button>`;
-const bigGloss = (act, label, extra = '') => `<button data-act="${act}" class="game-gloss-card w-full h-16 rounded-2xl flex items-center justify-center cursor-pointer text-2xl font-black text-3d-white ${extra}">${label}</button>`;
+const cost = (n) => `<div class="flex items-center bg-[#3c0f5e] px-1.5 py-0.5 rounded-md text-xs font-bold text-yellow-300 gap-1 border border-yellow-500/30"><span>${n}</span>${I.coin('w-3.5 h-3.5')}</div>`;
+const darkBtn = (act, cls, inner) => `<button data-act="${act}" type="button" class="${cls} bg-[#52177c] hover:bg-[#5f1c90] active:scale-95 transition-all text-white py-2 rounded-xl flex items-center justify-center gap-1.5 btn-3d-dark border border-white/20">${inner}</button>`;
+const bigGloss = (act, label, extra = '') => `<button data-act="${act}" class="game-gloss-card w-full h-16 rounded-xl flex items-center justify-center cursor-pointer text-2xl font-black text-3d-white ${extra}">${label}</button>`;
 
 // ---------- toast / modal ----------
 let toastTimer;
@@ -117,10 +119,10 @@ function toast(msg) {
 }
 function openModal(title, text, buttons) {
   const m = $('#modal');
-  m.innerHTML = `<div class="game-gloss-card w-full rounded-3xl p-5 text-center flex flex-col gap-3">
+  m.innerHTML = `<div class="game-gloss-card w-full rounded-2xl p-5 text-center flex flex-col gap-3">
     <h3 class="text-2xl font-black text-3d-white">${title}</h3>
     ${text ? `<p class="text-purple-100 font-medium leading-relaxed">${text}</p>` : ''}
-    ${buttons.map((b, i) => `<button data-modal="${i}" class="${b.ghost ? 'bg-[#3c0f5e] border border-white/20' : 'play-btn-glow'} rounded-2xl py-3 text-xl font-extrabold">${b.label}</button>`).join('')}
+    ${buttons.map((b, i) => `<button data-modal="${i}" class="${b.ghost ? 'bg-[#3c0f5e] border border-white/20' : 'play-btn-glow'} rounded-xl py-3 text-xl font-extrabold">${b.label}</button>`).join('')}
   </div>`;
   m.hidden = false;
   m.onclick = (e) => {
@@ -161,12 +163,12 @@ function tween(key, from, to) {
   };
   requestAnimationFrame(step);
 }
-function countUp(el, to, prefix = '', suffix = '') {
+function countUp(el, to, prefix = '', iconHtml = '') {
   const t0 = performance.now();
   const step = (now) => {
     const k = Math.min(1, (now - t0) / 900);
     const v = Math.round(to * (1 - (1 - k) ** 3));
-    el.textContent = `${prefix}${v}${suffix}`;
+    el.innerHTML = `${prefix}${v} ${iconHtml}`;
     if (k < 1 && el.isConnected) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
@@ -188,8 +190,8 @@ setInterval(renderBar, 1000);
 // ---------- economy actions ----------
 function buyEnergy() {
   if (save.energy >= MAX_ENERGY) return toast('האנרגיה מלאה');
-  openModal('⚡ אנרגיה', 'כל משחק עולה אנרגיה אחת. אנרגיה אחת חוזרת כל 10 דקות.', [
-    { label: `מלא הכול ב-${COST.refill} 💎`, run: () => {
+  openModal(`${I.bolt('w-6 h-6')} אנרגיה`, 'כל משחק עולה אנרגיה אחת. אנרגיה אחת חוזרת כל 10 דקות.', [
+    { label: `מלא הכול ב-${COST.refill} ${I.gem('w-5 h-5')}`, run: () => {
       if (!spend(save, 'gems', COST.refill)) return toast('אין מספיק יהלומים');
       save.energy = MAX_ENERGY; persist(); renderBar(); toast('האנרגיה התמלאה');
     } },
@@ -197,14 +199,14 @@ function buyEnergy() {
   ]);
 }
 function gemsModal() {
-  openModal('💎 יהלומים', 'בגרסה המלאה כאן קונים יהלומים בכסף אמיתי. באב-הטיפוס אפשר לקבל פרס יומי וחינם.', [
-    { label: `פרס יומי: ${DAILY_GEMS} 💎`, run: claimDaily },
+  openModal(`${I.gem('w-6 h-6')} יהלומים`, 'בגרסה המלאה כאן קונים יהלומים בכסף אמיתי. באב-הטיפוס אפשר לקבל פרס יומי וחינם.', [
+    { label: `פרס יומי: ${DAILY_GEMS} ${I.gem('w-5 h-5')}`, run: claimDaily },
     { label: 'סגור', ghost: true },
   ]);
 }
 function coinsModal() {
-  openModal('🪙 מטבעות', 'המטבעות משמשים ל"החלף שאלה", "זמן" ו"ג\'וקר".', [
-    { label: `${COIN_PACK} 🪙 ב-${COST.coinPack} 💎`, run: () => {
+  openModal(`${I.coin('w-6 h-6')} מטבעות`, 'המטבעות משמשים ל"החלף שאלה", "זמן" ו"ג\'וקר".', [
+    { label: `${COIN_PACK} ${I.coin('w-5 h-5')} ב-${COST.coinPack} ${I.gem('w-5 h-5')}`, run: () => {
       if (!spend(save, 'gems', COST.coinPack)) return toast('אין מספיק יהלומים');
       save.coins += COIN_PACK; persist(); renderBar(); toast(`קיבלת ${COIN_PACK} מטבעות`);
     } },
@@ -251,20 +253,20 @@ function home() {
   ${homeHeader()}
   <main class="menu-in px-4 flex flex-col justify-start gap-3.5 mt-2 z-10">
     <section class="grid grid-cols-2 gap-3">
-      <button data-act="daily" class="game-gloss-card h-20 rounded-2xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
+      <button data-act="daily" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
         <div class="absolute inset-0 bg-gradient-to-tr from-pink-500/20 to-purple-400/10 pointer-events-none"></div>
-        <div class="absolute -left-2 -bottom-2 text-3xl opacity-25 filter blur-[0.5px]">🎁</div>
+        <div class="absolute -left-1 -bottom-2 opacity-30">${I.gift('w-12 h-12')}</div>
         <span class="text-xl font-black text-3d-white tracking-wide z-10">פרס יומי</span>
       </button>
-      <button data-act="free" class="game-gloss-card h-20 rounded-2xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
+      <button data-act="free" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
         <div class="absolute inset-0 bg-gradient-to-tr from-yellow-500/15 to-purple-400/10 pointer-events-none"></div>
-        <div class="absolute -right-2 -top-2 text-2xl opacity-20">✨</div>
+        <div class="absolute -right-1 -top-1 opacity-30 text-yellow-200">${I.spark('w-9 h-9')}</div>
         <span class="text-lg font-black text-3d-white tracking-tight z-10 leading-tight">מטבעות חינם</span>
         <span class="text-xs font-bold text-yellow-300 z-10 mt-0.5 drop-shadow">זמין!</span>
       </button>
     </section>
     <section>
-      <button data-act="seasons" class="w-full game-gloss-card h-24 rounded-2xl relative overflow-hidden flex items-center justify-center cursor-pointer">
+      <button data-act="seasons" class="w-full game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
           <svg class="w-24 h-24 text-pink-300" fill="currentColor" viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"></path></svg>
         </div>
@@ -274,11 +276,11 @@ function home() {
       </button>
     </section>
     <section>
-      <button data-act="play" class="w-full play-btn-glow h-28 rounded-2xl relative overflow-hidden flex items-center justify-center cursor-pointer transition-all active:scale-[0.98]">
+      <button data-act="play" class="w-full play-btn-glow h-28 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer transition-all active:scale-[0.98]">
         <div class="absolute inset-0 tiled-diamonds opacity-40"></div>
-        <div class="absolute top-2.5 right-6 text-white text-xs opacity-75 animate-pulse">✦</div>
-        <div class="absolute bottom-3 left-10 text-white text-xs opacity-60 animate-pulse">✦</div>
-        <div class="absolute top-4 left-1/4 text-white text-[10px] opacity-75">✦</div>
+        <div class="absolute top-2.5 right-6 text-white opacity-75 animate-pulse">${I.spark('w-3 h-3')}</div>
+        <div class="absolute bottom-3 left-10 text-white opacity-60 animate-pulse">${I.spark('w-3 h-3')}</div>
+        <div class="absolute top-4 left-1/4 text-white opacity-75">${I.spark('w-2.5 h-2.5')}</div>
         <span class="text-4xl font-extrabold text-3d-white tracking-normal z-10">שחק כעת</span>
       </button>
     </section>
@@ -306,7 +308,7 @@ function home() {
       </div>
       <h1 class="text-5xl font-black font-display text-3d-banner tracking-normal relative z-20 mt-1 mb-1 leading-none">עוד!</h1>
       <p class="text-xs sm:text-sm font-bold text-purple-100 max-w-[280px] leading-snug drop-shadow-md z-20">המון אפשרויות, פעילויות ואתגרים מחכים במשחק!</p>
-      <span class="text-[10px] text-purple-300/60 mt-1 z-20">v4</span>
+      <span class="text-[10px] text-purple-300/70 mt-1 z-20">v5 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></span>
     </div>
   </footer>
 </div>`);
@@ -325,27 +327,27 @@ const CROWN = (cls, gems = false) => `
 function leaderboard() {
   const rows = [
     FRIENDS[2], FRIENDS[1],
-    { name: 'חגית דהן', face: '👱‍♀️', trophies: 556 },
+    { name: 'חגית דהן', trophies: 556 },
     { ...ME, trophies: save.trophies, me: true },
-    { name: 'Shir Daum', face: '👩', trophies: 123 },
-    { name: 'Shai Cohen', face: '🧑', trophies: 58 },
+    { name: 'Shir Daum', trophies: 123 },
+    { name: 'Shai Cohen', trophies: 58 },
   ].sort((a, b) => b.trophies - a.trophies);
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} tiled-diamonds flex flex-col overflow-hidden">
   ${gameHeader()}
   <div class="px-3.5 flex justify-start">
-    <div class="stat-pill px-3 py-0.5 rounded-full flex items-center gap-1.5 h-7"><span class="text-sm font-bold">${save.trophies}</span><span>🏆</span></div>
+    <div class="stat-pill px-3 py-0.5 rounded-lg flex items-center gap-1.5 h-7"><span class="text-sm font-bold">${save.trophies}</span>${I.trophy('w-4 h-4')}</div>
   </div>
   <div class="flex justify-center -mb-3 z-10 crown-in">${CROWN('w-28 h-20 drop-shadow-lg')}</div>
-  <section class="mx-3.5 flex-1 min-h-0 bg-gradient-to-b from-[#7a22d6] to-[#5a16a8] rounded-3xl border border-white/20 shadow-xl px-3 pt-4 pb-3 flex flex-col">
+  <section class="mx-3.5 flex-1 min-h-0 bg-gradient-to-b from-[#7a22d6] to-[#5a16a8] rounded-2xl border border-white/20 shadow-xl px-3 pt-4 pb-3 flex flex-col">
     <h1 class="text-center text-4xl font-black text-3d-white mb-3">המובילים</h1>
     <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 lb-list">
       ${rows.map((r, i) => `
-      <div class="lb-row rounded-2xl px-3 py-2 flex items-center gap-3 ${r.me ? 'bg-white/15 border border-white/50' : 'bg-white/5'}" style="animation-delay:${i * 70}ms">
-        <div class="w-9 h-9 rounded-full ${r.me ? 'text-yellow-300 border-yellow-300/70' : 'border-white/30'} border flex items-center justify-center font-black text-lg">${i + 1}</div>
+      <div class="lb-row rounded-xl px-3 py-2 flex items-center gap-3 ${r.me ? 'bg-white/15 border border-white/50' : 'bg-white/5'}" style="animation-delay:${i * 70}ms">
+        <div class="w-9 h-9 rounded-lg ${r.me ? 'text-yellow-300 border-yellow-300/70' : 'border-white/30'} border flex items-center justify-center font-black text-lg">${i + 1}</div>
         ${avatar(r, 'w-12 h-12', `border-2 ${r.me ? 'border-yellow-400' : 'border-white/80'}`)}
         <b class="flex-1 font-extrabold text-lg ${r.me ? 'text-yellow-200' : ''}">${esc(r.name)}</b>
-        <div class="stat-pill px-3 py-1 rounded-full text-sm font-extrabold flex items-center gap-1.5"><span>${r.trophies}</span><span>🏆</span></div>
+        <div class="stat-pill px-3 py-1 rounded-lg text-sm font-extrabold flex items-center gap-1.5"><span>${r.trophies}</span>${I.trophy('w-4 h-4')}</div>
       </div>`).join('')}
     </div>
   </section>
@@ -411,18 +413,18 @@ function intro() {
   ${gameHeader()}
   <section class="px-3.5 flex flex-col gap-4">
     <div class="grid grid-cols-[1fr_auto_1fr] items-center text-center gap-2 mt-2">
-      <div class="flex flex-col items-center gap-1">${avatar(ME, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(ME.name)}</span><span class="stat-pill rounded-full px-3 text-sm font-bold">${save.trophies} 🏆</span></div>
+      <div class="flex flex-col items-center gap-1">${avatar(ME, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(ME.name)}</span><span class="stat-pill rounded-lg px-3 text-sm font-bold">${save.trophies} ${I.trophy('w-4 h-4')}</span></div>
       <div class="text-5xl font-black text-3d-white bump" dir="ltr">${M.score[0]}-${M.score[1]}</div>
-      <div class="flex flex-col items-center gap-1">${avatar(M.opp, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(M.opp.name)}</span><span class="stat-pill rounded-full px-3 text-sm font-bold">${M.opp.trophies} 🏆</span></div>
+      <div class="flex flex-col items-center gap-1">${avatar(M.opp, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(M.opp.name)}</span><span class="stat-pill rounded-lg px-3 text-sm font-bold">${M.opp.trophies} ${I.trophy('w-4 h-4')}</span></div>
     </div>
     <div id="count" class="count-tick self-center w-20 h-20 rounded-full border-4 border-white/25 border-t-white flex items-center justify-center text-4xl font-black">${left}</div>
-    <div class="bg-[#8b2dbf] p-5 rounded-3xl border-2 border-white/25 shadow-xl text-center">
+    <div class="bg-[#8b2dbf] p-5 rounded-2xl border-2 border-white/25 shadow-xl text-center">
       <h1 class="font-extrabold text-white text-[23px] leading-tight text-emboss">${esc(q.text)}</h1>
       <p class="text-purple-100 text-sm mt-2 font-medium">סיבוב ${M.round} · ${q.answers.length} תשובות לחפש</p>
     </div>
     <div class="grid grid-cols-2 gap-3">
       ${darkBtn('swap', 'py-3', `<span class="font-extrabold text-sm">החלף שאלה</span>${cost(COST.swap)}`)}
-      ${darkBtn('confirm', 'py-3', '<span class="font-extrabold text-sm">✓ אשר שאלה</span>')}
+      ${darkBtn('confirm', 'py-3', `<span class="font-extrabold text-sm">${I.check('w-4 h-4')} אשר שאלה</span>`)}
     </div>
   </section>
 </div>`, forfeit);
@@ -439,21 +441,18 @@ function intro() {
   }, 1000) };
 }
 
-const CHECK = (cls = 'bg-[#70d63b]', mark = '✓') => `<div class="relative w-6 h-6 rounded-full ${cls} flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">${mark}</div>`;
+const CHECK = (ok, spark = '') => `<div class="relative w-6 h-6 rounded-md ${ok ? 'bg-[#70d63b]' : 'bg-[#ef4444]'} flex items-center justify-center text-white shadow-sm shrink-0">${ok ? I.check('w-3.5 h-3.5') : I.cross('w-3.5 h-3.5')}${spark}</div>`;
 const SPARKS = '<span class="spark" style="--dx:-14px;--dy:-16px"></span><span class="spark" style="--dx:14px;--dy:-14px"></span><span class="spark" style="--dx:-16px;--dy:12px"></span><span class="spark" style="--dx:16px;--dy:14px"></span>';
 
 /** שורה בלוח: who = me | bot, hit = נכון/טעות. "me" בצד שמאל, "bot" בצד ימין. */
 const bubbleRow = (e) => {
-  const ok = e.hit;
-  const check = ok
-    ? `<div class="relative w-6 h-6 rounded-full bg-[#70d63b] flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">✓${e.who === 'me' ? SPARKS : ''}</div>`
-    : CHECK('bg-[#ef4444]', '✗');
-  const bubble = ok
+  const check = CHECK(e.hit, e.hit && e.who === 'me' ? SPARKS : '');
+  const bubble = e.hit
     ? (e.who === 'me'
       ? 'bg-[#dcfce7] text-[#1b7a2d] border-green-200'
       : 'bg-white text-[#2a0845] border-purple-100')
     : 'bg-[#fee2e2] text-[#b91c1c] border-red-200 miss-flash';
-  const b = `<div class="${bubble} font-extrabold text-[15px] px-4 py-1 rounded-xl badge-3d border max-w-[70%] truncate">${esc(e.text)}</div>`;
+  const b = `<div class="${bubble} font-extrabold text-[15px] px-4 py-1 rounded-lg badge-3d border max-w-[70%] truncate">${esc(e.text)}</div>`;
   return e.who === 'me'
     ? `<div class="flex items-center justify-end gap-1.5 slide-end">${b}${check}</div>`
     : `<div class="flex items-center justify-start gap-1.5 slide-start">${check}${b}</div>`;
@@ -468,13 +467,16 @@ const SWORD = (rot, trans, grad) => `
   <div class="w-4 h-4 bg-yellow-500 rounded-full border border-amber-600 shadow"></div>
 </div></div>`;
 
+const HEART = (alive, breaking) => I.heart(`w-5 h-5 ${alive ? 'text-red-500' : 'text-white/25'} ${breaking ? 'heart-break' : ''}`);
+const hearts = (lives, breaking) => Array.from({ length: LIVES }, (_, i) => HEART(i < lives, breaking && i === lives)).join('');
+const REACTIONS = ['יפה!', 'חכם', 'נו, תחשוב', 'אחלה', 'בואו נראה'];
+
 function play() {
   const q = QUESTIONS[M.qi];
   const n = q.answers.length;
-  const found = Array(n).fill(null); // null | 'me' | 'bot'
+  const S = newRound(n, M.round % 2 === 1 ? 'me' : 'bot');
   const log = []; // { who, hit, text }
-  const strikes = { me: 0, bot: 0 };
-  let turn = M.round % 2 === 1 ? 'me' : 'bot';
+  const shown = { me: LIVES, bot: LIVES };
   let turnTotal = TURN_SECONDS * 1000;
   let turnLeft = turnTotal;
   let over = false;
@@ -483,32 +485,31 @@ function play() {
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col justify-between overflow-hidden">
   ${gameHeader()}
   <section class="px-3.5 z-10 flex flex-col gap-3 min-h-0">
-    <div class="flex items-center justify-between px-1">
-      <div id="av-me" class="rounded-full">${avatar(ME, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div>
+    <div class="flex items-start justify-between px-1">
+      <div class="flex flex-col items-center gap-1"><div id="av-me" class="rounded-full">${avatar(ME, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div><div id="lives-me" class="flex gap-0.5"></div></div>
       <div class="flex flex-col items-center">
-        <div id="chip" class="stat-pill rounded-full px-4 py-1 text-sm font-extrabold flex items-center gap-2"><span id="chip-text"></span><span id="chip-sec" class="text-yellow-300 tabular-nums"></span></div>
+        <div id="chip" class="stat-pill rounded-lg px-4 py-1 text-sm font-extrabold flex items-center gap-2"><span id="chip-text"></span><span id="chip-sec" class="text-yellow-300 tabular-nums"></span></div>
         <div class="w-40 bg-purple-950/40 h-1.5 rounded-full overflow-hidden mt-1.5"><div id="tbar" class="h-full rounded-full w-full" style="background:linear-gradient(to left,#d4a853,#eab308)"></div></div>
       </div>
-      <div id="av-bot" class="rounded-full">${avatar(M.opp, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div>
+      <div class="flex flex-col items-center gap-1"><div id="av-bot" class="rounded-full">${avatar(M.opp, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div><div id="lives-bot" class="flex gap-0.5"></div></div>
     </div>
-    <div class="bg-[#8b2dbf] p-3 pb-3.5 rounded-3xl border-2 border-white/25 shadow-xl flex flex-col gap-2.5 min-h-0">
+    <div class="bg-[#8b2dbf] p-3 pb-3.5 rounded-2xl border-2 border-white/25 shadow-xl flex flex-col gap-2.5 min-h-0">
       <h1 class="text-center font-extrabold text-white text-[21px] leading-tight px-2 text-emboss tracking-normal">${esc(q.text)}</h1>
-      <div class="doodle-bg rounded-2xl p-3 border border-purple-300/40 relative shadow-inner min-h-[175px] flex flex-col justify-between overflow-hidden">
+      <div class="doodle-bg rounded-xl p-3 border border-purple-300/40 relative shadow-inner min-h-[175px] flex flex-col justify-between overflow-hidden">
         <div id="rows" class="flex flex-col gap-2.5 w-full max-h-[30dvh] overflow-y-auto"></div>
         <div class="mt-2 pt-1 border-t border-purple-200/50 flex items-center justify-between text-xs font-bold text-purple-900 px-1">
           <span class="text-purple-800 text-[13px] font-black">${esc(ME.name)}</span>
           <span id="left" class="text-[11px] font-bold text-purple-700/70"></span>
-          <span id="lives" class="text-[13px] tracking-widest"></span>
         </div>
       </div>
     </div>
     <div class="grid grid-cols-5 gap-2 px-1">
       ${darkBtn('joker', 'col-span-2', `<span class="font-extrabold text-sm">ג'וקר</span>${cost(COST.joker)}`)}
       ${darkBtn('time', 'col-span-2', `<span class="font-extrabold text-sm">זמן</span>${cost(COST.time)}`)}
-      ${darkBtn('emoji', 'col-span-1 !text-xl', '🤪')}
+      ${darkBtn('emoji', 'col-span-1', I.smile('w-6 h-6'))}
     </div>
-    <form id="form" class="flex items-stretch bg-white rounded-2xl p-1 shadow-2xl border border-white/50 h-[52px]" autocomplete="off">
-      <button id="send" class="bg-gradient-to-b from-[#ffbe2e] to-[#f59e0b] text-white font-black text-lg px-6 rounded-xl btn-3d-yellow transition-transform active:scale-95 flex items-center justify-center disabled:opacity-50" type="submit">שלח</button>
+    <form id="form" class="flex items-stretch bg-white rounded-xl p-1 shadow-2xl border border-white/50 h-[52px]" autocomplete="off">
+      <button id="send" class="bg-gradient-to-b from-[#ffbe2e] to-[#f59e0b] text-white font-black text-lg px-6 rounded-lg btn-3d-yellow transition-transform active:scale-95 flex items-center justify-center disabled:opacity-50" type="submit">שלח</button>
       <input id="ans" class="flex-1 min-w-0 bg-transparent border-0 outline-none text-gray-800 placeholder-gray-400 font-bold text-right px-3 text-base" dir="rtl" placeholder="הזן תשובה" type="text" autocapitalize="off" spellcheck="false" enterkeyhint="send" aria-label="תשובה" />
     </form>
   </section>
@@ -535,13 +536,15 @@ function play() {
   function draw() {
     rowsEl.innerHTML = log.map(bubbleRow).join('');
     rowsEl.scrollTop = rowsEl.scrollHeight;
-    $('#left').textContent = `נשארו ${n - found.filter(Boolean).length}`;
-    const dots = (who) => '●'.repeat(2 - strikes[who]) + '<span class="opacity-30">' + '●'.repeat(strikes[who]) + '</span>';
-    $('#lives').innerHTML = `<span class="text-red-500">${dots('me')}</span>`;
+    $('#left').textContent = `נשארו ${n - S.count}`;
+    for (const who of ['me', 'bot']) {
+      $(`#lives-${who}`).innerHTML = hearts(S.lives[who], shown[who] !== S.lives[who]);
+      shown[who] = S.lives[who];
+    }
   }
 
   function paintTurn() {
-    const mine = turn === 'me';
+    const mine = S.turn === 'me';
     $('#chip-text').textContent = mine ? 'התור שלך' : `${M.opp.name} עונה...`;
     $('#chip-sec').style.visibility = mine ? 'visible' : 'hidden';
     $('#av-me').className = `rounded-full ${mine ? 'turn-active' : 'turn-idle'}`;
@@ -554,14 +557,12 @@ function play() {
     else input.blur();
   }
 
-  function setTurn(t) {
-    if (over) return;
-    turn = t;
+  function nextTurn() {
     turnTotal = TURN_SECONDS * 1000;
     turnLeft = turnTotal;
     paintTurn();
-    if (t === 'bot') {
-      const open = found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
+    if (S.turn === 'bot') {
+      const open = S.found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
       const plan = planBotTurn(open, botSkill(M.opp));
       R.botTimers.push(setTimeout(() => {
         if (over) return;
@@ -569,36 +570,34 @@ function play() {
       }, plan.delay));
     }
   }
-  const other = (w) => (w === 'me' ? 'bot' : 'me');
 
   function hit(i, who) {
-    if (over || found[i]) return;
-    found[i] = who;
-    strikes[who] = 0;
+    if (over || S.turn !== who || S.found[i]) return;
+    ruleHit(S, who, i);
     log.push({ who, hit: true, text: q.answers[i].names[0] });
     draw();
-    if (found.every(Boolean)) return end(null);
-    setTurn(other(who));
+    if (S.over) return end();
+    nextTurn();
   }
   function miss(who, text) {
-    if (over) return;
-    strikes[who] += 1;
+    if (over || S.turn !== who) return;
+    ruleMiss(S, who);
     log.push({ who, hit: false, text });
     draw();
-    if (strikes[who] >= 2) return end(who);
-    setTurn(other(who));
+    if (S.over) return end();
+    nextTurn();
   }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (turn !== 'me' || over) return;
+    if (S.turn !== 'me' || over) return;
     const text = input.value.trim();
     if (!text) return;
     const m = matchAnswer(text, q.answers);
     input.value = '';
-    if (m && found[m.index]) {
+    if (m && S.found[m.index]) {
       form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
-      return toast(found[m.index] === 'me' ? 'כבר מצאת את זה' : 'היריב כבר מצא את זה');
+      return toast(S.found[m.index] === 'me' ? 'כבר מצאת את זה' : 'היריב כבר מצא את זה');
     }
     if (m) hit(m.index, 'me');
     else {
@@ -607,51 +606,50 @@ function play() {
     }
   });
   ACTIONS.time = () => {
-    if (over || turn !== 'me') return toast('רק בתור שלך');
+    if (over || S.turn !== 'me') return toast('רק בתור שלך');
     if (!spend(save, 'coins', COST.time)) return toast('אין מספיק מטבעות');
     turnTotal += 10000; turnLeft += 10000; persist(); renderBar();
   };
   ACTIONS.joker = () => {
-    if (over || turn !== 'me') return toast('רק בתור שלך');
-    const open = found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
+    if (over || S.turn !== 'me') return toast('רק בתור שלך');
+    const open = S.found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
     if (!open.length) return;
     if (!spend(save, 'coins', COST.joker)) return toast('אין מספיק מטבעות');
     persist(); renderBar();
     hit(open[Math.floor(Math.random() * open.length)], 'me');
   };
-  ACTIONS.emoji = () => toast(['😜', '😎', '🤔', '😂'][Math.floor(Math.random() * 4)]);
+  ACTIONS.emoji = () => toast(REACTIONS[Math.floor(Math.random() * REACTIONS.length)]);
 
   R = { botTimers: [], iv: null };
   draw();
-  paintTurn();
-  setTurn(turn);
+  nextTurn();
   let last = performance.now();
   R.iv = setInterval(() => {
     const now = performance.now();
     turnLeft -= now - last; last = now;
-    const sec = Math.max(0, Math.ceil(turnLeft / 1000));
-    $('#chip-sec').textContent = sec;
+    $('#chip-sec').textContent = Math.max(0, Math.ceil(turnLeft / 1000));
     tbar.style.width = `${Math.max(0, (turnLeft / turnTotal) * 100)}%`;
     const low = turnLeft < 3000;
     tbar.classList.toggle('bar-low', low);
     $('#chip').classList.toggle('chip-low', low);
-    if (turnLeft <= 0 && turn === 'me') miss('me', '⏱');
+    if (turnLeft <= 0 && S.turn === 'me') miss('me', 'נגמר הזמן');
     else if (turnLeft <= 0) turnLeft = 0;
   }, 100);
 
-  /** loser: מי שהפסיד בגלל שתי החטאות, או null אם נגמרו התשובות */
-  function end(loser) {
+  /** הסיבוב נגמר: מי שנשאר בלי חיים מפסיד, או שמי שנתן את התשובה האחרונה מנצח. */
+  function end() {
     if (over) return;
     over = true;
     stopRound();
     input.disabled = true; send.disabled = true;
-    const me = found.filter((f) => f === 'me').length;
-    const bot = found.filter((f) => f === 'bot').length;
-    const winner = loser ? (loser === 'me' ? 1 : 0) : me > bot ? 0 : bot > me ? 1 : -1;
-    if (winner >= 0) M.score[winner] += 1;
-    const missed = q.answers.map((a, i) => (found[i] ? null : a.names[0])).filter(Boolean);
-    const title = winner === 0 ? 'זכית בסיבוב!' : winner === 1 ? 'היריב זכה בסיבוב' : 'תיקו בסיבוב';
-    const why = loser === 'me' ? 'שתי טעויות ברצף' : loser === 'bot' ? `${M.opp.name} טעה פעמיים` : `${me} מול ${bot}`;
+    const { winner: w, reason } = S.over;
+    const winner = w === 'me' ? 0 : 1;
+    M.score[winner] += 1;
+    const title = winner === 0 ? 'זכית בסיבוב!' : 'היריב זכה בסיבוב';
+    const why = reason === 'last'
+      ? (w === 'me' ? 'נתת את התשובה האחרונה' : `${M.opp.name} נתן את התשובה האחרונה`)
+      : (w === 'me' ? `${M.opp.name} נשאר בלי חיים` : 'נגמרו לך החיים');
+    const missed = q.answers.map((a, i) => (S.found[i] ? null : a.names[0])).filter(Boolean);
     const banner = document.createElement('div');
     banner.className = 'banner';
     banner.innerHTML = `<div class="px-6"><h2 class="text-4xl font-black text-3d-white mb-2">${esc(title)}</h2><p class="text-xl text-purple-100 font-bold">${esc(why)}</p>${missed.length ? `<p class="mt-3 text-sm text-purple-200">לא נמצאו: ${esc(missed.slice(0, 4).join(', '))}${missed.length > 4 ? '…' : ''}</p>` : ''}</div>`;
@@ -674,7 +672,7 @@ function finishMatch(outcome) {
   save.coins += r.coins;
   if (outcome === 'win') save.wins += 1;
   persist();
-  const title = outcome === 'win' ? '🏆 ניצחת!' : outcome === 'lose' ? 'הפסדת הפעם' : 'תיקו';
+  const title = outcome === 'win' ? 'ניצחת!' : outcome === 'lose' ? 'הפסדת הפעם' : 'תיקו';
   ACTIONS.again = () => startMatch();
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
@@ -687,16 +685,30 @@ function finishMatch(outcome) {
     </div>
     <h2 class="text-5xl font-black text-3d-banner">${title}</h2>
     <div class="flex justify-center gap-3">
-      <div id="r-tp" class="stat-pill rounded-full px-5 py-2 text-xl font-bold pop"></div>
-      <div id="r-co" class="stat-pill rounded-full px-5 py-2 text-xl font-bold pop" style="animation-delay:.15s"></div>
+      <div id="r-tp" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop"></div>
+      <div id="r-co" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop" style="animation-delay:.15s"></div>
     </div>
-    <button data-act="again" class="play-btn-glow w-full h-20 rounded-2xl text-3xl font-extrabold text-3d-white">שחק שוב</button>
+    <button data-act="again" class="play-btn-glow w-full h-20 rounded-xl text-3xl font-extrabold text-3d-white">שחק שוב</button>
     ${bigGloss('home', 'חזרה למסך הבית', '!text-xl')}
   </section>
 </div>`, home);
-  countUp($('#r-tp'), Math.abs(r.trophies), r.trophies < 0 ? '-' : '+', ' 🏆');
-  countUp($('#r-co'), r.coins, '+', ' 🪙');
+  countUp($('#r-tp'), Math.abs(r.trophies), r.trophies < 0 ? '-' : '+', I.trophy('w-5 h-5'));
+  countUp($('#r-co'), r.coins, '+', I.coin('w-5 h-5'));
   if (outcome === 'win') confetti(screen, 40);
 }
 
+// ---------- הודעת שמירה בדפדפן ----------
+function consentBar() {
+  try { if (localStorage.getItem('rosh-brosh-consent')) return; } catch { /* show anyway */ }
+  const bar = document.createElement('div');
+  bar.className = 'absolute inset-x-3 bottom-3 z-[45] bg-[#2b0850] border border-purple-400/50 rounded-xl p-3 flex items-center gap-3 text-sm shadow-2xl';
+  bar.innerHTML = '<p class="flex-1 leading-snug">המשחק שומר את ההתקדמות שלך בדפדפן. <a href="./privacy.html" class="underline">מדיניות פרטיות</a></p><button class="bg-[#ffbe2e] text-[#3b2200] font-extrabold rounded-lg px-4 py-2">הבנתי</button>';
+  bar.querySelector('button').onclick = () => {
+    try { localStorage.setItem('rosh-brosh-consent', '1'); } catch { /* ignore */ }
+    bar.remove();
+  };
+  $('#app').append(bar);
+}
+
 home();
+consentBar();
