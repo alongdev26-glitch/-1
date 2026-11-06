@@ -10,12 +10,10 @@
   <body>
     <div id="app">
       <header id="topbar" hidden>
-        <button id="back" class="round" aria-label="חזרה">‹</button>
-        <div class="pills">
-          <button class="pill" id="energy-pill" aria-label="אנרגיה"><span id="energy-val"></span><b>⚡</b><small id="energy-timer"></small></button>
-          <button class="pill" id="gems-pill" aria-label="יהלומים"><span id="gems-val"></span><b>💎</b></button>
-          <button class="pill" id="coins-pill" aria-label="מטבעות"><span id="coins-val"></span><b>🪙</b></button>
-        </div>
+        <button id="back" class="round" aria-label="סגירה">✕</button>
+        <button class="pill energy" id="energy-pill" aria-label="אנרגיה"><span id="energy-val"></span><b class="ico">⚡<i>+</i></b><small id="energy-timer"></small></button>
+        <button class="pill" id="gems-pill" aria-label="יהלומים"><span id="gems-val"></span><b class="ico">💎<i>+</i></b></button>
+        <button class="pill" id="coins-pill" aria-label="מטבעות"><span id="coins-val"></span><b class="ico">🪙<i>+</i></b></button>
       </header>
       <main id="screen"></main>
       <div id="toast" role="status" aria-live="polite"></div>

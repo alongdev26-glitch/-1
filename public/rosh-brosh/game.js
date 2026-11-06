@@ -122,7 +122,7 @@ let backAction = null;
 function show(name, builder, { back = null, bar = true } = {}) {
   $('#topbar').hidden = !bar;
   backAction = back;
-  $('#back').style.visibility = back ? 'visible' : 'hidden';
+  $('#back').style.visibility = 'visible';
   screen.replaceChildren(builder());
   screen.scrollTop = 0;
   renderBar();
@@ -130,22 +130,29 @@ function show(name, builder, { back = null, bar = true } = {}) {
 $('#back').onclick = () => backAction?.();
 
 // ---------- home ----------
-const FRIENDS = [makeOpponent(60), makeOpponent(100), makeOpponent(150)];
+const FRIENDS = (() => {
+  const out = [];
+  while (out.length < 3) {
+    const f = makeOpponent([60, 100, 150][out.length]);
+    if (!out.some((o) => o.name === f.name)) out.push(f);
+  }
+  return out;
+})();
 function home() {
   stopRound();
   show('home', () => h('div', { class: 'home', style: 'display:flex;flex-direction:column;flex:1' },
-    h('div', { class: 'trophies' }, `${save.trophies} 🏆`),
+    h('div', { class: 'profile' }, avatar(ME, 'md gold'), h('div', { class: 'trophies' }, `${save.trophies} 🏆`)),
     h('div', { class: 'menu' },
       h('div', { class: 'row' },
         h('button', { class: 'big small', onclick: claimDaily }, 'פרס יומי'),
         h('button', { class: 'big small', onclick: claimFreeCoins }, 'מטבעות חינם', h('small', {}, 'זמין!')),
       ),
-      h('button', { class: 'big', onclick: leaderboard }, 'המובילים'),
+      h('button', { class: 'big seasons', onclick: leaderboard }, 'עונות', h('small', {}, 'טבלת המובילים')),
       h('button', { class: 'big play', onclick: startMatch }, 'שחק כעת'),
     ),
     h('div', { class: 'section-title' }, 'החברים שלי'),
     h('div', { class: 'friends' }, FRIENDS.map((f) => h('button', { class: 'friend', onclick: () => startMatch(f) }, avatar(f), f.name))),
-    h('div', { class: 'hero' }, h('h1', {}, 'ראש בראש'), h('p', {}, `${save.played} משחקים · ${save.wins} ניצחונות`)),
+    
   ));
 }
 
@@ -239,26 +246,28 @@ function play() {
   const found = Array(n).fill(null); // null | 'me' | 'bot'
   const chips = h('div', { class: 'chips' });
   const countMe = h('span', {}, '');
-  const countBot = h('span', {}, '');
+  
   const bar = h('div', { class: 'timerbar' }, h('i'));
   const input = h('input', { type: 'text', placeholder: 'הזן תשובה', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'send', 'aria-label': 'תשובה' });
   const entry = h('form', { class: 'entry' }, input, h('button', { type: 'submit' }, 'שלח'));
-  const timeBtn = h('button', { class: 'act', type: 'button' }, `עוד 10 שניות · ${COST.time} 🪙`);
-  const jokerBtn = h('button', { class: 'act', type: 'button' }, `ג'וקר · ${COST.joker} 🪙`);
+  const cost = (n) => h('span', { class: 'cost' }, h('b', {}, n), '🪙');
+  const timeBtn = h('button', { class: 'act', type: 'button' }, h('span', {}, 'זמן'), cost(COST.time));
+  const emojiBtn = h('button', { class: 'act emoji', type: 'button', onclick: () => toast(['😜', '😎', '🤔', '😂'][Math.floor(Math.random() * 4)]) }, '🤪');
+  const jokerBtn = h('button', { class: 'act', type: 'button' }, h('span', {}, "ג'וקר"), cost(COST.joker));
   let total = ROUND_SECONDS * 1000;
   let left = total;
   let over = false;
   const order = []; // indexes in the order they were found, to show the story
 
   function draw() {
-    chips.replaceChildren(
-      ...order.map((i) => h('span', { class: `chip ${found[i]}` }, h('span', { class: 'tick' }, found[i] === 'me' ? '✓' : '•'), q.answers[i].names[0])),
-      ...Array.from({ length: n - order.length }, () => h('span', { class: 'chip ghost' }, '?')),
-    );
+    chips.replaceChildren(...order.map((i) => {
+      const mine = found[i] === 'me';
+      return h('div', { class: `msg ${mine ? 'me' : 'bot'}` },
+        h('span', { class: 'okc' }, '✓'), h('span', { class: 'bubble' }, q.answers[i].names[0]));
+    }));
     const me = found.filter((f) => f === 'me').length;
     const bot = found.filter((f) => f === 'bot').length;
-    countMe.textContent = `אתה: ${me}`;
-    countBot.textContent = `${M.opp.name}: ${bot}`;
+    countMe.textContent = `נשארו ${n - me - bot}`;
     chips.scrollTop = chips.scrollHeight;
   }
   function claim(i, who) {
@@ -300,8 +309,8 @@ function play() {
   };
 
   show('play', () => h('div', { style: 'display:flex;flex-direction:column;flex:1;min-height:0' },
-    h('div', { class: 'board' }, h('header', {}, q.text), chips, h('div', { class: 'count' }, countMe, countBot), bar),
-    h('div', { class: 'helpers' }, timeBtn, jokerBtn),
+    h('div', { class: 'board' }, h('header', {}, q.text), h('div', { class: 'panel' }, chips, h('div', { class: 'me-row' }, h('div', { class: 'who-line' }, h('span', { class: 'nm' }, ME.name), countMe, avatar(ME, 'sm')), bar))),
+    h('div', { class: 'helpers' }, jokerBtn, timeBtn, emojiBtn),
     entry,
   ), { back: forfeit });
   draw();
