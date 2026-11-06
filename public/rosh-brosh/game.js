@@ -1,20 +1,22 @@
-import { QUESTIONS } from './questions.js?v=6';
-import { matchAnswer } from './checker.js?v=6';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=6';
+import { QUESTIONS } from './questions.js?v=7';
+import { matchAnswer } from './checker.js?v=7';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=7';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=6';
-import { I, emblem } from './icons.js?v=6';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=6';
+} from './economy.js?v=7';
+import { I, emblem } from './icons.js?v=7';
+import { findMatch } from './net.js?v=7';
+import { toGuest, acceptAnswer, cleanName } from './protocol.js?v=7';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=7';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
 const WINS_NEEDED = 2;
 const MAX_ROUNDS = 5;
 
-const ME = { name: 'אופיר שאול' };
+const ME = { get name() { return save.name || 'אופיר שאול'; } };
 const FRIENDS = [
   { name: 'שימי ביטון', trophies: 68 },
   { name: 'יוני הררי', trophies: 677 },
@@ -71,7 +73,8 @@ const homeHeader = () => `
     </div>
   </div>
   <div class="flex items-center gap-2 mt-1 mr-1">
-    ${avatar(ME, 'w-12 h-12', 'border-2 border-yellow-400 shadow-lg')}
+    <button data-act="rename" aria-label="שנה שם" class="rounded-full">${avatar(ME, 'w-12 h-12', 'border-2 border-yellow-400 shadow-lg')}</button>
+    <span class="text-sm font-bold text-white/90">${esc(ME.name)}</span>
     <div class="stat-pill px-2.5 py-0.5 rounded-lg flex items-center gap-1 h-6"><span class="text-xs font-bold text-white">${save.trophies}</span>${I.trophy('w-4 h-4')}</div>
   </div>
 </header>`;
@@ -234,7 +237,7 @@ function show(html, back = null) {
 const ACTIONS = {
   back: () => backAction?.(),
   energy: buyEnergy, gems: gemsModal, coins: coinsModal,
-  daily: claimDaily, free: claimFreeCoins, seasons: () => leaderboard(), play: () => startMatch(),
+  daily: claimDaily, free: claimFreeCoins, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => renameModal(),
   friend: (el) => startMatch(FRIENDS[Number(el.dataset.i)]),
   home: () => home(),
   claim: () => { if (claimTask(save)) { persist(); renderBar(); toast(`קיבלת ${TASK_GEMS} יהלומים`); home(); } },
@@ -243,6 +246,24 @@ screen.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (el) (ACTIONS[el.dataset.act] || (() => {}))(el);
 });
+
+// ---------- שם שחקן ----------
+function renameModal() {
+  const m = $('#modal');
+  m.innerHTML = `<form id="rename" class="game-gloss-card w-full rounded-2xl p-5 text-center flex flex-col gap-3">
+    <h3 class="text-2xl font-black text-3d-white">איך קוראים לך?</h3>
+    <input id="rename-input" class="rounded-xl px-4 py-3 text-lg font-bold text-gray-800 text-right outline-none" dir="rtl" maxlength="14" value="${esc(ME.name)}" autocomplete="off" />
+    <button class="play-btn-glow rounded-xl py-3 text-xl font-extrabold" type="submit">שמור</button>
+  </form>`;
+  m.hidden = false;
+  m.onclick = (e) => { if (e.target === m) closeModal(); };
+  $('#rename-input').focus();
+  $('#rename').addEventListener('submit', (e) => {
+    e.preventDefault();
+    save.name = cleanName($('#rename-input').value, 'אופיר שאול');
+    persist(); closeModal(); home();
+  });
+}
 
 // ---------- משימה יומית ----------
 function taskCard() {
@@ -306,6 +327,10 @@ function home() {
         <span class="text-4xl font-extrabold text-3d-white tracking-normal z-10">שחק כעת</span>
       </button>
     </section>
+    <section class="grid grid-cols-2 gap-3">
+      <button data-act="local2" class="game-gloss-card h-14 rounded-xl text-base font-black text-3d-white cursor-pointer">שניים על מכשיר אחד</button>
+      <button data-act="bot" class="game-gloss-card h-14 rounded-xl text-base font-black text-3d-white cursor-pointer">מול הבוט</button>
+    </section>
     ${taskCard()}
     <section class="mt-1">
       <div class="flex justify-start mb-2">
@@ -320,7 +345,7 @@ function home() {
       </div>
     </section>
   </main>
-  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v6 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v7 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`);
 }
 
@@ -370,15 +395,99 @@ function leaderboard() {
 }
 
 // ---------- match ----------
-let M = null; // { opp, score:[me,opp], round, qi, usedQ, finished }
+// M.mode: 'bot' (מול בוט) | 'local2' (שניים על מכשיר אחד) | 'host' / 'guest' (אונליין)
+let M = null; // { mode, opp, conn, score:[me,opp], round, qi, usedQ, finished, onRemote, mirror }
 let R = null; // current round runtime
+const other = (w) => (w === 'me' ? 'bot' : 'me');
+const SEARCH_SECONDS = Number(new URLSearchParams(location.search).get('search')) || 20;
+
+function beginMatch(opp, mode, conn = null) {
+  M = { mode, opp, conn, score: [0, 0], round: 0, usedQ: [], finished: false, onRemote: null, mirror: null };
+  if (conn) {
+    conn.onClose(() => { if (M && M.conn === conn && !M.finished) opponentLeft(); });
+    conn.onMessage((raw) => onNet(raw));
+  }
+  if (mode === 'guest') return show(waitScreen('מחכה ליריב...'), forfeit);
+  nextRound();
+}
 
 function startMatch(friend) {
   const opp = friend && friend.name ? { ...friend } : makeOpponent(save.trophies);
   if (!spendEnergy(save)) { renderBar(); return buyEnergy(); }
   save.played += 1; persist(); renderBar();
-  M = { opp, score: [0, 0], round: 0, usedQ: [], finished: false };
-  nextRound();
+  beginMatch(opp, 'bot');
+}
+
+function startLocal2() {
+  beginMatch({ name: 'שחקן 2', trophies: 0 }, 'local2');
+}
+
+const waitScreen = (text) => `
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+  ${gameHeader()}
+  <section class="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
+    <div class="spinner"></div>
+    <p class="text-2xl font-black text-3d-white">${esc(text)}</p>
+  </section>
+</div>`;
+
+// ---------- אונליין ----------
+function startOnline() {
+  tickEnergy(save);
+  if (save.energy < 1) return buyEnergy();
+  const search = findMatch({ timeoutMs: SEARCH_SECONDS * 1000 });
+  let secs = 0;
+  let tick = 0;
+  const stop = () => { clearInterval(tick); };
+  show(`
+<div id="searching" class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+  ${gameHeader()}
+  <section class="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
+    <div class="spinner"></div>
+    <p class="text-2xl font-black text-3d-white">מחפש יריב...</p>
+    <p class="text-white/80"><span id="search-sec">0</span> שניות</p>
+    <button data-act="cancel-search" class="game-gloss-card rounded-xl px-8 py-3 text-lg font-black">ביטול</button>
+  </section>
+</div>`, () => { stop(); search.cancel(); home(); });
+  ACTIONS['cancel-search'] = () => { stop(); search.cancel(); home(); };
+  tick = setInterval(() => { secs += 1; const el = $('#search-sec'); if (el) el.textContent = secs; }, 1000);
+  search.promise.then((res) => {
+    stop();
+    if (!$('#searching')) { res?.conn.close(); return; } // בוטל
+    if (!res) { toast('לא נמצא יריב פנוי, משחקים מול בוט'); return startMatch(); }
+    connected(res);
+  });
+}
+
+/** לחיצת יד: כל צד שולח שם וגביעים, ואז המשחק מתחיל. */
+function connected({ role, conn }) {
+  const hello = { t: 'hello', name: cleanName(save.name || ME.name), trophies: save.trophies };
+  let started = false;
+  const timeout = setTimeout(() => { if (!started) { conn.close(); toast('החיבור נכשל, משחקים מול בוט'); startMatch(); } }, 6000);
+  conn.onMessage((m) => {
+    if (started || !m || m.t !== 'hello') return;
+    started = true;
+    clearTimeout(timeout);
+    if (!spendEnergy(save)) { conn.close(); return buyEnergy(); }
+    save.played += 1; persist(); renderBar();
+    const opp = { name: cleanName(m.name), trophies: Number(m.trophies) || 0 };
+    beginMatch(opp, role, conn);
+  });
+  conn.send(hello);
+}
+
+function onNet(raw) {
+  if (!M || !raw || typeof raw !== 'object') return;
+  if (raw.t === 'leave') return opponentLeft();
+  if (M.mode === 'host') return M.onRemote?.(raw);
+  if (M.mode === 'guest') return guestHandle(toGuest(raw));
+}
+
+function opponentLeft() {
+  if (!M || M.finished) return;
+  stopRound();
+  toast('היריב עזב את המשחק');
+  finishMatch('win');
 }
 
 function chooseQuestion() {
@@ -389,8 +498,12 @@ function chooseQuestion() {
 
 function forfeit() {
   if (!M || M.finished) return home();
+  if (M.mode === 'local2') return openModal('לצאת מהמשחק?', '', [
+    { label: 'כן, לצאת', run: () => { stopRound(); M.finished = true; home(); } },
+    { label: 'להישאר', ghost: true },
+  ]);
   openModal('לעזוב באמצע?', 'עזיבה נחשבת הפסד, והאנרגיה לא חוזרת.', [
-    { label: 'כן, לעזוב', run: () => finishMatch('lose') },
+    { label: 'כן, לעזוב', run: () => { M.conn?.send({ t: 'leave' }); finishMatch('lose'); } },
     { label: 'להישאר', ghost: true },
   ]);
 }
@@ -409,29 +522,40 @@ function nextRound() {
   intro();
 }
 
-function intro() {
-  let left = PRE_SECONDS;
-  const q = QUESTIONS[M.qi];
-  show(`
+const trophyPill = (n) => (M.mode === 'local2' ? '' : `<span class="stat-pill rounded-lg px-3 text-sm font-bold">${n} ${I.trophy('w-4 h-4')}</span>`);
+
+function introHtml(q, actionsHtml) {
+  return `
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
   ${gameHeader()}
   <section class="px-3.5 flex flex-col gap-4">
     <div class="grid grid-cols-[1fr_auto_1fr] items-center text-center gap-2 mt-2">
-      <div class="flex flex-col items-center gap-1">${avatar(ME, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(ME.name)}</span><span class="stat-pill rounded-lg px-3 text-sm font-bold">${save.trophies} ${I.trophy('w-4 h-4')}</span></div>
+      <div class="flex flex-col items-center gap-1">${avatar(ME, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(ME.name)}</span>${trophyPill(save.trophies)}</div>
       <div class="text-5xl font-black text-3d-white bump" dir="ltr">${M.score[0]}-${M.score[1]}</div>
-      <div class="flex flex-col items-center gap-1">${avatar(M.opp, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(M.opp.name)}</span><span class="stat-pill rounded-lg px-3 text-sm font-bold">${M.opp.trophies} ${I.trophy('w-4 h-4')}</span></div>
+      <div class="flex flex-col items-center gap-1">${avatar(M.opp, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}<span class="font-black">${esc(M.opp.name)}</span>${trophyPill(M.opp.trophies)}</div>
     </div>
-    <div id="count" class="count-tick self-center w-20 h-20 rounded-full border-4 border-white/25 border-t-white flex items-center justify-center text-4xl font-black">${left}</div>
-    <div class="bg-[#bf2d35] p-5 rounded-2xl border-2 border-white/25 shadow-xl text-center">
+    <div id="count" class="count-tick self-center w-20 h-20 rounded-full border-4 border-white/25 border-t-white flex items-center justify-center text-4xl font-black">${PRE_SECONDS}</div>
+    <div class="bg-[#8b2dbf] p-5 rounded-2xl border-2 border-white/25 shadow-xl text-center">
       <h1 class="font-extrabold text-white text-[23px] leading-tight text-emboss">${esc(q.text)}</h1>
-      <p class="text-[#ffe8ed] text-sm mt-2 font-medium">סיבוב ${M.round} · ${q.answers.length} תשובות לחפש</p>
+      <p class="text-purple-100 text-sm mt-2 font-medium">סיבוב ${M.round} · ${q.answers.length} תשובות לחפש</p>
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    ${actionsHtml}
+  </section>
+</div>`;
+}
+
+function intro() {
+  let left = PRE_SECONDS;
+  const q = QUESTIONS[M.qi];
+  const online = M.mode === 'host';
+  const actions = online
+    ? '<p class="text-center text-sm text-white/80">הסיבוב מתחיל בעוד רגע</p>'
+    : `<div class="grid grid-cols-2 gap-3">
       ${darkBtn('swap', 'py-3', `<span class="font-extrabold text-sm">החלף שאלה</span>${cost(COST.swap)}`)}
       ${darkBtn('confirm', 'py-3', `<span class="font-extrabold text-sm">${I.check('w-4 h-4')} אשר שאלה</span>`)}
-    </div>
-  </section>
-</div>`, forfeit);
+    </div>`;
+  show(introHtml(q, actions), forfeit);
+  if (online) M.conn.send({ t: 'intro', round: M.round, qi: M.qi, score: [...M.score], ms: PRE_SECONDS * 1000 });
   const count = $('#count');
   ACTIONS.swap = () => {
     if (!spend(save, 'coins', COST.swap)) return toast('אין מספיק מטבעות');
@@ -475,16 +599,12 @@ const HEART = (alive, breaking) => I.heart(`w-5 h-5 ${alive ? 'text-red-500' : '
 const hearts = (lives, breaking) => Array.from({ length: LIVES }, (_, i) => HEART(i < lives, breaking && i === lives)).join('');
 const REACTIONS = ['יפה!', 'חכם', 'נו, תחשוב', 'אחלה', 'בואו נראה'];
 
-function play() {
-  const q = QUESTIONS[M.qi];
-  const n = q.answers.length;
-  const S = newRound(n, M.round % 2 === 1 ? 'me' : 'bot');
-  const log = []; // { who, hit, text }
-  const shown = { me: LIVES, bot: LIVES };
-  let turnTotal = TURN_SECONDS * 1000;
-  let turnLeft = turnTotal;
-  let over = false;
+const names = () => ({ me: ME.name, bot: M.opp.name });
+const turnLabel = (turn) => (M.mode === 'local2' ? `התור של ${names()[turn]}` : turn === 'me' ? 'התור שלך' : `${M.opp.name} עונה...`);
+const inputOn = (turn) => M.mode === 'local2' || turn === 'me';
 
+/** בונה את מסך המשחק ומחזיר את האלמנטים שלו. */
+function mountPlay(q) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col justify-between overflow-hidden">
   ${gameHeader()}
@@ -493,17 +613,17 @@ function play() {
       <div class="flex flex-col items-center gap-1"><div id="av-me" class="rounded-full">${avatar(ME, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div><div id="lives-me" class="flex gap-0.5"></div></div>
       <div class="flex flex-col items-center">
         <div id="chip" class="stat-pill rounded-lg px-4 py-1 text-sm font-extrabold flex items-center gap-2"><span id="chip-text"></span><span id="chip-sec" class="text-yellow-300 tabular-nums"></span></div>
-        <div class="w-40 bg-[#640714]/40 h-1.5 rounded-full overflow-hidden mt-1.5"><div id="tbar" class="h-full rounded-full w-full" style="background:linear-gradient(to left,#d4a853,#eab308)"></div></div>
+        <div class="w-40 bg-purple-950/40 h-1.5 rounded-full overflow-hidden mt-1.5"><div id="tbar" class="h-full rounded-full w-full" style="background:linear-gradient(to left,#d4a853,#eab308)"></div></div>
       </div>
       <div class="flex flex-col items-center gap-1"><div id="av-bot" class="rounded-full">${avatar(M.opp, 'w-11 h-11', 'border-2 border-white shadow-lg')}</div><div id="lives-bot" class="flex gap-0.5"></div></div>
     </div>
-    <div class="bg-[#bf2d35] p-3 pb-3.5 rounded-2xl border-2 border-white/25 shadow-xl flex flex-col gap-2.5 min-h-0">
+    <div class="bg-[#8b2dbf] p-3 pb-3.5 rounded-2xl border-2 border-white/25 shadow-xl flex flex-col gap-2.5 min-h-0">
       <h1 class="text-center font-extrabold text-white text-[21px] leading-tight px-2 text-emboss tracking-normal">${esc(q.text)}</h1>
-      <div class="doodle-bg rounded-xl p-3 border border-[#feb4c4]/40 relative shadow-inner min-h-[175px] flex flex-col justify-between overflow-hidden">
+      <div class="doodle-bg rounded-xl p-3 border border-purple-300/40 relative shadow-inner min-h-[175px] flex flex-col justify-between overflow-hidden">
         <div id="rows" class="flex flex-col gap-2.5 w-full max-h-[30dvh] overflow-y-auto"></div>
-        <div class="mt-2 pt-1 border-t border-[#ffd5de]/50 flex items-center justify-between text-xs font-bold text-[#871c2b] px-1">
-          <span class="text-[#a82135] text-[13px] font-black">${esc(ME.name)}</span>
-          <span id="left" class="text-[11px] font-bold text-[#ce223e]/70"></span>
+        <div class="mt-2 pt-1 border-t border-purple-200/50 flex items-center justify-between text-xs font-bold text-purple-900 px-1">
+          <span class="text-purple-800 text-[13px] font-black">${esc(ME.name)}</span>
+          <span id="left" class="text-[11px] font-bold text-purple-700/70"></span>
         </div>
       </div>
     </div>
@@ -530,93 +650,142 @@ function play() {
     </div>
   </footer>
 </div>`, forfeit);
+  return { rows: $('#rows'), form: $('#form'), input: $('#ans'), send: $('#send'), tbar: $('#tbar'), chip: $('#chip'), shown: { me: LIVES, bot: LIVES } };
+}
 
-  const rowsEl = $('#rows');
-  const form = $('#form');
-  const input = $('#ans');
-  const send = $('#send');
-  const tbar = $('#tbar');
-
-  function draw() {
-    rowsEl.innerHTML = log.map(bubbleRow).join('');
-    rowsEl.scrollTop = rowsEl.scrollHeight;
-    $('#left').textContent = `נשארו ${n - S.count}`;
-    for (const who of ['me', 'bot']) {
-      $(`#lives-${who}`).innerHTML = hearts(S.lives[who], shown[who] !== S.lives[who]);
-      shown[who] = S.lives[who];
-    }
+function drawPlay(v, st, n) {
+  v.rows.innerHTML = st.log.map(bubbleRow).join('');
+  v.rows.scrollTop = v.rows.scrollHeight;
+  $('#left').textContent = `נשארו ${n - st.count}`;
+  for (const who of ['me', 'bot']) {
+    $(`#lives-${who}`).innerHTML = hearts(st.lives[who], v.shown[who] !== st.lives[who]);
+    v.shown[who] = st.lives[who];
   }
+}
 
-  function paintTurn() {
-    const mine = S.turn === 'me';
-    $('#chip-text').textContent = mine ? 'התור שלך' : `${M.opp.name} עונה...`;
-    $('#chip-sec').style.visibility = mine ? 'visible' : 'hidden';
-    $('#av-me').className = `rounded-full ${mine ? 'turn-active' : 'turn-idle'}`;
-    $('#av-bot').className = `rounded-full ${mine ? 'turn-idle' : 'turn-active'}`;
-    input.disabled = !mine;
-    send.disabled = !mine;
-    input.placeholder = mine ? 'הזן תשובה' : `התור של ${M.opp.name}...`;
-    form.classList.toggle('opacity-60', !mine);
-    if (mine) input.focus({ preventScroll: true });
-    else input.blur();
-  }
+function paintPlayTurn(v, turn) {
+  const on = inputOn(turn);
+  $('#chip-text').textContent = turnLabel(turn);
+  $('#chip-sec').style.visibility = turn === 'me' || M.mode !== 'bot' ? 'visible' : 'hidden';
+  $('#av-me').className = `rounded-full ${turn === 'me' ? 'turn-active' : 'turn-idle'}`;
+  $('#av-bot').className = `rounded-full ${turn === 'bot' ? 'turn-active' : 'turn-idle'}`;
+  v.input.disabled = !on;
+  v.send.disabled = !on;
+  v.input.placeholder = on ? 'הזן תשובה' : `התור של ${M.opp.name}...`;
+  v.form.classList.toggle('opacity-60', !on);
+  if (on) v.input.focus({ preventScroll: true });
+  else v.input.blur();
+}
+
+function tickPlay(v, left, total) {
+  $('#chip-sec').textContent = Math.max(0, Math.ceil(left / 1000));
+  v.tbar.style.width = `${Math.max(0, (left / total) * 100)}%`;
+  const low = left < 3000;
+  v.tbar.classList.toggle('bar-low', low);
+  v.chip.classList.toggle('chip-low', low);
+}
+
+const shake = (form) => { form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); };
+
+/** באנר סוף סיבוב. w = מי ניצח מנקודת המבט של המכשיר הזה. */
+function showBanner(w, reason, missed) {
+  const nm = names();
+  const you = M.mode !== 'local2';
+  const title = !you ? `${nm[w]} זכה בסיבוב` : w === 'me' ? 'זכית בסיבוב!' : 'היריב זכה בסיבוב';
+  const loser = other(w);
+  const why = reason === 'last'
+    ? (you && w === 'me' ? 'נתת את התשובה האחרונה' : `${nm[w]} נתן את התשובה האחרונה`)
+    : (you && loser === 'me' ? 'נגמרו לך החיים' : `${nm[loser]} נשאר בלי חיים`);
+  const banner = document.createElement('div');
+  banner.className = 'banner';
+  banner.innerHTML = `<div class="px-6"><h2 class="text-4xl font-black text-3d-white mb-2">${esc(title)}</h2><p class="text-xl text-purple-100 font-bold">${esc(why)}</p>${missed.length ? `<p class="mt-3 text-sm text-purple-200">לא נמצאו: ${esc(missed.slice(0, 4).join(', '))}${missed.length > 4 ? '…' : ''}</p>` : ''}</div>`;
+  $('#app').append(banner);
+  if (w === 'me' && you) confetti(banner, 24);
+  return banner;
+}
+
+/** סיבוב אצל מי שמחליט: בוט, שניים על מכשיר אחד, או מארח אונליין. */
+function play() {
+  const q = QUESTIONS[M.qi];
+  const n = q.answers.length;
+  const S = newRound(n, M.round % 2 === 1 ? 'me' : 'bot');
+  const st = { log: [], lives: S.lives, count: 0 };
+  let turnTotal = TURN_SECONDS * 1000;
+  let turnLeft = turnTotal;
+  let over = false;
+  const host = M.mode === 'host';
+  const send = (m) => { if (host) M.conn.send(m); };
+  const v = mountPlay(q);
+
+  const draw = () => { st.count = S.count; drawPlay(v, st, n); };
+  const openIdx = () => S.found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
 
   function nextTurn() {
     turnTotal = TURN_SECONDS * 1000;
     turnLeft = turnTotal;
-    paintTurn();
-    if (S.turn === 'bot') {
-      const open = S.found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
-      const plan = planBotTurn(open, botSkill(M.opp));
+    paintPlayTurn(v, S.turn);
+    if (S.turn === 'bot' && M.mode === 'bot') {
+      const plan = planBotTurn(openIdx(), botSkill(M.opp));
       R.botTimers.push(setTimeout(() => {
         if (over) return;
         if (plan.index === null) miss('bot', '?'); else hit(plan.index, 'bot');
       }, plan.delay));
     }
   }
+  const broadcast = (who, ok, text) => send({ t: 'ev', who, hit: ok, text, lives: { ...S.lives }, turn: S.turn, count: S.count, ms: over ? 0 : turnTotal });
 
   function hit(i, who) {
     if (over || S.turn !== who || S.found[i]) return;
     ruleHit(S, who, i);
-    log.push({ who, hit: true, text: q.answers[i].names[0] });
+    const text = q.answers[i].names[0];
+    st.log.push({ who, hit: true, text });
     draw();
-    if (S.over) return end();
+    if (S.over) { broadcast(who, true, text); return end(); }
     nextTurn();
+    broadcast(who, true, text);
   }
   function miss(who, text) {
     if (over || S.turn !== who) return;
     ruleMiss(S, who);
-    log.push({ who, hit: false, text });
+    st.log.push({ who, hit: false, text });
     draw();
-    if (S.over) return end();
+    if (S.over) { broadcast(who, false, text); return end(); }
     nextTurn();
+    broadcast(who, false, text);
   }
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (S.turn !== 'me' || over) return;
-    const text = input.value.trim();
-    if (!text) return;
+  /** תשובה מוקלדת של who. מחזיר 'hit' | 'miss' | 'dup' */
+  function submit(who, text) {
     const m = matchAnswer(text, q.answers);
-    input.value = '';
-    if (m && S.found[m.index]) {
-      form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
-      return toast(S.found[m.index] === 'me' ? 'כבר מצאת את זה' : 'היריב כבר מצא את זה');
-    }
-    if (m) hit(m.index, 'me');
-    else {
-      form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
-      miss('me', text);
-    }
+    if (m && S.found[m.index]) return 'dup';
+    if (m) { hit(m.index, who); return 'hit'; }
+    miss(who, text);
+    return 'miss';
+  }
+
+  v.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const who = S.turn;
+    if (over || !inputOn(who)) return;
+    const text = v.input.value.trim();
+    if (!text) return;
+    v.input.value = '';
+    const r = submit(who, text);
+    if (r === 'dup') toast('כבר נמצא');
+    if (r !== 'hit') shake(v.form);
   });
+
   ACTIONS.time = () => {
+    if (M.mode === 'local2') return toast('לא זמין במשחק של שניים');
     if (over || S.turn !== 'me') return toast('רק בתור שלך');
     if (!spend(save, 'coins', COST.time)) return toast('אין מספיק מטבעות');
     turnTotal += 10000; turnLeft += 10000; persist(); renderBar();
+    send({ t: 'turn', turn: S.turn, ms: turnLeft });
   };
   ACTIONS.joker = () => {
+    if (M.mode === 'local2') return toast('לא זמין במשחק של שניים');
     if (over || S.turn !== 'me') return toast('רק בתור שלך');
-    const open = S.found.map((f, i) => (f ? -1 : i)).filter((i) => i >= 0);
+    const open = openIdx();
     if (!open.length) return;
     if (!spend(save, 'coins', COST.joker)) return toast('אין מספיק מטבעות');
     persist(); renderBar();
@@ -624,20 +793,33 @@ function play() {
   };
   ACTIONS.emoji = () => toast(REACTIONS[Math.floor(Math.random() * REACTIONS.length)]);
 
+  // הודעות מהאורח (אונליין)
+  M.onRemote = (m) => {
+    if (over) return;
+    if (m.t === 'answer' && acceptAnswer(S, m)) {
+      if (submit('bot', m.text) === 'dup') M.conn.send({ t: 'toast', text: 'כבר נמצא' });
+    } else if (m.t === 'joker' && S.turn === 'bot') {
+      const open = openIdx();
+      if (open.length) hit(open[Math.floor(Math.random() * open.length)], 'bot');
+    } else if (m.t === 'time' && S.turn === 'bot') {
+      turnTotal += 10000; turnLeft += 10000;
+      send({ t: 'turn', turn: S.turn, ms: turnLeft });
+    }
+  };
+
   R = { botTimers: [], iv: null };
   draw();
+  send({ t: 'start', turn: S.turn, ms: turnTotal });
   nextTurn();
   let last = performance.now();
   R.iv = setInterval(() => {
     const now = performance.now();
     turnLeft -= now - last; last = now;
-    $('#chip-sec').textContent = Math.max(0, Math.ceil(turnLeft / 1000));
-    tbar.style.width = `${Math.max(0, (turnLeft / turnTotal) * 100)}%`;
-    const low = turnLeft < 3000;
-    tbar.classList.toggle('bar-low', low);
-    $('#chip').classList.toggle('chip-low', low);
-    if (turnLeft <= 0 && S.turn === 'me') miss('me', 'נגמר הזמן');
-    else if (turnLeft <= 0) turnLeft = 0;
+    tickPlay(v, turnLeft, turnTotal);
+    if (turnLeft <= 0) {
+      if (S.turn === 'me' || M.mode !== 'bot') miss(S.turn, 'נגמר הזמן');
+      else turnLeft = 0;
+    }
   }, 100);
 
   /** הסיבוב נגמר: מי שנשאר בלי חיים מפסיד, או שמי שנתן את התשובה האחרונה מנצח. */
@@ -645,39 +827,126 @@ function play() {
     if (over) return;
     over = true;
     stopRound();
-    input.disabled = true; send.disabled = true;
+    v.input.disabled = true; v.send.disabled = true;
     const { winner: w, reason } = S.over;
-    const winner = w === 'me' ? 0 : 1;
-    M.score[winner] += 1;
-    const title = winner === 0 ? 'זכית בסיבוב!' : 'היריב זכה בסיבוב';
-    const why = reason === 'last'
-      ? (w === 'me' ? 'נתת את התשובה האחרונה' : `${M.opp.name} נתן את התשובה האחרונה`)
-      : (w === 'me' ? `${M.opp.name} נשאר בלי חיים` : 'נגמרו לך החיים');
+    M.score[w === 'me' ? 0 : 1] += 1;
     const missed = q.answers.map((a, i) => (S.found[i] ? null : a.names[0])).filter(Boolean);
-    const banner = document.createElement('div');
-    banner.className = 'banner';
-    banner.innerHTML = `<div class="px-6"><h2 class="text-4xl font-black text-3d-white mb-2">${esc(title)}</h2><p class="text-xl text-[#ffe8ed] font-bold">${esc(why)}</p>${missed.length ? `<p class="mt-3 text-sm text-[#ffd5de]">לא נמצאו: ${esc(missed.slice(0, 4).join(', '))}${missed.length > 4 ? '…' : ''}</p>` : ''}</div>`;
-    $('#app').append(banner);
-    if (winner === 0) confetti(banner, 24);
+    send({ t: 'end', winner: w, reason, score: [...M.score], missed: missed.slice(0, 5) });
+    const banner = showBanner(w, reason, missed);
     setTimeout(() => {
       banner.remove();
       const done = M.score.some((s) => s >= WINS_NEEDED) || M.round >= MAX_ROUNDS;
       if (!done) return nextRound();
-      finishMatch(M.score[0] > M.score[1] ? 'win' : M.score[1] > M.score[0] ? 'lose' : 'draw');
+      const outcome = M.score[0] > M.score[1] ? 'win' : M.score[1] > M.score[0] ? 'lose' : 'draw';
+      send({ t: 'final', outcome });
+      finishMatch(outcome);
     }, 2600);
   }
+}
+
+// ---------- אורח (אונליין): מציג מה שהמארח שולח ושולח תשובות ----------
+function guestHandle(m) {
+  switch (m.t) {
+    case 'intro': {
+      const q = QUESTIONS[m.qi];
+      if (!q) return;
+      M.round = m.round; M.qi = m.qi; M.score = m.score;
+      stopRound();
+      show(introHtml(q, '<p class="text-center text-sm text-white/80">הסיבוב מתחיל בעוד רגע</p>'), forfeit);
+      let left = Math.round((m.ms || 6000) / 1000);
+      const count = $('#count');
+      count.textContent = left;
+      R = { iv: setInterval(() => { left -= 1; count.textContent = Math.max(left, 0); bump(count); if (left <= 0) clearInterval(R.iv); }, 1000) };
+      break;
+    }
+    case 'start': return playMirror(m);
+    case 'ev': return M.mirror?.ev(m);
+    case 'turn': return M.mirror?.turn(m);
+    case 'end': return M.mirror?.end(m);
+    case 'toast': return toast(String(m.text || '').slice(0, 40));
+    case 'final': return finishMatch(['win', 'lose', 'draw'].includes(m.outcome) ? m.outcome : 'draw');
+    default:
+  }
+}
+
+function playMirror(m) {
+  stopRound();
+  const q = QUESTIONS[M.qi];
+  if (!q) return;
+  const n = q.answers.length;
+  const st = { log: [], lives: { me: LIVES, bot: LIVES }, count: 0 };
+  let turn = m.turn;
+  let total = m.ms;
+  let left = m.ms;
+  let over = false;
+  const v = mountPlay(q);
+  const paint = () => paintPlayTurn(v, turn);
+  M.mirror = {
+    ev(e) {
+      st.log.push({ who: e.who, hit: !!e.hit, text: String(e.text).slice(0, 60) });
+      st.lives = e.lives; st.count = e.count;
+      turn = e.turn; total = left = e.ms || total;
+      drawPlay(v, st, n);
+      if (e.who === 'me' && !e.hit) shake(v.form);
+      if (!over) paint();
+    },
+    turn(e) { turn = e.turn; total = left = e.ms; paint(); },
+    end(e) {
+      over = true;
+      clearInterval(R?.iv);
+      v.input.disabled = true; v.send.disabled = true;
+      M.score = e.score;
+      const banner = showBanner(e.winner, e.reason, Array.isArray(e.missed) ? e.missed.map(String) : []);
+      setTimeout(() => banner.remove(), 2600);
+    },
+  };
+  v.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (over || turn !== 'me') return;
+    const text = v.input.value.trim();
+    if (!text) return;
+    v.input.value = '';
+    M.conn.send({ t: 'answer', text });
+  });
+  const mine = () => { if (over || turn !== 'me') { toast('רק בתור שלך'); return false; } return true; };
+  ACTIONS.joker = () => {
+    if (!mine()) return;
+    if (!spend(save, 'coins', COST.joker)) return toast('אין מספיק מטבעות');
+    persist(); renderBar(); M.conn.send({ t: 'joker' });
+  };
+  ACTIONS.time = () => {
+    if (!mine()) return;
+    if (!spend(save, 'coins', COST.time)) return toast('אין מספיק מטבעות');
+    persist(); renderBar(); M.conn.send({ t: 'time' });
+  };
+  ACTIONS.emoji = () => toast(REACTIONS[Math.floor(Math.random() * REACTIONS.length)]);
+  R = { botTimers: [], iv: null };
+  drawPlay(v, st, n);
+  paint();
+  let last = performance.now();
+  R.iv = setInterval(() => {
+    const now = performance.now();
+    left -= now - last; last = now;
+    tickPlay(v, left, total);
+  }, 100);
 }
 
 function finishMatch(outcome) {
   stopRound();
   M.finished = true;
-  const r = rewards(outcome, save.trophies, M.opp.trophies);
-  save.trophies = Math.max(0, save.trophies + r.trophies);
-  save.coins += r.coins;
-  if (outcome === 'win') { save.wins += 1; recordWin(save); }
-  persist();
-  const title = outcome === 'win' ? 'ניצחת!' : outcome === 'lose' ? 'הפסדת הפעם' : 'תיקו';
-  ACTIONS.again = () => startMatch();
+  const local2 = M.mode === 'local2';
+  const r = local2 ? { trophies: 0, coins: 0 } : rewards(outcome, save.trophies, M.opp.trophies);
+  if (!local2) {
+    save.trophies = Math.max(0, save.trophies + r.trophies);
+    save.coins += r.coins;
+    if (outcome === 'win') { save.wins += 1; recordWin(save); }
+    persist();
+  }
+  const mode = M.mode;
+  const title = local2
+    ? (outcome === 'win' ? `${ME.name} ניצח` : outcome === 'lose' ? `${M.opp.name} ניצח` : 'תיקו')
+    : (outcome === 'win' ? 'ניצחת!' : outcome === 'lose' ? 'הפסדת הפעם' : 'תיקו');
+  ACTIONS.again = () => (mode === 'local2' ? startLocal2() : mode === 'bot' ? startMatch() : startOnline());
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
   ${gameHeader()}
@@ -687,18 +956,21 @@ function finishMatch(outcome) {
       <div class="text-5xl font-black text-3d-white" dir="ltr">${M.score[0]}-${M.score[1]}</div>
       ${avatar(M.opp, 'w-20 h-20', 'border-[3px] border-white shadow-xl')}
     </div>
-    <h2 class="text-5xl font-black text-3d-banner">${title}</h2>
-    <div class="flex justify-center gap-3">
+    <h2 class="text-5xl font-black text-3d-banner">${esc(title)}</h2>
+    ${local2 ? '' : `<div class="flex justify-center gap-3">
       <div id="r-tp" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop"></div>
       <div id="r-co" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop" style="animation-delay:.15s"></div>
-    </div>
+    </div>`}
     <button data-act="again" class="play-btn-glow w-full h-20 rounded-xl text-3xl font-extrabold text-3d-white">שחק שוב</button>
     ${bigGloss('home', 'חזרה למסך הבית', '!text-xl')}
   </section>
 </div>`, home);
-  countUp($('#r-tp'), Math.abs(r.trophies), r.trophies < 0 ? '-' : '+', I.trophy('w-5 h-5'));
-  countUp($('#r-co'), r.coins, '+', I.coin('w-5 h-5'));
-  if (outcome === 'win') confetti(screen, 40);
+  if (!local2) {
+    countUp($('#r-tp'), Math.abs(r.trophies), r.trophies < 0 ? '-' : '+', I.trophy('w-5 h-5'));
+    countUp($('#r-co'), r.coins, '+', I.coin('w-5 h-5'));
+  }
+  if (outcome === 'win' && !local2) confetti(screen, 40);
+  if (M.conn && mode !== 'bot') { const c = M.conn; setTimeout(() => c.close(), 500); }
 }
 
 // ---------- הודעת שמירה בדפדפן ----------
