@@ -13,3 +13,27 @@ export const I = {
   spark: (c = 'w-4 h-4') => svg(c, '<path d="M12 1.5c.7 5.2 3.3 7.8 8.5 10.5-5.2 2.7-7.8 5.3-8.5 10.5C11.3 17.3 8.700 14.700 3.500 12 8.700 9.300 11.300 6.700 12 1.500z" fill="currentColor"/>'),
   smile: (c = 'w-6 h-6') => svg(c, '<circle cx="12" cy="12" r="9.5" fill="#ffd34d" stroke="#c98a00" stroke-width="1.4"/><circle cx="8.8" cy="10" r="1.4" fill="#5a2a00"/><circle cx="15.2" cy="10" r="1.4" fill="#5a2a00"/><path d="M7.8 14.2c1 2.2 7.400 2.200 8.400 0" fill="none" stroke="#5a2a00" stroke-width="1.6" stroke-linecap="round"/>'),
 };
+
+// ---------- לוגואים לשחקנים (במקום תמונות) ----------
+const PALETTES = [['#ff5a4d', '#a80f1d'], ['#ffd23f', '#d98200'], ['#ff9a3d', '#b83a0a'], ['#e8303f', '#6e0612'], ['#ffe27a', '#e0a000']];
+const SYMBOLS = {
+  crown: '<path d="M26 66 22 34l16 13 12-20 12 20 16-13-4 32z" /><rect x="26" y="68" width="48" height="8" rx="2"/>',
+  bolt: '<path d="M56 18 30 56h18l-6 26 28-40H52z" />',
+  star: '<path d="m50 20 8.600 19.400 21 2-15.800 14 4.700 20.600L50 64.700 31.500 76 36.200 55.400 20.400 41.400l21-2z" />',
+  shield: '<path d="M50 20 74 28v20c0 15-10 25-24 32C36 73 26 63 26 48V28z" />',
+  flame: '<path d="M52 18c2 12 16 18 16 36a18 18 0 0 1-36 0c0-8 4-13 8-17 0 6 3 9 6 9 -1-10 2-20 6-28z" />',
+  gem: '<path d="M32 28h36l12 16-30 36L20 44z" />',
+};
+const SYMBOL_NAMES = Object.keys(SYMBOLS);
+const KNOWN = { 'שמרית': 'crown', 'יוני הררי': 'star', 'שימי ביטון': 'bolt', 'אופיר שאול': 'flame' };
+let emblemId = 0;
+const hash = (str) => [...str].reduce((a, ch) => (a * 31 + ch.codePointAt(0)) >>> 0, 7);
+
+/** לוגו עגול לשחקן: צבע וסמל לפי השם. */
+export function emblem(name, cls = 'w-12 h-12') {
+  const h = hash(name);
+  const [c1, c2] = PALETTES[h % PALETTES.length];
+  const sym = KNOWN[name] || SYMBOL_NAMES[(h >> 3) % SYMBOL_NAMES.length];
+  const id = `em${emblemId++}`;
+  return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(#${id})"/><circle cx="50" cy="50" r="42" fill="none" stroke="#fff6d6" stroke-opacity=".55" stroke-width="2.5"/><g fill="#fff6d6" stroke="#5a0710" stroke-opacity=".45" stroke-width="2.5" stroke-linejoin="round">${SYMBOLS[sym]}</g></svg>`;
+}

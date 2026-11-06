@@ -3,35 +3,35 @@ body { font-family: 'Rubik', sans-serif; -webkit-tap-highlight-color: transparen
 button { cursor: pointer; }
 [hidden] { display: none !important; }
 .bg-game-swirls {
-  background-color: #551493;
+  background-color: #93142c;
   background-image:
-    radial-gradient(circle at 50% 20%, rgba(135, 41, 219, 0.4) 0%, transparent 60%),
-    radial-gradient(circle at 20% 80%, rgba(104, 25, 172, 0.5) 0%, transparent 50%),
-    radial-gradient(circle at 80% 60%, rgba(68, 12, 114, 0.6) 0%, transparent 60%),
-    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 40c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0-10c16.569 0 30 13.431 30 30s-13.431 30-30 30-30-13.431-30-30 13.431-30 30-30zm0-15c24.853 0 45 20.147 45 45s-20.147 45-45 45-45-20.147-45-45 20.147-45 45-45z' fill='%236f1ebf' fill-opacity='0.16' fill-rule='evenodd'/%3E%3C/svg%3E");
+    radial-gradient(circle at 50% 20%, rgba(219,41,72, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(172,25,49, 0.5) 0%, transparent 50%),
+    radial-gradient(circle at 80% 60%, rgba(114,12,27, 0.6) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 40c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0-10c16.569 0 30 13.431 30 30s-13.431 30-30 30-30-13.431-30-30 13.431-30 30-30zm0-15c24.853 0 45 20.147 45 45s-20.147 45-45 45-45-20.147-45-45 20.147-45 45-45z' fill='%23bf1e3e' fill-opacity='0.16' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 .tiled-diamonds { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 12px, transparent 12px, transparent 24px); }
 .game-gloss-card {
-  background: linear-gradient(180deg, #8125d0 0%, #681aa9 50%, #521287 100%);
+  background: linear-gradient(180deg, #d02541 0%, #a91a30 50%, #871224 100%);
   box-shadow: inset 0 2px 4px rgba(255,255,255,.4), inset 0 -4px 6px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.45);
-  border: 2px solid #a342f5;
+  border: 2px solid #f5425e;
 }
 .game-gloss-card:active { transform: translateY(2px) scale(.99); box-shadow: inset 0 1px 3px rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.4); }
 .play-btn-glow {
-  background: linear-gradient(180deg, #7e1ccf 0%, #6211a7 55%, #4c0a85 100%);
-  border: 3px solid #b759ff;
-  box-shadow: 0 0 16px rgba(183,89,255,.45), inset 0 3px 6px rgba(255,255,255,.5), inset 0 -6px 8px rgba(0,0,0,.5), 0 8px 18px rgba(0,0,0,.5);
+  background: linear-gradient(180deg, #cf1c37 0%, #a71129 55%, #850a1e 100%);
+  border: 3px solid #ff596f;
+  box-shadow: 0 0 16px rgba(255,89,111,.45), inset 0 3px 6px rgba(255,255,255,.5), inset 0 -6px 8px rgba(0,0,0,.5), 0 8px 18px rgba(0,0,0,.5);
 }
-.stat-pill { background: rgba(43,8,77,.85); border: 1.5px solid #8e30e6; box-shadow: inset 0 1px 3px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3); }
+.stat-pill { background: rgba(77,8,21,.85); border: 1.5px solid #e63051; box-shadow: inset 0 1px 3px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3); }
 .text-3d-white { color: #fff; text-shadow: 0 1px 0 #ccc, 0 2px 0 #bbb, 0 3px 0 #999, 0 4px 6px rgba(0,0,0,.6); }
-.text-3d-banner { color: #fff; text-shadow: 0 2px 0 #d9c4ff, 0 4px 0 #9f75eb, 0 6px 0 #6b35bf, 0 8px 10px rgba(18,2,34,.8); }
+.text-3d-banner { color: #fff; text-shadow: 0 2px 0 #ffc4d8, 0 4px 0 #eb759e, 0 6px 0 #bf3560, 0 8px 10px rgba(34,2,8,.8); }
 .coin-3d { background: radial-gradient(circle at 35% 30%, #fff799, #f7ba13 60%, #b37300 100%); box-shadow: 0 4px 10px rgba(0,0,0,.5), inset 0 2px 3px #fff, inset 0 -2px 4px #7a4e00; border: 2px solid #ffe97d; }
 .text-stroke-title { -webkit-text-stroke: 1.5px rgba(255,255,255,.4); filter: drop-shadow(0 6px 4px rgba(0,0,0,.45)); }
 .text-emboss { text-shadow: 0 2px 4px rgba(0,0,0,.35); }
-.doodle-bg { background-color: #ede7f6; background-image: radial-gradient(#d1c4e9 .85px, transparent .85px), radial-gradient(#d1c4e9 .85px, #ede7f6 .85px); background-size: 20px 20px; background-position: 0 0, 10px 10px; }
+.doodle-bg { background-color: #f6e7ec; background-image: radial-gradient(#e9c4d1 .85px, transparent .85px), radial-gradient(#e9c4d1 .85px, #f6e7ec .85px); background-size: 20px 20px; background-position: 0 0, 10px 10px; }
 .glow-flare { position: absolute; width: 14px; height: 14px; background: #fff; box-shadow: 0 0 16px 8px #fff, 0 0 28px 14px rgba(147,197,253,.8); transform: rotate(45deg); border-radius: 2px; }
 .btn-3d-yellow { box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 3px 0 #b45309, 0 4px 6px rgba(0,0,0,.3); }
-.btn-3d-dark { box-shadow: inset 0 1px 1px rgba(255,255,255,.2), 0 3px 0 #28093d, 0 3px 5px rgba(0,0,0,.3); }
+.btn-3d-dark { box-shadow: inset 0 1px 1px rgba(255,255,255,.2), 0 3px 0 #3d090e, 0 3px 5px rgba(0,0,0,.3); }
 .badge-3d { box-shadow: inset 0 1px 2px rgba(255,255,255,.4), 0 2px 4px rgba(0,0,0,.25); }
 
 /* ===== תוספות של המשחק (לא ב-Stitch) ===== */
@@ -39,10 +39,10 @@ button { cursor: pointer; }
 .pop { animation: pop .28s ease-out; }
 @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 .shake { animation: shake .35s; }
-#modal { position: absolute; inset: 0; background: rgba(15,4,35,.78); display: grid; place-items: center; padding: 24px; z-index: 40; }
+#modal { position: absolute; inset: 0; background: rgba(35,4,15,.78); display: grid; place-items: center; padding: 24px; z-index: 40; }
 #toast { position: absolute; top: 84px; left: 50%; transform: translate(-50%, -20px); background: rgba(0,0,0,.82); padding: 10px 18px; border-radius: 999px; font-weight: 700; opacity: 0; pointer-events: none; transition: .25s; z-index: 50; max-width: 90%; text-align: center; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
-.banner { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(32,9,63,.78); z-index: 30; text-align: center; animation: pop .3s ease-out; }
+.banner { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(63,9,24,.78); z-index: 30; text-align: center; animation: pop .3s ease-out; }
 
 /* ===== אנימציות ===== */
 @keyframes screenIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -53,7 +53,7 @@ button { cursor: pointer; }
 .slide-end { animation: slideEnd .34s cubic-bezier(.2, .9, .3, 1.25); }
 @keyframes missFlash { 0% { background: #ef4444; color: #fff; } 100% { background: #fee2e2; } }
 .miss-flash { animation: missFlash .6s ease-out; }
-@keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255, 208, 0, .75); } 100% { box-shadow: 0 0 0 14px rgba(255, 208, 0, 0); } }
+@keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255,208,0, .75); } 100% { box-shadow: 0 0 0 14px rgba(255,208,0, 0); } }
 .turn-active { animation: pulseRing 1.2s ease-out infinite; transform: scale(1.12); transition: transform .25s; }
 .turn-idle { opacity: .5; filter: saturate(.5); transition: all .25s; }
 @keyframes lowPulse { 50% { opacity: .45; } }
@@ -76,7 +76,7 @@ button { cursor: pointer; }
 .menu-in > section:nth-child(2) { animation-delay: .08s; }
 .menu-in > section:nth-child(3) { animation-delay: .16s; }
 .menu-in > section:nth-child(4) { animation-delay: .24s; }
-@keyframes playGlow { 50% { box-shadow: 0 0 28px rgba(183, 89, 255, .85), inset 0 3px 6px rgba(255, 255, 255, .5), inset 0 -6px 8px rgba(0, 0, 0, .5), 0 8px 18px rgba(0, 0, 0, .5); } }
+@keyframes playGlow { 50% { box-shadow: 0 0 28px rgba(255,89,111, .85), inset 0 3px 6px rgba(255,255,255, .5), inset 0 -6px 8px rgba(0,0,0, .5), 0 8px 18px rgba(0,0,0, .5); } }
 .play-btn-glow { animation: playGlow 2s ease-in-out infinite; }
 .lb-row { animation: slideStart .4s cubic-bezier(.2, .9, .3, 1.2) both; }
 @keyframes crownIn { from { opacity: 0; transform: translateY(-24px) rotate(-8deg) scale(.7); } to { opacity: 1; transform: none; } }
@@ -94,3 +94,20 @@ button:active { transition: transform .08s; }
 /* חיים */
 @keyframes heartBreak { 0% { transform: scale(1.5); color: #ef4444; } 60% { transform: scale(.7) rotate(-14deg); } 100% { transform: scale(1); } }
 .heart-break { animation: heartBreak .6s ease-out; }
+
+/* ===== סגנון אדום וצהוב ===== */
+.game-gloss-card { border-color: #ffc233; }
+.stat-pill { border-color: #e9a62a; }
+.play-btn-glow {
+  background: linear-gradient(180deg, #ffe27a 0%, #ffc233 55%, #f59e0b 100%);
+  border: 3px solid #fff0a8;
+  box-shadow: 0 0 18px rgba(255, 194, 51, .6), inset 0 3px 6px rgba(255, 255, 255, .7), inset 0 -6px 8px rgba(160, 80, 0, .35), 0 8px 18px rgba(0, 0, 0, .5);
+}
+.play-btn-glow .text-3d-white { color: #7a0a14; text-shadow: 0 2px 0 #fff3b0, 0 4px 6px rgba(120, 40, 0, .35); }
+.play-btn-glow .tiled-diamonds { opacity: .25; }
+@keyframes playGlow { 50% { box-shadow: 0 0 30px rgba(255, 210, 63, .95), inset 0 3px 6px rgba(255, 255, 255, .7), inset 0 -6px 8px rgba(160, 80, 0, .35), 0 8px 18px rgba(0, 0, 0, .5); } }
+.doodle-bg { background-color: #fff4dc; background-image: radial-gradient(#f0d9a8 .85px, transparent .85px), radial-gradient(#f0d9a8 .85px, #fff4dc .85px); }
+.task-card { background: linear-gradient(180deg, rgba(255, 194, 51, .22), rgba(255, 194, 51, .08)); border: 2px solid #e9a62a; box-shadow: inset 0 1px 2px rgba(255, 255, 255, .25), 0 4px 10px rgba(0, 0, 0, .3); }
+@keyframes taskReady { 50% { transform: scale(1.08); } }
+.task-ready { animation: taskReady 1s ease-in-out infinite; }
+.swords { filter: hue-rotate(0deg); }
