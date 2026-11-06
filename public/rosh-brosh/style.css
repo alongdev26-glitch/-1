@@ -111,3 +111,7 @@ button:active { transition: transform .08s; }
 @keyframes taskReady { 50% { transform: scale(1.08); } }
 .task-ready { animation: taskReady 1s ease-in-out infinite; }
 .swords { filter: hue-rotate(0deg); }
+
+/* אונליין */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 64px; height: 64px; border-radius: 50%; border: 6px solid rgba(255, 255, 255, .2); border-top-color: #ffd23f; animation: spin .9s linear infinite; }
