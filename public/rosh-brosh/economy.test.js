@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
+import { taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
 import { planBotTurn, makeOpponent, botSkill } from './bot.js';
 
 describe('אנרגיה', () => {
@@ -48,5 +48,23 @@ describe('בוט', () => {
     const o = makeOpponent(100, () => 0.9);
     expect(Math.abs(o.trophies - 100)).toBeLessThanOrEqual(40);
     expect(botSkill(o)).toBeLessThanOrEqual(0.8);
+  });
+});
+
+describe('משימה יומית', () => {
+  const day1 = Date.UTC(2026, 10, 6, 10);
+  const day2 = Date.UTC(2026, 10, 7, 10);
+  it('מתקדמת עם ניצחונות, נלקחת פעם אחת, ומתאפסת ביום חדש', () => {
+    const s = defaultSave(day1);
+    expect(taskState(s, day1)).toEqual({ wins: 0, done: false, claimed: false });
+    recordWin(s, day1);
+    expect(claimTask(s, day1)).toBe(false);
+    recordWin(s, day1);
+    expect(taskState(s, day1).done).toBe(true);
+    const gems = s.gems;
+    expect(claimTask(s, day1)).toBe(true);
+    expect(s.gems).toBe(gems + TASK_GEMS);
+    expect(claimTask(s, day1)).toBe(false);
+    expect(taskState(s, day2)).toEqual({ wins: 0, done: false, claimed: false });
   });
 });

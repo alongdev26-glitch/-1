@@ -66,3 +66,29 @@ export function pickQuestion(total, seen, exclude = [], rng = Math.random) {
   seen.push(idx);
   return idx;
 }
+
+// משימה יומית: לנצח 2 משחקים היום ולקבל יהלומים.
+export const TASK_WINS = 2;
+export const TASK_GEMS = 15;
+export const dayKey = (now = Date.now()) => new Date(now).toISOString().slice(0, 10);
+
+/** מאפס את המשימה ביום חדש. מחזיר { wins, done, claimed }. */
+export function taskState(s, now = Date.now()) {
+  const day = dayKey(now);
+  if (s.taskDay !== day) { s.taskDay = day; s.taskWins = 0; s.taskClaimed = false; }
+  const wins = Math.min(TASK_WINS, s.taskWins || 0);
+  return { wins, done: wins >= TASK_WINS, claimed: !!s.taskClaimed };
+}
+export function recordWin(s, now = Date.now()) {
+  taskState(s, now);
+  s.taskWins = (s.taskWins || 0) + 1;
+  return s;
+}
+/** מחזיר true ונותן יהלומים אם המשימה הושלמה ועוד לא נלקחה. */
+export function claimTask(s, now = Date.now()) {
+  const t = taskState(s, now);
+  if (!t.done || t.claimed) return false;
+  s.taskClaimed = true;
+  s.gems += TASK_GEMS;
+  return true;
+}
