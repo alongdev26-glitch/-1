@@ -43,3 +43,50 @@ button { cursor: pointer; }
 #toast { position: absolute; top: 84px; left: 50%; transform: translate(-50%, -20px); background: rgba(0,0,0,.82); padding: 10px 18px; border-radius: 999px; font-weight: 700; opacity: 0; pointer-events: none; transition: .25s; z-index: 50; max-width: 90%; text-align: center; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 .banner { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(32,9,63,.78); z-index: 30; text-align: center; animation: pop .3s ease-out; }
+
+/* ===== אנימציות ===== */
+@keyframes screenIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+#screen > * { animation: screenIn .32s ease-out; }
+@keyframes slideStart { from { opacity: 0; transform: translateX(46px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes slideEnd { from { opacity: 0; transform: translateX(-46px) scale(.9); } to { opacity: 1; transform: none; } }
+.slide-start { animation: slideStart .34s cubic-bezier(.2, .9, .3, 1.25); }
+.slide-end { animation: slideEnd .34s cubic-bezier(.2, .9, .3, 1.25); }
+@keyframes missFlash { 0% { background: #ef4444; color: #fff; } 100% { background: #fee2e2; } }
+.miss-flash { animation: missFlash .6s ease-out; }
+@keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255, 208, 0, .75); } 100% { box-shadow: 0 0 0 14px rgba(255, 208, 0, 0); } }
+.turn-active { animation: pulseRing 1.2s ease-out infinite; transform: scale(1.12); transition: transform .25s; }
+.turn-idle { opacity: .5; filter: saturate(.5); transition: all .25s; }
+@keyframes lowPulse { 50% { opacity: .45; } }
+.bar-low { background: linear-gradient(to left, #ff5d73, #ff9aa8) !important; animation: lowPulse .5s infinite; }
+@keyframes chipLow { 50% { transform: scale(1.08); } }
+.chip-low { animation: chipLow .5s infinite; border-color: #ff5d73; }
+.chip-low #chip-sec { color: #ff8a9a; }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.bump { animation: bump .45s ease-out; display: inline-block; }
+.count-tick { transition: border-color .2s; }
+@keyframes spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2); } }
+.spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #ffd000; box-shadow: 0 0 6px #ffd000; animation: spark .6s ease-out forwards; pointer-events: none; }
+@keyframes swordsFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.04); } }
+.swords { animation: swordsFloat 2.2s ease-in-out infinite; }
+@keyframes flare { 0%, 100% { opacity: .4; transform: rotate(45deg) scale(.7); } 50% { opacity: 1; transform: rotate(45deg) scale(1.2); } }
+.glow-flare { animation: flare 1.6s ease-in-out infinite; }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.floaty { animation: floaty 2.4s ease-in-out infinite; }
+.menu-in > section { animation: pop .45s cubic-bezier(.2, .9, .3, 1.25) both; }
+.menu-in > section:nth-child(2) { animation-delay: .08s; }
+.menu-in > section:nth-child(3) { animation-delay: .16s; }
+.menu-in > section:nth-child(4) { animation-delay: .24s; }
+@keyframes playGlow { 50% { box-shadow: 0 0 28px rgba(183, 89, 255, .85), inset 0 3px 6px rgba(255, 255, 255, .5), inset 0 -6px 8px rgba(0, 0, 0, .5), 0 8px 18px rgba(0, 0, 0, .5); } }
+.play-btn-glow { animation: playGlow 2s ease-in-out infinite; }
+.lb-row { animation: slideStart .4s cubic-bezier(.2, .9, .3, 1.2) both; }
+@keyframes crownIn { from { opacity: 0; transform: translateY(-24px) rotate(-8deg) scale(.7); } to { opacity: 1; transform: none; } }
+.crown-in { animation: crownIn .6s cubic-bezier(.2, .9, .3, 1.3); }
+.crown-float { animation: floaty 2.8s ease-in-out infinite; }
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 35; }
+@keyframes confettiFall { 0% { transform: translateY(-20px) rotate(0); opacity: 1; } 100% { transform: translateY(105dvh) rotate(var(--rot)); opacity: .9; } }
+.confetti i { position: absolute; top: 0; width: 8px; height: 14px; border-radius: 2px; animation: confettiFall 2.5s linear forwards; }
+button:active { transition: transform .08s; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .confetti { display: none; }
+}

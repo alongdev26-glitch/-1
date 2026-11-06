@@ -18,24 +18,14 @@ export function botSkill(opp) {
   return Math.min(0.8, Math.max(0.35, 0.4 + opp.trophies / 1500));
 }
 
+export const TURN_SECONDS = 10;
+
 /**
- * מתזמן את הניחושים של הבוט. מחזיר רשימה של { at (מילישניות), index }.
- * הבוט "יודע" כל תשובה בהסתברות skill, ועונה בין שנייה 2.5 לשנייה 27.
+ * התור של הבוט: חושב 2 עד 6 שניות, ואז עונה נכון בהסתברות skill
+ * (תשובה אקראית מבין הפתוחות) או מחטיא (index = null).
  */
-export function planBotGuesses(answerCount, skill, rng = Math.random, seconds = ROUND_SECONDS) {
-  const known = [];
-  for (let i = 0; i < answerCount; i++) if (rng() < skill) known.push(i);
-  for (let i = known.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [known[i], known[j]] = [known[j], known[i]];
-  }
-  let t = 2500 + rng() * 2500;
-  const end = (seconds - 3) * 1000;
-  const plan = [];
-  for (const index of known) {
-    if (t > end) break;
-    plan.push({ at: Math.round(t), index });
-    t += 1200 + rng() * 4200;
-  }
-  return plan;
+export function planBotTurn(open, skill, rng = Math.random) {
+  const delay = Math.round(2000 + rng() * 4000);
+  if (!open.length || rng() >= skill) return { delay, index: null };
+  return { delay, index: open[Math.floor(rng() * open.length)] };
 }
