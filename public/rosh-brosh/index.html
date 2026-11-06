@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ראש בראש · אב-טיפוס</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#4a1a8c" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar" hidden>
+        <button id="back" class="round" aria-label="חזרה">‹</button>
+        <div class="pills">
+          <button class="pill" id="energy-pill" aria-label="אנרגיה"><span id="energy-val"></span><b>⚡</b><small id="energy-timer"></small></button>
+          <button class="pill" id="gems-pill" aria-label="יהלומים"><span id="gems-val"></span><b>💎</b></button>
+          <button class="pill" id="coins-pill" aria-label="מטבעות"><span id="coins-val"></span><b>🪙</b></button>
+        </div>
+      </header>
+      <main id="screen"></main>
+      <div id="toast" role="status" aria-live="polite"></div>
+      <div id="modal" hidden></div>
+    </div>
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>
