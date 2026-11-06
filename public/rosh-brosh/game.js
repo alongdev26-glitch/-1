@@ -1,10 +1,10 @@
-import { QUESTIONS } from './questions.js';
-import { matchAnswer } from './checker.js';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js';
+import { QUESTIONS } from './questions.js?v=4';
+import { matchAnswer } from './checker.js?v=4';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=4';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
-} from './economy.js';
+} from './economy.js?v=4';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -306,6 +306,7 @@ function home() {
       </div>
       <h1 class="text-5xl font-black font-display text-3d-banner tracking-normal relative z-20 mt-1 mb-1 leading-none">עוד!</h1>
       <p class="text-xs sm:text-sm font-bold text-purple-100 max-w-[280px] leading-snug drop-shadow-md z-20">המון אפשרויות, פעילויות ואתגרים מחכים במשחק!</p>
+      <span class="text-[10px] text-purple-300/60 mt-1 z-20">v4</span>
     </div>
   </footer>
 </div>`);
@@ -541,7 +542,8 @@ function play() {
 
   function paintTurn() {
     const mine = turn === 'me';
-    $('#chip-text').textContent = mine ? 'התור שלך' : `התור של ${M.opp.name}`;
+    $('#chip-text').textContent = mine ? 'התור שלך' : `${M.opp.name} עונה...`;
+    $('#chip-sec').style.visibility = mine ? 'visible' : 'hidden';
     $('#av-me').className = `rounded-full ${mine ? 'turn-active' : 'turn-idle'}`;
     $('#av-bot').className = `rounded-full ${mine ? 'turn-idle' : 'turn-active'}`;
     input.disabled = !mine;
@@ -549,6 +551,7 @@ function play() {
     input.placeholder = mine ? 'הזן תשובה' : `התור של ${M.opp.name}...`;
     form.classList.toggle('opacity-60', !mine);
     if (mine) input.focus({ preventScroll: true });
+    else input.blur();
   }
 
   function setTurn(t) {
