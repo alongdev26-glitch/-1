@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
-import { planBotGuesses, makeOpponent, botSkill } from './bot.js';
+import { planBotTurn, makeOpponent, botSkill } from './bot.js';
 
 describe('אנרגיה', () => {
   it('גובה אנרגיה ומתחיל טיימר, וממלא עם הזמן', () => {
@@ -29,14 +29,20 @@ describe('פרסים ושאלות', () => {
   });
 });
 describe('בוט', () => {
-  it('מתזמן ניחושים בקצב אנושי, ללא כפילויות', () => {
-    let x = 0.37;
-    const rng = () => (x = (x * 9301 + 49297) % 233280 / 233280);
-    const plan = planBotGuesses(12, 0.7, rng);
-    expect(plan.length).toBeGreaterThan(0);
-    expect(new Set(plan.map((p) => p.index)).size).toBe(plan.length);
-    expect(plan[0].at).toBeGreaterThanOrEqual(2500);
-    plan.forEach((p, i) => { if (i) expect(p.at - plan[i - 1].at).toBeGreaterThanOrEqual(1200); expect(p.at).toBeLessThanOrEqual(27000); });
+  it('תור הבוט: מחכה 2 עד 6 שניות ועונה מבין התשובות הפתוחות או מחטיא', () => {
+    let a = 12345;
+    const rng = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    let hits = 0;
+    for (let i = 0; i < 200; i++) {
+      const t = planBotTurn([2, 5, 7], 0.6, rng);
+      expect(t.delay).toBeGreaterThanOrEqual(2000);
+      expect(t.delay).toBeLessThanOrEqual(6000);
+      if (t.index !== null) { hits++; expect([2, 5, 7]).toContain(t.index); }
+    }
+    expect(hits).toBeGreaterThan(80);
+    expect(hits).toBeLessThan(160);
+    expect(planBotTurn([], 1, rng).index).toBeNull();
+    expect(planBotTurn([1], 0, rng).index).toBeNull();
   });
   it('יריב קרוב בגביעים', () => {
     const o = makeOpponent(100, () => 0.9);
