@@ -123,3 +123,8 @@ button:active { transition: transform .08s; }
 .roulette-band { position: absolute; left: 0; right: 0; top: 72px; height: 72px; border-top: 2px solid #ffd23f; border-bottom: 2px solid #ffd23f; background: linear-gradient(90deg, rgba(255, 210, 63, .22), rgba(255, 210, 63, .08)); pointer-events: none; }
 @keyframes rouletteWin { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 .roulette-win { opacity: 1; font-weight: 900; animation: rouletteWin .6s ease-in-out 2; }
+
+/* בחירת לוגו */
+.logo-opt { border: 2px solid transparent; background: rgba(0, 0, 0, .18); transition: transform .15s; }
+.logo-opt:active { transform: scale(.96); }
+.logo-on { border-color: #ffd23f; background: rgba(255, 210, 63, .2); box-shadow: 0 0 14px rgba(255, 210, 63, .45); }
