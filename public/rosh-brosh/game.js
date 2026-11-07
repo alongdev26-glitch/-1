@@ -1,16 +1,16 @@
-import { QUESTIONS } from './questions.js?v=13';
-import { matchAnswer } from './checker.js?v=13';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=13';
+import { QUESTIONS } from './questions.js?v=14';
+import { matchAnswer } from './checker.js?v=14';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=14';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=13';
-import { I, emblem } from './icons.js?v=13';
-import { findMatch } from './net.js?v=13';
-import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=13';
-import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=13';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=13';
+} from './economy.js?v=14';
+import { I, emblem } from './icons.js?v=14';
+import { findMatch } from './net.js?v=14';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=14';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=14';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=14';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -263,7 +263,7 @@ function questionnaire(first) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
   <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
-    <img src="./icon-512.png?v=13" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
+    <img src="./icon-512.png?v=14" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
     <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
     <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
     <label class="flex flex-col gap-1.5">
@@ -418,7 +418,7 @@ function home() {
       </div>
     </section>
   </main>
-  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v13 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v14 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`);
 }
 
@@ -472,7 +472,7 @@ function leaderboard() {
 let M = null; // { mode, opp, conn, score:[me,opp], round, qi, usedQ, finished, onRemote, mirror }
 let R = null; // current round runtime
 const other = (w) => (w === 'me' ? 'bot' : 'me');
-const SEARCH_SECONDS = Number(new URLSearchParams(location.search).get('search')) || 20;
+const SEARCH_SECONDS = Number(new URLSearchParams(location.search).get('search')) || 30;
 
 function beginMatch(opp, mode, conn = null) {
   M = { mode, opp, conn, score: [0, 0], round: 0, usedQ: [], finished: false, onRemote: null, mirror: null };
@@ -565,7 +565,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 function startOnline() {
   tickEnergy(save);
   if (save.energy < 1) return buyEnergy();
-  const search = findMatch({ timeoutMs: SEARCH_SECONDS * 1000 });
+  let lastStatus = '';
+  const STATUS = { loading: 'טוען רכיב אונליין...', connecting: 'מתחבר לשרת המשחק...', dialing: 'מצאתי שחקן, מתחבר...', waiting: 'ממתין ליריב...', retry: 'מחפש שוב...', 'error:server': 'אין חיבור לשרת המשחק, מנסה שוב...', 'error:lib': 'לא ניתן לטעון את רכיב האונליין' };
+  const onStatus = (st) => { lastStatus = st; const el = $('#search-status'); if (el) el.textContent = STATUS[st] || ''; };
+  const search = findMatch({ timeoutMs: SEARCH_SECONDS * 1000, onStatus });
   let secs = 0;
   let tick = 0;
   let cancelled = false;
@@ -577,6 +580,7 @@ function startOnline() {
   <section class="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
     <p id="search-title" class="text-2xl font-black text-3d-white">מחפש יריב...</p>
     ${rouletteHtml()}
+    <p class="text-yellow-200 font-bold min-h-6" id="search-status"></p>
     <p class="text-white/80" id="search-sub"><span id="search-sec">0</span> שניות</p>
     <button id="cancel-btn" data-act="cancel-search" class="game-gloss-card rounded-xl px-8 py-3 text-lg font-black">ביטול</button>
   </section>
@@ -597,7 +601,7 @@ function startOnline() {
     if (cancelled) { res?.conn.close(); return; }
     if (!res) {
       const bot = makeOpponent(save.trophies);
-      if (await found(bot)) { toast('לא נמצא שחקן פנוי, משחקים מול בוט'); startMatch(bot); }
+      if (await found(bot)) { toast(lastStatus.startsWith('error') ? 'אין חיבור לשרת המשחק, משחקים מול בוט' : 'לא נמצא שחקן פנוי, משחקים מול בוט'); startMatch(bot); }
       return;
     }
     connected(res, found, () => cancelled);
