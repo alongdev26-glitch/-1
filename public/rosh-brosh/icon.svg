@@ -3,6 +3,9 @@
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a4d"/><stop offset=".5" stop-color="#d4202f"/><stop offset="1" stop-color="#7d0818"/></linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset=".5" stop-color="#ffc933"/><stop offset="1" stop-color="#e98a00"/></linearGradient>
     <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffd9c0"/></linearGradient>
+    <linearGradient id="gold2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7b8"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#d98200"/></linearGradient>
+    <linearGradient id="mane" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a2e"/><stop offset="1" stop-color="#c2500a"/></linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#f3a73b"/></linearGradient>
     <radialGradient id="glow" cx=".5" cy=".5" r=".55"><stop offset="0" stop-color="#ffe27a" stop-opacity=".95"/><stop offset=".6" stop-color="#ff9a3d" stop-opacity=".35"/><stop offset="1" stop-color="#ff5a3d" stop-opacity="0"/></radialGradient>
     <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
@@ -20,10 +23,27 @@
     <circle cx="256" cy="270" r="215" fill="url(#glow)"/>
     <!-- heads, face to face -->
     <g stroke="#4d0510" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
-      <use href="#head" fill="url(#gold)" transform="translate(40 190) scale(1.02)"/>
-      <use href="#head" fill="url(#cream)" transform="translate(472 190) scale(-1.02 1.02)"/>
+      <!-- lion (left side) -->
+      <g transform="translate(10 202) scale(1.04)">
+        <g fill="url(#mane)">
+          <circle cx="110" cy="122" r="30" transform="translate(-58 -6)"/><circle cx="110" cy="122" r="30" transform="translate(-44 -48)"/>
+          <circle cx="110" cy="122" r="30" transform="translate(-6 -66)"/><circle cx="110" cy="122" r="30" transform="translate(36 -52)"/>
+          <circle cx="110" cy="122" r="30" transform="translate(-56 38)"/><circle cx="110" cy="122" r="30" transform="translate(-34 72)"/>
+          <circle cx="110" cy="122" r="30" transform="translate(6 82)"/><circle cx="110" cy="122" r="30" transform="translate(44 70)"/>
+        </g>
+        <circle cx="110" cy="122" r="66" fill="url(#mane)" stroke="none"/>
+        <path d="M70 154c-6-44 14-82 52-82 30 0 50 22 52 52l24 10c8 3 8 14 0 18l-16 6c-6 14-22 24-44 24-34 0-62-10-68-28z" fill="url(#fur)"/>
+        <ellipse cx="164" cy="150" rx="30" ry="22" fill="#ffe9bf" stroke="none"/>
+        <path d="M148 168q16 12 32 0" fill="none"/>
+        <path d="M186 130l16 6-8 12-14-4z" fill="#4d0510"/>
+        <circle cx="138" cy="116" r="7" fill="#4d0510" stroke="none"/><circle cx="140" cy="114" r="2.4" fill="#fff" stroke="none"/>
+        <path d="M122 100q16-10 32-2" fill="none" stroke-width="8"/>
+        <circle cx="86" cy="78" r="17" fill="url(#fur)"/><circle cx="86" cy="79" r="8" fill="#c2500a" stroke="none"/>
+      </g>
+      <!-- gold side (right) -->
+      <use href="#head" fill="url(#gold2)" transform="translate(472 190) scale(-1.02 1.02)"/>
       <!-- bolt between the foreheads -->
-      <path d="M270 214 226 292h34l-18 70 70-96h-38l26-52z" fill="#ffe14d" stroke="#7a1400"/>
+      <path d="M274 226 238 290h28l-14 56 56-76h-30l22-48z" fill="#ffe14d" stroke="#7a1400" transform="translate(6 4)"/>
       <!-- crown -->
       <path d="M176 156 164 92l48 36 44-62 44 62 48-36-12 64z" fill="url(#gold)"/>
       <rect x="176" y="156" width="160" height="26" rx="9" fill="#f5a30a"/>
