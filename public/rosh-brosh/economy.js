@@ -1,7 +1,7 @@
 // כלכלה: אנרגיה שמתמלאת עם הזמן, מטבעות, יהלומים וגביעים.
 export const MAX_ENERGY = 5;
 export const ENERGY_MS = 10 * 60 * 1000;
-export const COST = { swap: 8, time: 6, joker: 12, refill: 20, coinPack: 10 };
+export const COST = { swap: 10, time: 6, joker: 20, refill: 20, coinPack: 10 };
 export const COIN_PACK = 100;
 export const FREE_COINS = 25;
 export const FREE_COINS_MS = 4 * 60 * 60 * 1000;

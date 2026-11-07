@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
+import { COST, taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
 import { planBotTurn, makeOpponent, botSkill } from './bot.js';
 
 describe('אנרגיה', () => {
@@ -66,5 +66,12 @@ describe('משימה יומית', () => {
     expect(s.gems).toBe(gems + TASK_GEMS);
     expect(claimTask(s, day1)).toBe(false);
     expect(taskState(s, day2)).toEqual({ wins: 0, done: false, claimed: false });
+  });
+});
+
+describe('מחירים', () => {
+  it('החלפת שאלה 10 וג\'וקר 20', () => {
+    expect(COST.swap).toBe(10);
+    expect(COST.joker).toBe(20);
   });
 });

@@ -56,4 +56,18 @@ describe('בדיקת תשובות', () => {
       });
     }
   });
+  it('שאלות פתוחות מקבלות הרבה תשובות, ורק קבוצות סגורות קטנות', () => {
+    const closed = ['ימות השבוע', 'חודשי השנה', 'צבעי הקשת', 'כוכבי הלכת', '5 האוקיינוסים', '7 פלאי', 'נבחרות שזכו', 'ימים ואגמים'];
+    for (const q of QUESTIONS) {
+      const isClosed = closed.some((c) => q.text.includes(c));
+      if (isClosed) continue;
+      expect(q.answers.length, q.text).toBeGreaterThanOrEqual(q.text.startsWith('10 ') ? 10 : 20);
+    }
+  });
+  it('תשובות חדשות מתקבלות: בגדי חורף', () => {
+    const w = QUESTIONS.find((q) => q.text.includes('בגדים שלובשים בחורף'));
+    for (const t of ['פליז', 'צעיף', 'קפוצון', 'מגפי גשם', 'מעיל פוך', 'כובע צמר', 'טייץ']) {
+      expect(matchAnswer(t, w.answers), t).not.toBeNull();
+    }
+  });
 });
