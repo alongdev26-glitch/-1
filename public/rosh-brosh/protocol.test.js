@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toGuest, acceptAnswer, cleanName, flip } from './protocol.js';
+import { toGuest, acceptAnswer, cleanName, cleanLogo, flip } from './protocol.js';
 import { newRound } from './rules.js';
 
 describe('פרוטוקול אונליין', () => {
@@ -35,5 +35,10 @@ describe('פרוטוקול אונליין', () => {
     expect(cleanName('א'.repeat(40))).toHaveLength(14);
     expect(cleanName(undefined)).toBe('שחקן');
     expect(cleanName(12)).toBe('שחקן');
+  });
+  it('לוגו מהיריב רק מהרשימה', () => {
+    expect(cleanLogo('crown')).toBe('crown');
+    expect(cleanLogo('<img onerror=x>')).toBeUndefined();
+    expect(cleanLogo(5)).toBeUndefined();
   });
 });

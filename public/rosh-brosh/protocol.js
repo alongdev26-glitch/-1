@@ -1,3 +1,5 @@
+import { LOGOS } from './profile.js';
+
 // הודעות בין שני הטלפונים. המארח (host) מחליט הכול, והאורח (guest) מציג ושולח תשובות.
 // כל ההודעות של המארח כתובות מנקודת המבט שלו: "me" = המארח, "bot" = היריב (האורח).
 // toGuest הופך אותן לנקודת המבט של האורח.
@@ -35,3 +37,6 @@ export const cleanName = (s, fallback = 'שחקן') => {
   const t = typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, 14) : '';
   return t || fallback;
 };
+
+/** לוגו שמגיע מהיריב: רק מהרשימה המותרת. */
+export const cleanLogo = (l) => (LOGOS.includes(l) ? l : undefined);

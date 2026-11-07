@@ -1,22 +1,23 @@
-import { QUESTIONS } from './questions.js?v=8';
-import { matchAnswer } from './checker.js?v=8';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=8';
+import { QUESTIONS } from './questions.js?v=9';
+import { matchAnswer } from './checker.js?v=9';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=9';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=8';
-import { I, emblem } from './icons.js?v=8';
-import { findMatch } from './net.js?v=8';
-import { toGuest, acceptAnswer, cleanName } from './protocol.js?v=8';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=8';
+} from './economy.js?v=9';
+import { I, emblem } from './icons.js?v=9';
+import { findMatch } from './net.js?v=9';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=9';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=9';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=9';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
 const WINS_NEEDED = 2;
 const MAX_ROUNDS = 5;
 
-const ME = { get name() { return save.name || 'אופיר שאול'; } };
+const ME = { get name() { return save.name || 'אופיר שאול'; }, get logo() { return save.logo || 'flame'; } };
 const FRIENDS = [
   { name: 'שימי ביטון', trophies: 68 },
   { name: 'יוני הררי', trophies: 677 },
@@ -43,9 +44,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 
 /** לוגו עגול לשחקן (SVG), עם מסגרת מ-extra. */
 const avatar = (p, size, extra = '') =>
-  `<div class="${size} rounded-full overflow-hidden shrink-0 ${extra}">${emblem(p.name, 'w-full h-full block')}</div>`;
+  `<div class="${size} rounded-full overflow-hidden shrink-0 ${extra}">${emblem(p.name, 'w-full h-full block', p.logo)}</div>`;
 
-const PLUS = (pos) => `<span class="absolute ${pos} text-[9px] bg-green-500 rounded-sm w-3 h-3 flex items-center justify-center text-white font-extrabold leading-none">+</span>`;
+const PLUS = (pos) => `<span class="absolute ${pos} z-10 text-[10px] bg-green-500 rounded-md w-4 h-4 flex items-center justify-center text-white font-extrabold leading-none border border-white/80">+</span>`;
 
 /** סרגל עליון של מסך הבית (stat-pill) */
 const homeHeader = () => `
@@ -56,19 +57,22 @@ const homeHeader = () => `
     </button>
     <div class="flex items-center gap-1.5 flex-1 justify-end">
       <button data-act="energy" class="flex flex-col items-center">
-        <div class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[70px] justify-between h-7">
+        <div class="stat-pill relative pl-3 pr-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[70px] justify-between h-7">
+          ${PLUS('-top-2 -left-2')}
           <span data-v="energy" class="font-bold text-xs tracking-tight text-white pl-0.5"></span>
-          <div class="relative flex items-center justify-center -mr-1">${I.bolt('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
+          <div class="flex items-center justify-center">${I.bolt('w-5 h-5')}</div>
         </div>
         <span data-v="timer" class="text-[9px] font-semibold text-[#ffd5de]/90 mt-0.5 tracking-wider h-3"></span>
       </button>
-      <button data-act="gems" class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[76px] justify-between h-7">
+      <button data-act="gems" class="stat-pill relative pl-3 pr-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[76px] justify-between h-7">
+        ${PLUS('-top-2 -left-2')}
         <span data-v="gems" class="font-bold text-xs tracking-tight text-white"></span>
-        <div class="relative flex items-center justify-center -mr-1">${I.gem('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
+        <div class="flex items-center justify-center">${I.gem('w-4 h-4')}</div>
       </button>
-      <button data-act="coins" class="stat-pill px-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[68px] justify-between h-7">
+      <button data-act="coins" class="stat-pill relative pl-3 pr-2 py-0.5 rounded-lg flex items-center gap-1 min-w-[68px] justify-between h-7">
+        ${PLUS('-top-2 -left-2')}
         <span data-v="coins" class="font-bold text-xs tracking-tight text-white"></span>
-        <div class="relative flex items-center justify-center -mr-1">${I.coin('w-4 h-4')}${PLUS('-top-1 -right-1')}</div>
+        <div class="flex items-center justify-center">${I.coin('w-4 h-4')}</div>
       </button>
     </div>
   </div>
@@ -81,21 +85,23 @@ const homeHeader = () => `
 
 /** סרגל עליון של מסך הדו-קרב (פילים בלי מסגרת בהירה) */
 const gamePill = (act, key, icon, heightCls = 'h-[32px]') => `
-<button data-act="${act}" class="bg-[#720f1d] border border-white/25 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-inner ${heightCls}">
+<button data-act="${act}" class="relative bg-[#460f72] border border-white/25 rounded-xl pl-3.5 pr-2.5 py-1 flex items-center gap-1.5 shadow-inner ${heightCls}">
+  ${PLUS('-top-2 -left-2')}
   <span data-v="${key}" class="font-extrabold text-sm tracking-wide text-white"></span>
-  <div class="relative flex items-center justify-center"><span class="leading-none">${icon}</span><span class="absolute -bottom-1.5 -left-1 text-[9px] font-black bg-white text-[#871c2b] rounded-sm w-3 h-3 flex items-center justify-center leading-none">+</span></div>
+  <div class="flex items-center justify-center leading-none">${icon}</div>
 </button>`;
 const gameHeader = () => `
 <header class="pt-3 px-3 pb-2 z-20 flex flex-col gap-1">
   <div class="flex items-center justify-between w-full">
-    <button data-act="back" aria-label="חזרה" class="w-10 h-10 rounded-xl bg-[#720f1d]/70 active:scale-95 transition-transform flex items-center justify-center border border-white/20 shadow-md" type="button">
+    <button data-act="back" aria-label="חזרה" class="w-10 h-10 rounded-xl bg-[#460f72]/70 active:scale-95 transition-transform flex items-center justify-center border border-white/20 shadow-md" type="button">
       <svg class="w-6 h-6 text-white stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     </button>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <div class="flex flex-col items-center">
-        <button data-act="energy" class="bg-[#720f1d] border border-white/25 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-inner">
+        <button data-act="energy" class="relative bg-[#460f72] border border-white/25 rounded-xl pl-3.5 pr-2.5 py-1 flex items-center gap-1.5 shadow-inner">
+          ${PLUS('-top-2 -left-2')}
           <span data-v="energy" class="font-extrabold text-sm tracking-wide text-white"></span>
-          <div class="relative flex items-center justify-center">${I.bolt('w-4 h-4')}<span class="absolute -bottom-1 -left-1 text-[9px] font-black bg-white text-[#871c2b] rounded-sm w-3 h-3 flex items-center justify-center leading-none">+</span></div>
+          <div class="flex items-center justify-center leading-none">${I.bolt('w-5 h-5')}</div>
         </button>
         <span data-v="timer" class="text-[10px] text-white/90 font-medium tracking-tight mt-0.5 h-3"></span>
       </div>
@@ -237,7 +243,7 @@ function show(html, back = null) {
 const ACTIONS = {
   back: () => backAction?.(),
   energy: buyEnergy, gems: gemsModal, coins: coinsModal,
-  daily: claimDaily, free: claimFreeCoins, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => renameModal(),
+  daily: claimDaily, free: claimFreeCoins, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
   friend: (el) => startMatch(FRIENDS[Number(el.dataset.i)]),
   home: () => home(),
   claim: () => { if (claimTask(save)) { persist(); renderBar(); toast(`קיבלת ${TASK_GEMS} יהלומים`); home(); } },
@@ -247,22 +253,88 @@ screen.addEventListener('click', (e) => {
   if (el) (ACTIONS[el.dataset.act] || (() => {}))(el);
 });
 
-// ---------- שם שחקן ----------
-function renameModal() {
-  const m = $('#modal');
-  m.innerHTML = `<form id="rename" class="game-gloss-card w-full rounded-2xl p-5 text-center flex flex-col gap-3">
-    <h3 class="text-2xl font-black text-3d-white">איך קוראים לך?</h3>
-    <input id="rename-input" class="rounded-xl px-4 py-3 text-lg font-bold text-gray-800 text-right outline-none" dir="rtl" maxlength="14" value="${esc(ME.name)}" autocomplete="off" />
-    <button class="play-btn-glow rounded-xl py-3 text-xl font-extrabold" type="submit">שמור</button>
-  </form>`;
-  m.hidden = false;
-  m.onclick = (e) => { if (e.target === m) closeModal(); };
-  $('#rename-input').focus();
-  $('#rename').addEventListener('submit', (e) => {
-    e.preventDefault();
-    save.name = cleanName($('#rename-input').value, 'אופיר שאול');
-    persist(); closeModal(); home();
+// ---------- פרופיל ושאלון ----------
+const LOGO_LABEL = { crown: 'כתר', bolt: 'ברק', star: 'כוכב', shield: 'מגן', flame: 'להבה', gem: 'יהלום' };
+
+/** השאלון: שם, גיל ולוגו. first = הפעלה ראשונה. */
+function questionnaire(first) {
+  let logo = save.logo || 'flame';
+  const nameVal = save.name || '';
+  show(`
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
+  <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
+    <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
+    <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
+    <label class="flex flex-col gap-1.5">
+      <span class="font-extrabold">איך קוראים לך?</span>
+      <input id="q-name" maxlength="14" value="${esc(nameVal)}" placeholder="השם שלך" class="rounded-xl px-4 py-3 text-lg font-bold text-gray-800 text-right outline-none" dir="rtl" />
+    </label>
+    <label class="flex flex-col gap-1.5">
+      <span class="font-extrabold">בן או בת כמה את/ה?</span>
+      <div class="flex items-center gap-3">
+        <input id="q-age" type="number" inputmode="numeric" min="${MIN_AGE}" max="${MAX_AGE}" value="${save.age || ''}" placeholder="גיל" class="w-28 rounded-xl px-4 py-3 text-lg font-bold text-gray-800 text-center outline-none" />
+        <span id="q-group" class="stat-pill rounded-lg px-4 py-1.5 text-sm font-extrabold min-w-[84px] text-center"></span>
+      </div>
+    </label>
+    <div class="flex flex-col gap-2">
+      <span class="font-extrabold">בחר לוגו</span>
+      <div id="q-logos" class="grid grid-cols-3 gap-3"></div>
+    </div>
+    <p id="q-err" class="text-yellow-200 text-sm min-h-5 text-center font-bold"></p>
+    <button type="submit" class="play-btn-glow h-16 rounded-xl text-2xl font-extrabold"><span class="text-3d-white">${first ? 'שמור והתחל' : 'שמור'}</span></button>
+    ${first ? '' : '<button type="button" data-act="profile" class="game-gloss-card h-12 rounded-xl text-lg font-black">ביטול</button>'}
+  </form>
+</div>`, first ? null : profileScreen);
+  const nameEl = $('#q-name');
+  const ageEl = $('#q-age');
+  const drawLogos = () => {
+    const nm = nameEl.value.trim() || 'שחקן';
+    $('#q-logos').innerHTML = LOGOS.map((l) => `
+      <button type="button" data-logo="${l}" aria-label="${LOGO_LABEL[l]}" aria-pressed="${l === logo}" class="logo-opt flex flex-col items-center gap-1 rounded-xl py-2 ${l === logo ? 'logo-on' : ''}">
+        <div class="w-16 h-16 rounded-full overflow-hidden">${emblem(nm, 'w-full h-full block', l)}</div>
+        <span class="text-xs font-bold">${LOGO_LABEL[l]}</span>
+      </button>`).join('');
+  };
+  const drawGroup = () => { $('#q-group').textContent = ageGroup(ageEl.value) || 'קבוצת גיל'; };
+  drawLogos(); drawGroup();
+  nameEl.addEventListener('input', drawLogos);
+  ageEl.addEventListener('input', drawGroup);
+  $('#q-logos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-logo]');
+    if (!b) return;
+    logo = b.dataset.logo;
+    drawLogos();
   });
+  $('#qform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const r = validateProfile({ name: nameEl.value, age: ageEl.value, logo });
+    if (r.error) { $('#q-err').textContent = r.error; return; }
+    Object.assign(save, r.value, { profileDone: true });
+    persist();
+    if (first) { home(); consentBar(); } else profileScreen();
+  });
+  if (first) nameEl.focus();
+}
+
+/** מסך הפרופיל: לוגו, שם, קבוצת גיל וסטטיסטיקה. */
+function profileScreen() {
+  const stat = (label, value) => `<div class="game-gloss-card rounded-xl py-3 flex flex-col items-center"><b class="text-2xl font-black text-3d-white">${value}</b><span class="text-xs font-bold text-white/85">${label}</span></div>`;
+  show(`
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
+  ${gameHeader()}
+  <section class="px-5 pb-6 flex flex-col items-center gap-4">
+    <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-300 shadow-xl crown-in">${emblem(ME.name, 'w-full h-full block', ME.logo)}</div>
+    <h1 class="text-3xl font-black text-3d-white">${esc(ME.name)}</h1>
+    <div class="flex gap-2">
+      <span class="stat-pill rounded-lg px-4 py-1 text-sm font-extrabold">${esc(ageGroup(save.age) || 'ללא גיל')}</span>
+      ${save.age ? `<span class="stat-pill rounded-lg px-4 py-1 text-sm font-extrabold">גיל ${esc(save.age)}</span>` : ''}
+    </div>
+    <div class="grid grid-cols-3 gap-3 w-full mt-2">
+      ${stat('גביעים', save.trophies)}${stat('משחקים', save.played)}${stat('ניצחונות', save.wins)}
+    </div>
+    <button data-act="edit-profile" class="play-btn-glow w-full h-16 rounded-xl text-2xl font-extrabold mt-2"><span class="text-3d-white">ערוך פרופיל</span></button>
+  </section>
+</div>`, home);
 }
 
 // ---------- משימה יומית ----------
@@ -345,7 +417,7 @@ function home() {
       </div>
     </section>
   </main>
-  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v8 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v9 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`);
 }
 
@@ -533,7 +605,7 @@ function startOnline() {
 
 /** לחיצת יד: כל צד שולח שם וגביעים. אחרי שהרולטה נעצרת על היריב, המשחק מתחיל. */
 function connected({ role, conn }, found, isCancelled) {
-  const hello = { t: 'hello', name: cleanName(save.name || ME.name), trophies: save.trophies };
+  const hello = { t: 'hello', name: cleanName(save.name || ME.name), trophies: save.trophies, logo: ME.logo };
   let started = false;
   const pending = [];
   const timeout = setTimeout(() => { if (!started) { conn.close(); toast('החיבור נכשל, משחקים מול בוט'); startMatch(); } }, 6000);
@@ -542,7 +614,7 @@ function connected({ role, conn }, found, isCancelled) {
     if (!m || m.t !== 'hello') return;
     started = true;
     clearTimeout(timeout);
-    const opp = { name: cleanName(m.name), trophies: Number(m.trophies) || 0 };
+    const opp = { name: cleanName(m.name), trophies: Number(m.trophies) || 0, logo: cleanLogo(m.logo) };
     found(opp).then((ok) => {
       if (!ok || isCancelled()) { conn.close(); return; }
       if (!spendEnergy(save)) { conn.close(); return buyEnergy(); }
@@ -1064,5 +1136,4 @@ function consentBar() {
   $('#app').append(bar);
 }
 
-home();
-consentBar();
+if (save.profileDone) { home(); consentBar(); } else questionnaire(true);

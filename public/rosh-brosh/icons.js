@@ -4,7 +4,7 @@ const svg = (cls, body, vb = '0 0 24 24') => `<svg class="${cls} inline-block sh
 export const I = {
   coin: (c = 'w-4 h-4') => svg(c, '<circle cx="12" cy="12" r="10" fill="#f7ba13" stroke="#b37300" stroke-width="1.5"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#fff3a8" stroke-width="1.6"/><path d="M12 8.5v7M10 10.2c.6-.7 3.4-.9 3.4.6 0 1.7-3.4.9-3.4 2.7 0 1.4 2.8 1.2 3.6.4" fill="none" stroke="#b37300" stroke-width="1.3" stroke-linecap="round"/>'),
   gem: (c = 'w-4 h-4') => svg(c, '<path d="M6 3h12l4 6-10 12L2 9z" fill="#2de2e6" stroke="#00798a" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 9h20M9 3l-2 6 5 12 5-12-2-6" fill="none" stroke="#c9fbff" stroke-width="1.1" stroke-linejoin="round"/>'),
-  bolt: (c = 'w-4 h-4') => svg(c, '<path d="M13.5 2 5 13.5h6L9.5 22 19 9.5h-6.3z" fill="#ffd000" stroke="#d48800" stroke-width="1.3" stroke-linejoin="round"/>'),
+  bolt: (c = 'w-4 h-4') => svg(c, '<path d="M13 2.5 6.5 13H11v8.500L17.500 11H13z" fill="#ffd000" stroke="#d48800" stroke-width="1.4" stroke-linejoin="round"/>'),
   trophy: (c = 'w-4 h-4') => svg(c, '<path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffc933" stroke="#c98a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 5H3.5c0 3 1.5 4.5 3.7 4.8M17 5h3.5c0 3-1.5 4.5-3.7 4.8" fill="none" stroke="#c98a00" stroke-width="1.5" stroke-linecap="round"/><path d="M12 13v4M8 21h8M9 17h6" fill="none" stroke="#c98a00" stroke-width="1.8" stroke-linecap="round"/>'),
   heart: (c = 'w-4 h-4') => svg(c, '<path d="M12 21s-8.5-5.2-8.5-11.2A4.8 4.8 0 0 1 12 7.2a4.8 4.8 0 0 1 8.5 2.6C20.5 15.8 12 21 12 21z" fill="currentColor"/>'),
   check: (c = 'w-4 h-4') => svg(c, '<path d="M4.5 12.8 9.5 18 19.5 6.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'),
@@ -30,10 +30,10 @@ let emblemId = 0;
 const hash = (str) => [...str].reduce((a, ch) => (a * 31 + ch.codePointAt(0)) >>> 0, 7);
 
 /** לוגו עגול לשחקן: צבע וסמל לפי השם. */
-export function emblem(name, cls = 'w-12 h-12') {
+export function emblem(name, cls = 'w-12 h-12', symbol) {
   const h = hash(name);
   const [c1, c2] = PALETTES[h % PALETTES.length];
-  const sym = KNOWN[name] || SYMBOL_NAMES[(h >> 3) % SYMBOL_NAMES.length];
+  const sym = SYMBOLS[symbol] ? symbol : KNOWN[name] || SYMBOL_NAMES[(h >> 3) % SYMBOL_NAMES.length];
   const id = `em${emblemId++}`;
   return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(#${id})"/><circle cx="50" cy="50" r="42" fill="none" stroke="#fff6d6" stroke-opacity=".55" stroke-width="2.5"/><g fill="#fff6d6" stroke="#5a0710" stroke-opacity=".45" stroke-width="2.5" stroke-linejoin="round">${SYMBOLS[sym]}</g></svg>`;
 }
