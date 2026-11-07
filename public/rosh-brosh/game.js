@@ -1,16 +1,16 @@
-import { QUESTIONS } from './questions.js?v=10';
-import { matchAnswer } from './checker.js?v=10';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=10';
+import { QUESTIONS } from './questions.js?v=11';
+import { matchAnswer } from './checker.js?v=11';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=11';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=10';
-import { I, emblem } from './icons.js?v=10';
-import { findMatch } from './net.js?v=10';
-import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=10';
-import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=10';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=10';
+} from './economy.js?v=11';
+import { I, emblem } from './icons.js?v=11';
+import { findMatch } from './net.js?v=11';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=11';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=11';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=11';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -263,7 +263,7 @@ function questionnaire(first) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
   <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
-    <img src="./icon.svg" alt="" class="w-20 h-20 mx-auto drop-shadow-lg" />
+    <img src="./icon.svg?v=11" alt="ראש בראש" class="w-24 h-24 mx-auto drop-shadow-lg" />
     <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
     <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
     <label class="flex flex-col gap-1.5">
@@ -419,9 +419,8 @@ function home() {
     </section>
   </main>
   <footer class="mt-auto pt-2 pb-3 flex flex-col items-center gap-1 z-10">
-    <img src="./icon.svg" alt="" class="w-16 h-16 drop-shadow-lg logo-float" />
-    <b class="text-2xl font-black font-display text-3d-banner leading-none">ראש בראש</b>
-    <span class="text-[10px] text-white/60 mt-1">v10 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></span>
+    <img src="./icon.svg?v=11" alt="ראש בראש" class="w-24 h-24 drop-shadow-lg logo-float" />
+    <span class="text-[10px] text-white/60 mt-1">v11 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></span>
   </footer>
 </div>`);
 }
