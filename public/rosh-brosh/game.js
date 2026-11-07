@@ -1,15 +1,15 @@
-import { QUESTIONS } from './questions.js?v=7';
-import { matchAnswer } from './checker.js?v=7';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS } from './bot.js?v=7';
+import { QUESTIONS } from './questions.js?v=8';
+import { matchAnswer } from './checker.js?v=8';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=8';
 import {
   MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=7';
-import { I, emblem } from './icons.js?v=7';
-import { findMatch } from './net.js?v=7';
-import { toGuest, acceptAnswer, cleanName } from './protocol.js?v=7';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=7';
+} from './economy.js?v=8';
+import { I, emblem } from './icons.js?v=8';
+import { findMatch } from './net.js?v=8';
+import { toGuest, acceptAnswer, cleanName } from './protocol.js?v=8';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=8';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -345,7 +345,7 @@ function home() {
       </div>
     </section>
   </main>
-  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v7 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v8 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`);
 }
 
@@ -432,46 +432,124 @@ const waitScreen = (text) => `
 </div>`;
 
 // ---------- אונליין ----------
+const ROW = 72; // גובה שורה ברולטה
+const REDUCED = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** רולטה של יריבים: מסתובבת בזמן החיפוש, ונעצרת על היריב שנמצא. */
+function rouletteHtml() {
+  const pool = [...NAMES].sort(() => Math.random() - 0.5);
+  const items = pool.map((name) => `<div class="roulette-item">${avatar({ name }, 'w-12 h-12', 'border-2 border-white/80')}<b>${esc(name)}</b></div>`).join('');
+  return `<div class="roulette"><div id="strip" class="roulette-strip">${items}${items}</div><div class="roulette-band"></div></div>`;
+}
+function startRoulette() {
+  const strip = $('#strip');
+  const n = strip.children.length / 2;
+  const total = n * ROW;
+  let pos = 0;
+  let landing = false;
+  let raf = 0;
+  let last = performance.now();
+  const apply = () => { strip.style.transform = `translateY(${-(pos % total)}px)`; };
+  const loop = (now) => {
+    const dt = (now - last) / 1000;
+    last = now;
+    if (!landing && !REDUCED()) { pos += 900 * dt; apply(); }
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+  return {
+    stop() { cancelAnimationFrame(raf); },
+    /** נעצרת עם היריב במרכז. מחזירה promise שנפתר כשנעצרה. */
+    land(opp) {
+      return new Promise((resolve) => {
+        landing = true;
+        const cur = pos % total;
+        const idx = (Math.ceil(cur / ROW) + 14) % n;
+        const html = `${avatar(opp, 'w-12 h-12', 'border-2 border-yellow-300')}<b>${esc(opp.name)}</b>`;
+        for (const k of [idx, idx + n]) { strip.children[k].innerHTML = html; strip.children[k].classList.add('roulette-hit'); }
+        let target = pos - cur + (((idx - 1) * ROW + total) % total);
+        if (target < pos + 8 * ROW) target += total;
+        const from = pos;
+        const dur = REDUCED() ? 0 : 2600;
+        const t0 = performance.now();
+        const step = (now) => {
+          const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+          pos = from + (target - from) * (1 - (1 - k) ** 3);
+          apply();
+          if (k < 1) return requestAnimationFrame(step);
+          cancelAnimationFrame(raf);
+          strip.children[idx].classList.add('roulette-win');
+          strip.children[idx + n].classList.add('roulette-win');
+          resolve();
+        };
+        requestAnimationFrame(step);
+      });
+    },
+  };
+}
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
 function startOnline() {
   tickEnergy(save);
   if (save.energy < 1) return buyEnergy();
   const search = findMatch({ timeoutMs: SEARCH_SECONDS * 1000 });
   let secs = 0;
   let tick = 0;
-  const stop = () => { clearInterval(tick); };
+  let cancelled = false;
+  let roulette = null;
+  const cancel = () => { cancelled = true; clearInterval(tick); search.cancel(); roulette?.stop(); home(); };
   show(`
 <div id="searching" class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
   ${gameHeader()}
   <section class="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
-    <div class="spinner"></div>
-    <p class="text-2xl font-black text-3d-white">מחפש יריב...</p>
-    <p class="text-white/80"><span id="search-sec">0</span> שניות</p>
-    <button data-act="cancel-search" class="game-gloss-card rounded-xl px-8 py-3 text-lg font-black">ביטול</button>
+    <p id="search-title" class="text-2xl font-black text-3d-white">מחפש יריב...</p>
+    ${rouletteHtml()}
+    <p class="text-white/80" id="search-sub"><span id="search-sec">0</span> שניות</p>
+    <button id="cancel-btn" data-act="cancel-search" class="game-gloss-card rounded-xl px-8 py-3 text-lg font-black">ביטול</button>
   </section>
-</div>`, () => { stop(); search.cancel(); home(); });
-  ACTIONS['cancel-search'] = () => { stop(); search.cancel(); home(); };
+</div>`, cancel);
+  roulette = startRoulette();
+  ACTIONS['cancel-search'] = cancel;
   tick = setInterval(() => { secs += 1; const el = $('#search-sec'); if (el) el.textContent = secs; }, 1000);
-  search.promise.then((res) => {
-    stop();
-    if (!$('#searching')) { res?.conn.close(); return; } // בוטל
-    if (!res) { toast('לא נמצא יריב פנוי, משחקים מול בוט'); return startMatch(); }
-    connected(res);
+  const found = async (opp) => {
+    clearInterval(tick);
+    $('#cancel-btn')?.remove();
+    await roulette.land(opp);
+    if (cancelled) return false;
+    $('#search-title').textContent = 'נמצא יריב!';
+    await wait(1100);
+    return !cancelled;
+  };
+  search.promise.then(async (res) => {
+    if (cancelled) { res?.conn.close(); return; }
+    if (!res) {
+      const bot = makeOpponent(save.trophies);
+      if (await found(bot)) { toast('לא נמצא שחקן פנוי, משחקים מול בוט'); startMatch(bot); }
+      return;
+    }
+    connected(res, found, () => cancelled);
   });
 }
 
-/** לחיצת יד: כל צד שולח שם וגביעים, ואז המשחק מתחיל. */
-function connected({ role, conn }) {
+/** לחיצת יד: כל צד שולח שם וגביעים. אחרי שהרולטה נעצרת על היריב, המשחק מתחיל. */
+function connected({ role, conn }, found, isCancelled) {
   const hello = { t: 'hello', name: cleanName(save.name || ME.name), trophies: save.trophies };
   let started = false;
+  const pending = [];
   const timeout = setTimeout(() => { if (!started) { conn.close(); toast('החיבור נכשל, משחקים מול בוט'); startMatch(); } }, 6000);
   conn.onMessage((m) => {
-    if (started || !m || m.t !== 'hello') return;
+    if (started) { pending.push(m); return; }
+    if (!m || m.t !== 'hello') return;
     started = true;
     clearTimeout(timeout);
-    if (!spendEnergy(save)) { conn.close(); return buyEnergy(); }
-    save.played += 1; persist(); renderBar();
     const opp = { name: cleanName(m.name), trophies: Number(m.trophies) || 0 };
-    beginMatch(opp, role, conn);
+    found(opp).then((ok) => {
+      if (!ok || isCancelled()) { conn.close(); return; }
+      if (!spendEnergy(save)) { conn.close(); return buyEnergy(); }
+      save.played += 1; persist(); renderBar();
+      beginMatch(opp, role, conn);
+      pending.forEach((raw) => onNet(raw));
+    });
   });
   conn.send(hello);
 }
