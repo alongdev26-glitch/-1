@@ -128,3 +128,5 @@ button:active { transition: transform .08s; }
 .logo-opt { border: 2px solid transparent; background: rgba(0, 0, 0, .18); transition: transform .15s; }
 .logo-opt:active { transform: scale(.96); }
 .logo-on { border-color: #ffd23f; background: rgba(255, 210, 63, .2); box-shadow: 0 0 14px rgba(255, 210, 63, .45); }
+
+.logo-float { animation: floaty 3s ease-in-out infinite; }

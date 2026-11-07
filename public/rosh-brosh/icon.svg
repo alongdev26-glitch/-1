@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ראש בראש">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a45"/><stop offset=".55" stop-color="#d61f2f"/><stop offset="1" stop-color="#8e0b1b"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#f5a30a"/></linearGradient>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe9c2"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".42" r=".6"><stop offset="0" stop-color="#ffd23f" stop-opacity=".55"/><stop offset="1" stop-color="#ffd23f" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#ffd23f" stroke-opacity=".7" stroke-width="6"/>
+  <circle cx="256" cy="262" r="210" fill="url(#glow)"/>
+  <g stroke="#5a0710" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <!-- left head (gold), tilted toward the middle -->
+    <g transform="rotate(9 168 330)">
+      <path d="M78 452c0-62 40-102 90-102s90 40 90 102z" fill="url(#gold)"/>
+      <circle cx="168" cy="282" r="64" fill="url(#gold)"/>
+    </g>
+    <!-- right head (cream) -->
+    <g transform="rotate(-9 344 330)">
+      <path d="M254 452c0-62 40-102 90-102s90 40 90 102z" fill="url(#cream)"/>
+      <circle cx="344" cy="282" r="64" fill="url(#cream)"/>
+    </g>
+    <!-- bolt between the heads -->
+    <path d="M276 196 220 292h40l-22 78 86-116h-46l30-58z" fill="#ffd000" stroke="#7a1400"/>
+    <!-- crown -->
+    <path d="M186 150 176 92l42 32 38-54 38 54 42-32-10 58z" fill="url(#gold)"/>
+    <rect x="186" y="150" width="140" height="22" rx="8" fill="#f5a30a"/>
+  </g>
+  <circle cx="176" cy="92" r="9" fill="#fff6d6" stroke="#5a0710" stroke-width="6"/>
+  <circle cx="256" cy="70" r="9" fill="#fff6d6" stroke="#5a0710" stroke-width="6"/>
+  <circle cx="336" cy="92" r="9" fill="#fff6d6" stroke="#5a0710" stroke-width="6"/>
+</svg>
