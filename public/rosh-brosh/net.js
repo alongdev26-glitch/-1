@@ -1,10 +1,13 @@
-// חיבור בין שני שחקנים בלי שרת משלנו.
-// peerMatch: PeerJS (WebRTC) עם "משבצות המתנה" קבועות בשרת הציבורי החינמי של PeerJS.
-// bcMatch: אותו רעיון בין שתי לשוניות באותו דפדפן (BroadcastChannel), לבדיקות. נבחר עם ?net=bc
-// כל אחד מחזיר { promise, cancel }. ה-promise נפתר ל-{ role: 'host' | 'guest', conn } או null אם לא נמצא יריב.
-const SLOTS = 5;
-const SLOT_ID = (i) => `rosh-brosh-q-${i}`;
+// חיבור בין שני שחקנים בלי שרת משלנו: שני הטלפונים מתחברים החוצה לשרת MQTT ציבורי (WSS)
+// ומעבירים דרכו הודעות. אין חיבור ישיר בין הטלפונים, ולכן אין בעיות NAT ורשתות סלולריות.
+// bus = { open(name) -> channel, close() }, channel = { post(data), onmessage, ready (promise), close() }
+// mqttBus: שרת MQTT ציבורי. bcBus: בין לשוניות באותו דפדפן (לבדיקות, ?net=bc).
+// busMatch מחזיר { promise, cancel }. ה-promise נפתר ל-{ role: 'host' | 'guest', conn } או null אם לא נמצא יריב.
 const rid = () => Math.random().toString(36).slice(2, 10);
+const qs = () => new URLSearchParams(location.search);
+
+export const HEARTBEAT_MS = 3000;
+export const DEAD_MS = 10000;
 
 /** חיבור כללי: send, onMessage (הודעות שהגיעו קודם נשמרות עד שיש מאזין), onClose, close. */
 export function makeConn(sendFn, closeFn) {
@@ -22,172 +25,164 @@ export function makeConn(sendFn, closeFn) {
   };
 }
 
-// ---------- בין לשוניות (בדיקות) ----------
-export function bcMatch({ timeoutMs = 20000 } = {}) {
+/**
+ * חיבור על ערוץ: מספר סידורי (מסנן כפילויות של MQTT), פעימת לב כדי לזהות שהיריב נעלם,
+ * וצד המארח שולח "ready" שוב ושוב עד שהאורח עונה (הודעה בודדת יכולה ללכת לאיבוד).
+ */
+export function toConn(ch, { host = false, onDone } = {}) {
+  let seqOut = 0;
+  let seqIn = 0;
+  let last = Date.now();
+  let heard = false;
+  const timers = [];
+  const stop = () => { timers.forEach(clearInterval); timers.length = 0; };
+  const conn = makeConn(
+    (m) => ch.post({ k: 'd', n: ++seqOut, m }),
+    () => { stop(); try { ch.post({ k: 'bye' }); } catch { /* ignore */ } ch.close(); onDone?.(); },
+  );
+  ch.onmessage = (x) => {
+    last = Date.now();
+    if (x.k !== 'ready') heard = true;
+    if (x.k === 'bye') { stop(); conn._closed(); ch.close(); onDone?.(); }
+    else if (x.k === 'd' && x.n > seqIn) { seqIn = x.n; conn._in(x.m); }
+  };
+  timers.push(setInterval(() => ch.post({ k: 'hb' }), HEARTBEAT_MS));
+  timers.push(setInterval(() => { if (Date.now() - last > DEAD_MS) { stop(); conn._closed(); } }, 1000));
+  if (host) timers.push(setInterval(() => { if (!heard) ch.post({ k: 'ready' }); }, 1000));
+  else ch.post({ k: 'hb' });
+  return conn;
+}
+
+/** התאמה: שני מחפשים מפרסמים "seek" בלובי. מי שהמזהה שלו קטן הופך למארח ושולח offer. */
+export function busMatch(makeBus, { timeoutMs = 30000, onStatus = () => {} } = {}) {
   const id = rid();
-  const lobby = new BroadcastChannel('rosh-brosh-lobby');
   let done = false;
   let finish;
-  let priv = null;
   const promise = new Promise((res) => { finish = res; });
-  const timers = [];
+  let bus = null;
+  let lobby = null;
+  let priv = null;
+  let seekTimer = 0;
+  let timeoutTimer = 0;
   const end = (value) => {
     if (done) return;
     done = true;
-    timers.forEach((t) => { clearInterval(t); clearTimeout(t); });
-    lobby.close();
+    clearInterval(seekTimer);
+    clearTimeout(timeoutTimer);
+    lobby?.close();
+    if (!value) { priv?.close(); bus?.close(); }
     finish(value);
   };
-  const toConn = (ch) => {
-    const conn = makeConn((m) => ch.postMessage(m), () => { ch.postMessage({ t: 'bye' }); ch.close(); });
-    ch.onmessage = (e) => { if (e.data.t === 'bye') conn._closed(); else if (e.data.t !== 'ready') conn._in(e.data); };
-    return conn;
-  };
-  lobby.onmessage = (e) => {
-    const m = e.data;
-    if (done || (m.to && m.to !== id)) return;
-    if (m.t === 'seek' && m.id !== id && id < m.id) {
-      lobby.postMessage({ t: 'offer', to: m.id, host: id });
-    } else if (m.t === 'offer' && !priv) {
-      priv = new BroadcastChannel(`rosh-brosh-m-${m.host}`);
-      priv.onmessage = (ev) => { if (ev.data.t === 'ready') end({ role: 'guest', conn: toConn(priv) }); };
-      lobby.postMessage({ t: 'accept', to: m.host, id });
-    } else if (m.t === 'accept' && !priv) {
-      priv = new BroadcastChannel(`rosh-brosh-m-${id}`);
-      priv.postMessage({ t: 'ready' });
-      end({ role: 'host', conn: toConn(priv) });
-    }
-  };
-  lobby.postMessage({ t: 'seek', id });
-  timers.push(setInterval(() => lobby.postMessage({ t: 'seek', id }), 600));
-  timers.push(setTimeout(() => end(null), timeoutMs));
+  timeoutTimer = setTimeout(() => end(null), timeoutMs);
+  (async () => {
+    onStatus('connecting');
+    try { bus = await makeBus(); } catch (e) { onStatus(e?.message === 'lib' ? 'error:lib' : 'error:server'); end(null); return; }
+    if (done) { bus.close(); return; }
+    onStatus('searching');
+    lobby = bus.open('lobby');
+    await lobby.ready;
+    lobby.onmessage = async (m) => {
+      if (done || !m || (m.to && m.to !== id)) return;
+      if (m.t === 'seek' && m.id !== id && id < m.id) {
+        lobby.post({ t: 'offer', to: m.id, host: id });
+      } else if (m.t === 'offer' && !priv) {
+        const ch = bus.open(`m-${m.host}`);
+        priv = ch;
+        ch.onmessage = (x) => { if (x.k === 'ready' && !done) end({ role: 'guest', conn: toConn(ch, { onDone: () => bus.close() }) }); };
+        await ch.ready;
+        lobby.post({ t: 'accept', to: m.host, id });
+      } else if (m.t === 'accept' && !priv) {
+        const ch = bus.open(`m-${id}`);
+        priv = ch;
+        await ch.ready;
+        ch.post({ k: 'ready' });
+        end({ role: 'host', conn: toConn(ch, { host: true, onDone: () => bus.close() }) });
+      }
+    };
+    const seek = () => lobby.post({ t: 'seek', id });
+    seek();
+    seekTimer = setInterval(seek, 900);
+  })();
   return { promise, cancel: () => end(null) };
 }
 
-// ---------- PeerJS ----------
-// שיטה: כל המחפשים מתחרים על אותן משבצות קבועות (rosh-brosh-q-0, 1, 2...).
-// מי שמצליח "לתפוס" משבצת מחכה בה (מארח). מי שהמשבצת תפוסה אצלו מתקשר אליה (אורח).
-// כך שני מחפשים תמיד נפגשים, גם אם לא לחצו באותה שנייה.
-const PEER_SRC = 'https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js';
-const qs = () => new URLSearchParams(location.search);
+// ---------- בין לשוניות (בדיקות) ----------
+export function bcBus() {
+  const me = rid();
+  const chans = new Set();
+  return {
+    open(name) {
+      const bc = new BroadcastChannel(`rosh-brosh-${name}`);
+      const ch = { onmessage: null, ready: Promise.resolve(), post: (d) => bc.postMessage({ f: me, d }), close: () => { bc.close(); chans.delete(ch); } };
+      bc.onmessage = (e) => { if (e.data.f !== me) ch.onmessage?.(e.data.d); };
+      chans.add(ch);
+      return ch;
+    },
+    close() { [...chans].forEach((c) => c.close()); },
+  };
+}
 
-/** כתובת הספרייה. ?peerjs= מותר רק מאותו אתר (לבדיקות). */
-function peerSrc() {
-  const v = qs().get('peerjs');
+// ---------- MQTT (שרת ציבורי) ----------
+const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt'];
+const MQTT_SRC = 'https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js';
+
+/** ?mqttjs= מותר רק מאותו אתר, ו-?broker= רק ל-localhost (לבדיקות). */
+function mqttSrc() {
+  const v = qs().get('mqttjs');
   try { if (v && new URL(v, location.href).origin === location.origin) return v; } catch { /* ignore */ }
-  return PEER_SRC;
+  return MQTT_SRC;
 }
-/** ?peer=localhost:9000 מצביע על שרת התאמה מקומי (לבדיקות בלבד). */
-function peerOptions() {
-  const c = qs().get('peer');
-  if (c && /^(localhost|127\.0\.0\.1):\d+$/.test(c)) {
-    const [host, port] = c.split(':');
-    return { host, port: Number(port), path: '/', secure: false, config: { iceServers: [] }, debug: 0 };
-  }
-  return { debug: 0 };
+function brokers() {
+  const b = qs().get('broker');
+  return b && /^wss?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(b) ? [b] : BROKERS;
 }
-function loadPeer() {
-  if (window.Peer) return Promise.resolve(window.Peer);
+function loadMqtt() {
+  if (window.mqtt) return Promise.resolve(window.mqtt);
   return new Promise((ok, bad) => {
     const s = document.createElement('script');
-    s.src = peerSrc();
-    s.onload = () => (window.Peer ? ok(window.Peer) : bad(new Error('peerjs')));
-    s.onerror = () => bad(new Error('peerjs'));
+    s.src = mqttSrc();
+    s.onload = () => (window.mqtt ? ok(window.mqtt) : bad(new Error('lib')));
+    s.onerror = () => bad(new Error('lib'));
     document.head.append(s);
   });
 }
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const connectTo = (mqtt, url, ms) => new Promise((ok) => {
+  const c = mqtt.connect(url, { reconnectPeriod: 0, connectTimeout: ms, clientId: `rb_${rid()}${rid()}`, clean: true, keepalive: 30 });
+  const t = setTimeout(() => { c.end(true); ok(null); }, ms + 500);
+  c.once('connect', () => { clearTimeout(t); ok(c); });
+  c.once('error', () => { clearTimeout(t); c.end(true); ok(null); });
+  c.once('close', () => { clearTimeout(t); ok(null); });
+});
 
-export function peerMatch({ timeoutMs = 30000, onStatus = () => {} } = {}) {
-  let cancelled = false;
-  const peers = [];
-  const kill = (p) => { try { p.destroy(); } catch { /* ignore */ } };
-  const promise = (async () => {
-    onStatus('loading');
-    let Peer;
-    try { Peer = await loadPeer(); } catch { onStatus('error:lib'); return null; }
-    const opts = peerOptions();
-    const deadline = Date.now() + timeoutMs;
-
-    const wrap = (c) => {
-      const conn = makeConn((m) => c.send(m), () => c.close());
-      c.on('data', (d) => conn._in(d));
-      c.on('close', () => conn._closed());
-      c.on('error', () => conn._closed());
-      return conn;
-    };
-    /** תופס משבצת. { peer } | { taken } | { error } */
-    const claim = (i) => new Promise((ok) => {
-      const p = new Peer(SLOT_ID(i), opts);
-      peers.push(p);
-      const t = setTimeout(() => { kill(p); ok({ error: true }); }, 9000);
-      p.once('open', () => { clearTimeout(t); ok({ peer: p }); });
-      p.once('error', (e) => { clearTimeout(t); kill(p); ok(e.type === 'unavailable-id' ? { taken: true } : { error: true }); });
-    });
-    /** מחכה בתוך המשבצת עד שמישהו מתחבר (עד הדדליין). */
-    const hold = (p) => new Promise((ok) => {
-      let taken = false;
-      const t = setTimeout(() => ok(null), Math.max(0, deadline - Date.now()));
-      p.on('error', () => {});
-      p.on('disconnected', () => { try { p.reconnect(); } catch { /* ignore */ } });
-      p.on('connection', (c) => c.on('open', () => {
-        if (taken || cancelled) { c.send({ t: 'busy' }); setTimeout(() => c.close(), 300); return; }
-        taken = true;
-        clearTimeout(t);
-        c.send({ t: 'ready' });
-        ok(c);
-      }));
-    });
-    let seeker = null;
-    const openSeeker = () => new Promise((ok) => {
-      const p = new Peer(opts);
-      peers.push(p);
-      const t = setTimeout(() => { kill(p); ok(null); }, 9000);
-      p.once('open', () => { clearTimeout(t); ok(p); });
-      p.once('error', () => { clearTimeout(t); kill(p); ok(null); });
-    });
-    /** מתקשר למשבצת תפוסה ומחכה ל"ready" מהמארח. */
-    const dial = (p, i) => new Promise((ok) => {
-      const slot = SLOT_ID(i);
-      let done = false;
-      const finish = (v) => { if (done) return; done = true; clearTimeout(t); p.off('error', onErr); ok(v); };
-      const onErr = (e) => { if (e.type === 'peer-unavailable' && String(e.message).includes(slot)) finish(null); };
-      p.on('error', onErr);
-      const t = setTimeout(() => { try { c.close(); } catch { /* ignore */ } finish(null); }, 5000);
-      const c = p.connect(slot, { reliable: true, serialization: 'json' });
-      c.on('data', (d) => { if (d && d.t === 'ready') finish(c); else if (d && d.t === 'busy') finish(null); });
-      c.on('error', () => finish(null));
-      c.on('close', () => finish(null));
-    });
-
-    while (!cancelled && Date.now() < deadline) {
-      let serverProblem = false;
-      for (let i = 0; i < SLOTS && !cancelled; i++) {
-        onStatus('connecting');
-        const r = await claim(i);
-        if (r.peer) {
-          onStatus('waiting');
-          const c = await hold(r.peer);
-          if (c) return { role: 'host', conn: wrap(c) };
-          kill(r.peer);
-          return null;
-        }
-        if (r.error) { serverProblem = true; continue; }
-        if (!seeker) seeker = await openSeeker();
-        if (!seeker) { serverProblem = true; continue; }
-        onStatus('dialing');
-        const c = await dial(seeker, i);
-        if (c) return { role: 'guest', conn: wrap(c) };
-      }
-      onStatus(serverProblem ? 'error:server' : 'retry');
-      await sleep(800 + Math.random() * 800);
-    }
-    return null;
-  })();
-  return { promise, cancel: () => { cancelled = true; peers.forEach(kill); } };
+export async function mqttBus() {
+  const mqtt = await loadMqtt();
+  let client = null;
+  for (const url of brokers()) { client = await connectTo(mqtt, url, 6000); if (client) break; }
+  if (!client) throw new Error('server');
+  const me = rid();
+  const handlers = new Map();
+  client.on('message', (topic, payload) => {
+    try {
+      const m = JSON.parse(payload.toString());
+      if (m.f !== me) handlers.get(topic)?.(m.d);
+    } catch { /* ignore garbage */ }
+  });
+  return {
+    open(name) {
+      const topic = `rosh-brosh/v1/${name}`;
+      const ch = {
+        onmessage: null,
+        post: (d) => client.publish(topic, JSON.stringify({ f: me, d }), { qos: 1 }),
+        close: () => { handlers.delete(topic); try { client.unsubscribe(topic); } catch { /* ignore */ } },
+      };
+      handlers.set(topic, (d) => ch.onmessage?.(d));
+      ch.ready = new Promise((ok) => client.subscribe(topic, { qos: 1 }, () => ok()));
+      return ch;
+    },
+    close() { try { client.end(true); } catch { /* ignore */ } },
+  };
 }
 
 export function findMatch(opts) {
-  const useBc = new URLSearchParams(location.search).get('net') === 'bc';
-  return useBc ? bcMatch(opts) : peerMatch(opts);
+  return busMatch(qs().get('net') === 'bc' ? bcBus : mqttBus, opts);
 }
