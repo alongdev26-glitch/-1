@@ -1,16 +1,16 @@
-import { QUESTIONS } from './questions.js?v=15';
-import { matchAnswer } from './checker.js?v=15';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=15';
+import { QUESTIONS } from './questions.js?v=16';
+import { matchAnswer } from './checker.js?v=16';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=16';
 import {
-  MAX_ENERGY, COST, COIN_PACK, FREE_COINS, FREE_COINS_MS, DAILY_GEMS,
+  MAX_ENERGY, COST, SHOP, DAILY_REWARDS, FREE_COINS, dailyState, claimDailyReward, freeCoinsState, claimFreeCoinsReward, buyItem,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=15';
-import { I, emblem } from './icons.js?v=15';
-import { findMatch } from './net.js?v=15';
-import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=15';
-import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=15';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=15';
+} from './economy.js?v=16';
+import { I, emblem } from './icons.js?v=16';
+import { findMatch } from './net.js?v=16';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=16';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=16';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=16';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -152,6 +152,7 @@ function renderBar() {
   };
   for (const [k, v] of Object.entries(vals)) {
     const els = document.querySelectorAll(`[data-v="${k}"]`);
+    if (hold.has(k)) continue;
     const prev = lastVal[k];
     if ((k === 'gems' || k === 'coins') && prev !== undefined && prev !== v) tween(k, prev, v);
     else els.forEach((e) => { e.textContent = v; });
@@ -193,44 +194,129 @@ function confetti(parent, n = 30) {
   parent.append(box);
   setTimeout(() => box.remove(), 4200);
 }
-setInterval(renderBar, 1000);
+setInterval(() => {
+  renderBar();
+  const f = freeCoinsState(save);
+  document.querySelectorAll('[data-free-cd]').forEach((el) => { el.textContent = f.ready ? (el.closest('.claim-btn') ? 'קבל' : 'זמין!') : fmtMs(f.msLeft); });
+  document.querySelectorAll('[data-free-btn]').forEach((el) => el.classList.toggle('reward-ready', f.ready));
+  document.querySelectorAll('.claim-btn').forEach((el) => { el.disabled = !f.ready; el.classList.toggle('claim-wait', !f.ready); });
+}, 1000);
 
-// ---------- economy actions ----------
+// ---------- אנימציות פרסים ----------
+const hold = new Set(); // מונים שנשארים במקומם עד שהאייקונים הפורחים נוחתים
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const pillOf = (key) => document.querySelector(`[data-v="${key}"]`)?.closest('button, div');
+
+/** אייקונים שעפים מנקודה לאייקון הרלוונטי בסרגל העליון. */
+function flyTo(fromEl, key, icon, n = 8) {
+  const to = pillOf(key);
+  const app = $('#app').getBoundingClientRect();
+  if (!fromEl || !to || reduced()) return Promise.resolve();
+  const a = fromEl.getBoundingClientRect();
+  const b = to.getBoundingClientRect();
+  const sx = a.left + a.width / 2 - app.left;
+  const sy = a.top + a.height / 2 - app.top;
+  const dx = b.left + b.width / 2 - app.left - sx;
+  const dy = b.top + b.height / 2 - app.top - sy;
+  const jobs = Array.from({ length: n }, (_, i) => {
+    const el = document.createElement('div');
+    el.className = 'fly';
+    el.style.cssText = `left:${sx - 12}px;top:${sy - 12}px`;
+    el.innerHTML = icon;
+    $('#app').append(el);
+    const spread = (Math.random() - 0.5) * 120;
+    const anim = el.animate([
+      { transform: 'translate(0,0) scale(.4)', opacity: 0 },
+      { transform: `translate(${spread}px,${-50 - Math.random() * 40}px) scale(1.1)`, opacity: 1, offset: 0.25 },
+      { transform: `translate(${dx}px,${dy}px) scale(.5)`, opacity: 1 },
+    ], { duration: 950 + i * 70, delay: i * 60, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+    return anim.finished.then(() => { el.remove(); bump(to); });
+  });
+  return Promise.all(jobs);
+}
+
+const GIFT = `<svg viewBox="0 0 120 120" class="w-36 h-36 gift-box" aria-hidden="true">
+  <rect x="18" y="52" width="84" height="56" rx="6" fill="#e8303f" stroke="#4d0510" stroke-width="5"/>
+  <rect x="54" y="52" width="12" height="56" fill="#ffd23f" stroke="#4d0510" stroke-width="3"/>
+  <g class="gift-lid"><rect x="12" y="34" width="96" height="22" rx="6" fill="#ff5a45" stroke="#4d0510" stroke-width="5"/>
+  <rect x="54" y="34" width="12" height="22" fill="#ffd23f" stroke="#4d0510" stroke-width="3"/>
+  <path d="M60 34C42 34 34 22 42 14c8-8 18 6 18 20zm0 0c18 0 26-12 18-20-8-8-18 6-18 20z" fill="#ffd23f" stroke="#4d0510" stroke-width="4" stroke-linejoin="round"/></g>
+</svg>`;
+
+/** חלון פתיחת פרס: קופסה נפתחת, הפרסים עולים, ואז עפים אל הסרגל העליון. */
+async function rewardModal(title, items) {
+  items.forEach((it) => hold.add(it.key));
+  const m = $('#modal');
+  m.onclick = null;
+  m.innerHTML = `<div class="reward-wrap relative w-full flex flex-col items-center gap-2 text-center">
+    <div class="reward-rays"></div>
+    <h3 class="relative text-3xl font-black text-3d-banner">${esc(title)}</h3>
+    <div id="gift" class="relative">${GIFT}</div>
+    <div class="relative flex flex-wrap justify-center gap-2 min-h-12">
+      ${items.map((it, i) => `<div class="reward-item stat-pill rounded-lg px-4 py-2 text-xl font-black flex items-center gap-2" style="animation-delay:${1.1 + i * 0.25}s"><span dir="ltr">+${it.n}</span> ${it.key === 'gems' ? I.gem('w-6 h-6') : I.coin('w-6 h-6')}</div>`).join('')}
+    </div>
+  </div>`;
+  m.hidden = false;
+  await sleep(reduced() ? 600 : 2300);
+  const gift = $('#gift');
+  await Promise.all(items.map((it) => flyTo(gift, it.key, it.key === 'gems' ? I.gem('w-6 h-6') : I.coin('w-6 h-6'), Math.min(10, Math.max(4, Math.round(it.n / 8))))));
+  closeModal();
+  hold.clear();
+  renderBar();
+  await sleep(500);
+}
+
+// ---------- פעולות כלכלה ----------
 function buyEnergy() {
   if (save.energy >= MAX_ENERGY) return toast('האנרגיה מלאה');
-  openModal(`${I.bolt('w-6 h-6')} אנרגיה`, 'כל משחק עולה אנרגיה אחת. אנרגיה אחת חוזרת כל 10 דקות.', [
-    { label: `מלא הכול ב-${COST.refill} ${I.gem('w-5 h-5')}`, run: () => {
-      if (!spend(save, 'gems', COST.refill)) return toast('אין מספיק יהלומים');
-      save.energy = MAX_ENERGY; persist(); renderBar(); toast('האנרגיה התמלאה');
-    } },
+  openModal(`${I.bolt('w-6 h-6')} אין אנרגיה`, 'כל משחק עולה אנרגיה אחת. אנרגיה אחת חוזרת כל 10 דקות.', [
+    { label: `מלא הכול ב-${SHOP.energy[1].gems} ${I.gem('w-5 h-5')}`, run: () => buyShopItem(SHOP.energy[1]) },
+    { label: 'לחנות', run: () => shop('energy') },
     { label: 'אחכה', ghost: true },
   ]);
 }
-function gemsModal() {
-  openModal(`${I.gem('w-6 h-6')} יהלומים`, 'בגרסה המלאה כאן קונים יהלומים בכסף אמיתי. באב-הטיפוס אפשר לקבל פרס יומי וחינם.', [
-    { label: `פרס יומי: ${DAILY_GEMS} ${I.gem('w-5 h-5')}`, run: claimDaily },
-    { label: 'סגור', ghost: true },
-  ]);
+
+let rewarding = false;
+async function claimFree() {
+  if (rewarding) return;
+  const r = claimFreeCoinsReward(save);
+  if (!r) return toast('עוד לא הגיע הזמן');
+  persist();
+  rewarding = true;
+  await rewardModal('מטבעות חינם!', [{ key: 'coins', n: r.coins }]);
+  rewarding = false;
+  view();
 }
-function coinsModal() {
-  openModal(`${I.coin('w-6 h-6')} מטבעות`, 'המטבעות משמשים ל"החלף שאלה", "זמן" ו"ג\'וקר".', [
-    { label: `${COIN_PACK} ${I.coin('w-5 h-5')} ב-${COST.coinPack} ${I.gem('w-5 h-5')}`, run: () => {
-      if (!spend(save, 'gems', COST.coinPack)) return toast('אין מספיק יהלומים');
-      save.coins += COIN_PACK; persist(); renderBar(); toast(`קיבלת ${COIN_PACK} מטבעות`);
-    } },
-    { label: 'מטבעות חינם', run: claimFreeCoins },
-    { label: 'סגור', ghost: true },
-  ]);
+async function claimDaily() {
+  if (rewarding) return;
+  const r = claimDailyReward(save);
+  if (!r) return toast('כבר לקחת היום. חוזרים מחר');
+  persist();
+  rewarding = true;
+  const items = [{ key: 'coins', n: r.coins }];
+  if (r.gems) items.push({ key: 'gems', n: r.gems });
+  await rewardModal(`פרס יומי, יום ${r.day}`, items);
+  rewarding = false;
+  view();
 }
-function claimFreeCoins() {
-  const wait = save.freeCoinsAt + FREE_COINS_MS - Date.now();
-  if (wait > 0) return toast(`חוזרים בעוד ${Math.ceil(wait / 60000)} דקות`);
-  save.coins += FREE_COINS; save.freeCoinsAt = Date.now(); persist(); renderBar(); toast(`קיבלת ${FREE_COINS} מטבעות`);
-}
-function claimDaily() {
-  const day = new Date().toISOString().slice(0, 10);
-  if (save.dailyDay === day) return toast('כבר לקחת היום. חוזרים מחר');
-  save.gems += DAILY_GEMS; save.dailyDay = day; persist(); renderBar(); toast(`קיבלת ${DAILY_GEMS} יהלומים`);
+async function buyShopItem(item, fromEl) {
+  const r = buyItem(save, item);
+  if (!r.ok) {
+    if (r.error === 'gems') return toast(`חסרים לך ${r.missing} יהלומים`);
+    if (r.error === 'full') return toast('האנרגיה מלאה');
+    return toast('בקרוב');
+  }
+  persist();
+  if (r.coins) {
+    hold.add('coins');
+    renderBar();
+    await flyTo(fromEl, 'coins', I.coin('w-6 h-6'), 8);
+    hold.clear();
+  }
+  renderBar();
+  toast(r.coins ? `קיבלת ${r.coins} מטבעות` : 'האנרגיה התמלאה');
+  view();
 }
 
 // ---------- navigation + events ----------
@@ -242,8 +328,8 @@ function show(html, back = null) {
 }
 const ACTIONS = {
   back: () => backAction?.(),
-  energy: buyEnergy, gems: gemsModal, coins: coinsModal,
-  daily: claimDaily, free: claimFreeCoins, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
+  energy: () => shop('energy'), gems: () => shop('gems'), coins: () => shop('coins'), shop: () => shop(),
+  daily: claimDaily, free: claimFree, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
   friend: (el) => startMatch(FRIENDS[Number(el.dataset.i)]),
   home: () => home(),
   claim: () => { if (claimTask(save)) { persist(); renderBar(); toast(`קיבלת ${TASK_GEMS} יהלומים`); home(); } },
@@ -251,6 +337,85 @@ const ACTIONS = {
 screen.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (el) (ACTIONS[el.dataset.act] || (() => {}))(el);
+});
+
+// ---------- חנות ----------
+let view = () => home(); // המסך הנוכחי, לרענון אחרי פרס או קנייה
+const fmtMs = (ms) => {
+  const t = Math.ceil(ms / 1000);
+  return [Math.floor(t / 3600), Math.floor((t % 3600) / 60), t % 60].map((n) => String(n).padStart(2, '0')).join(':');
+};
+const costBtn = (item, id) => `<button data-buy="${id}" class="buy-btn bg-gradient-to-b from-[#ffbe2e] to-[#f59e0b] text-[#6b0a14] font-black rounded-lg px-4 py-2 btn-3d-yellow flex items-center gap-1.5 ${save.gems < item.gems ? 'opacity-55' : ''}">${item.gems} ${I.gem('w-5 h-5')}</button>`;
+const shopSection = (id, title, body) => `<section id="sec-${id}" class="px-4 pt-4"><h2 class="text-xl font-black text-3d-white mb-2">${title}</h2>${body}</section>`;
+
+function shop(section) {
+  const free = freeCoinsState(save);
+  const d = dailyState(save);
+  const strip = DAILY_REWARDS.map((r, i) => {
+    const n = i + 1;
+    const done = d.claimed ? n <= d.day : n < d.day;
+    const today = !d.claimed && n === d.day;
+    return `<div class="day-chip ${done ? 'day-done' : ''} ${today ? 'day-today' : ''}">
+      <b class="text-[11px]">יום ${n}</b>
+      <span class="flex items-center gap-0.5 text-xs font-extrabold">${r.coins}${I.coin('w-3 h-3')}</span>
+      ${r.gems ? `<span class="flex items-center gap-0.5 text-xs font-extrabold">${r.gems}${I.gem('w-3 h-3')}</span>` : '<span class="h-4"></span>'}
+      ${done ? `<span class="absolute top-0.5 left-0.5 text-green-300">${I.check('w-3 h-3')}</span>` : ''}
+    </div>`;
+  }).join('');
+  const coins = SHOP.coins.map((it) => `
+    <div class="shop-card" data-card="${it.id}">
+      ${it.bonus ? `<span class="shop-tag" dir="ltr">${it.bonus}</span>` : ''}
+      <div class="flex-1 flex flex-col items-center justify-center gap-1"><div class="coin-pile">${I.coin('w-12 h-12')}</div><b class="text-2xl font-black text-3d-white">${it.coins}</b></div>
+      ${costBtn(it, it.id)}
+    </div>`).join('');
+  const energy = SHOP.energy.map((it) => `
+    <div class="shop-card" data-card="${it.id}">
+      <div class="flex-1 flex flex-col items-center justify-center gap-1">${I.bolt('w-12 h-12')}<b class="text-xl font-black text-3d-white">${it.energy === 'full' ? 'מלא הכול' : `+${it.energy} אנרגיה`}</b></div>
+      ${costBtn(it, it.id)}
+    </div>`).join('');
+  const gems = SHOP.gems.map((it) => `
+    <div class="shop-card shop-soon" data-card="${it.id}">
+      <div class="flex-1 flex flex-col items-center justify-center gap-1">${I.gem('w-12 h-12')}<b class="text-2xl font-black text-3d-white">${it.gems}</b></div>
+      <button data-buy="${it.id}" class="rounded-lg px-3 py-2 font-black bg-black/30 border border-white/20 text-sm">${it.price}<span class="block text-[10px] font-bold text-yellow-200">בקרוב</span></button>
+    </div>`).join('');
+  show(`
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+  ${gameHeader()}
+  <div id="shop-scroll" class="flex-1 min-h-0 overflow-y-auto pb-8">
+    <h1 class="text-center text-4xl font-black text-3d-white pt-1">חנות</h1>
+    ${shopSection('free', 'חינם', `
+      <div class="grid grid-cols-1 gap-3">
+        <div class="shop-wide ${free.ready ? 'reward-ready' : ''}">
+          <div class="shrink-0">${I.coin('w-12 h-12')}</div>
+          <div class="flex-1 text-right"><b class="font-black">מטבעות חינם</b><div class="text-sm text-white/80">+${FREE_COINS} מטבעות כל 4 שעות</div></div>
+          <button data-act="free" class="claim-btn ${free.ready ? '' : 'claim-wait'}" ${free.ready ? '' : 'disabled'}><span data-free-cd>${free.ready ? 'קבל' : fmtMs(free.msLeft)}</span></button>
+        </div>
+        <div class="shop-wide ${d.claimed ? '' : 'reward-ready'}">
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-2"><b class="font-black">פרס יומי</b><span class="text-xs text-white/80">${d.claimed ? 'נלקח, חוזרים מחר' : `יום ${d.day} ברצף`}</span></div>
+            <div class="grid grid-cols-7 gap-1">${strip}</div>
+          </div>
+        </div>
+        ${d.claimed ? '' : '<button data-act="daily" class="play-btn-glow h-14 rounded-xl text-xl font-extrabold reward-ready"><span class="text-3d-white">קבל את הפרס היומי</span></button>'}
+      </div>`)}
+    ${shopSection('coins', 'מטבעות', `<div class="grid grid-cols-3 gap-3">${coins}</div>`)}
+    ${shopSection('energy', 'אנרגיה', `<div class="grid grid-cols-2 gap-3">${energy}</div>`)}
+    ${shopSection('gems', 'יהלומים', `<div class="grid grid-cols-2 gap-3">${gems}</div><p class="text-xs text-white/70 mt-2">רכישה בכסף אמיתי תתאפשר בגרסה המלאה.</p>`)}
+  </div>
+</div>`, home);
+  view = () => shop();
+  if (section) $(`#sec-${section}`)?.scrollIntoView({ block: 'start' });
+}
+/** לחיצות על כפתורי הקנייה בחנות. */
+screen.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-buy]');
+  if (!b) return;
+  const all = [...SHOP.coins, ...SHOP.energy, ...SHOP.gems];
+  const item = all.find((x) => x.id === b.dataset.buy);
+  if (!item) return;
+  const card = b.closest('.shop-card');
+  buyShopItem(item, card?.querySelector('svg') || b);
+  if (card && !item.price) { card.classList.remove('shop-pop'); void card.offsetWidth; card.classList.add('shop-pop'); }
 });
 
 // ---------- פרופיל ושאלון ----------
@@ -263,7 +428,7 @@ function questionnaire(first) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
   <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
-    <img src="./icon-512.png?v=15" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
+    <img src="./icon-512.png?v=16" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
     <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
     <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
     <label class="flex flex-col gap-1.5">
@@ -364,30 +529,34 @@ function taskCard() {
 function home() {
   stopRound();
   M = null;
+  view = () => home();
+  const dailySt = dailyState(save);
+  const freeSt = freeCoinsState(save);
   show(`
 <div class="flex-1 min-h-0 bg-game-swirls flex flex-col justify-between overflow-y-auto">
   ${homeHeader()}
   <main class="menu-in px-4 flex flex-col justify-start gap-3.5 mt-2 z-10">
     <section class="grid grid-cols-2 gap-3">
-      <button data-act="daily" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
-        <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-[#fc849c]/10 pointer-events-none"></div>
-        <div class="absolute -left-1 -bottom-2 opacity-30">${I.gift('w-12 h-12')}</div>
+      <button data-act="daily" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer ${dailySt.claimed ? '' : 'reward-ready'}">
+        <div class="absolute inset-0 bg-gradient-to-tr from-pink-500/20 to-purple-400/10 pointer-events-none"></div>
+        <div class="absolute -left-1 -bottom-2 opacity-30 ${dailySt.claimed ? '' : 'gift-wiggle'}">${I.gift('w-12 h-12')}</div>
         <span class="text-xl font-black text-3d-white tracking-wide z-10">פרס יומי</span>
+        <span class="text-xs font-bold z-10 mt-0.5 drop-shadow ${dailySt.claimed ? 'text-white/70' : 'text-yellow-300'}">${dailySt.claimed ? 'נלקח' : `יום ${dailySt.day}`}</span>
       </button>
-      <button data-act="free" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer">
-        <div class="absolute inset-0 bg-gradient-to-tr from-yellow-500/15 to-[#fc849c]/10 pointer-events-none"></div>
+      <button data-act="free" data-free-btn class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-2 text-center cursor-pointer ${freeSt.ready ? 'reward-ready' : ''}">
+        <div class="absolute inset-0 bg-gradient-to-tr from-yellow-500/15 to-purple-400/10 pointer-events-none"></div>
         <div class="absolute -right-1 -top-1 opacity-30 text-yellow-200">${I.spark('w-9 h-9')}</div>
         <span class="text-lg font-black text-3d-white tracking-tight z-10 leading-tight">מטבעות חינם</span>
-        <span class="text-xs font-bold text-yellow-300 z-10 mt-0.5 drop-shadow">זמין!</span>
+        <span data-free-cd class="text-xs font-bold text-yellow-300 z-10 mt-0.5 drop-shadow tabular-nums">${freeSt.ready ? 'זמין!' : fmtMs(freeSt.msLeft)}</span>
       </button>
     </section>
-    <section>
-      <button data-act="seasons" class="w-full game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-          <svg class="w-24 h-24 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"></path></svg>
-        </div>
-        <div class="absolute left-6 top-3 w-3 h-1.5 bg-amber-400 rotate-45 rounded-sm opacity-60"></div>
-        <div class="absolute right-8 bottom-3 w-2.5 h-1.5 bg-yellow-400 -rotate-12 rounded-sm opacity-60"></div>
+    <section class="grid grid-cols-2 gap-3">
+      <button data-act="shop" class="game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
+        <div class="absolute -left-2 -bottom-3 opacity-25">${I.coin('w-20 h-20')}</div>
+        <h2 class="text-3xl font-black text-3d-white tracking-wide z-10">חנות</h2>
+      </button>
+      <button data-act="seasons" class="game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><span class="text-pink-300">${I.trophy('w-20 h-20')}</span></div>
         <h2 class="text-3xl font-black text-3d-white tracking-wide z-10">עונות</h2>
       </button>
     </section>
@@ -418,7 +587,7 @@ function home() {
       </div>
     </section>
   </main>
-  <footer class="mt-auto py-3 text-center text-[10px] text-white/60 z-10">v15 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto pt-3 pb-8 text-center text-[10px] text-white/60 z-10">v16 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`);
 }
 
