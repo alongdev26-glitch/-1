@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { COST, taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
+import { SHOP, buyItem, dailyState, claimDailyReward, DAILY_REWARDS, freeCoinsState, claimFreeCoinsReward, FREE_COINS, FREE_COINS_MS, COST, taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
 import { planBotTurn, makeOpponent, botSkill } from './bot.js';
 
 describe('אנרגיה', () => {
@@ -73,5 +73,79 @@ describe('מחירים', () => {
   it('החלפת שאלה 10 וג\'וקר 20', () => {
     expect(COST.swap).toBe(10);
     expect(COST.joker).toBe(20);
+  });
+});
+
+describe('חנות', () => {
+  it('קונה חבילת מטבעות ביהלומים, ולא קונה בלי מספיק', () => {
+    const s = defaultSave(0);
+    s.gems = 60;
+    expect(buyItem(s, SHOP.coins[0])).toMatchObject({ ok: true, coins: 100 });
+    expect(s.gems).toBe(50);
+    expect(s.coins).toBe(200);
+    expect(buyItem(s, SHOP.coins[2])).toEqual({ ok: false, error: 'gems', missing: 50 });
+    expect(s.gems).toBe(50);
+    expect(s.coins).toBe(200);
+  });
+  it('אנרגיה: לא קונים כשהיא מלאה, ממלאים וגובים יהלומים', () => {
+    const t = 1_000_000;
+    const s = defaultSave(t);
+    expect(buyItem(s, SHOP.energy[1], t)).toEqual({ ok: false, error: 'full' });
+    expect(s.gems).toBe(50);
+    s.energy = 2; s.energyAt = t;
+    expect(buyItem(s, SHOP.energy[0], t).ok).toBe(true);
+    expect(s.energy).toBe(3);
+    expect(buyItem(s, SHOP.energy[1], t).ok).toBe(true);
+    expect(s.energy).toBe(5);
+    expect(s.gems).toBe(50 - 5 - 20);
+  });
+  it('חבילות יהלומים בכסף אמיתי לא נקנות (בקרוב)', () => {
+    const s = defaultSave(0);
+    expect(buyItem(s, SHOP.gems[0])).toEqual({ ok: false, error: 'soon' });
+    expect(s.gems).toBe(50);
+  });
+});
+
+describe('פרס יומי עם רצף', () => {
+  const d = (n) => Date.UTC(2026, 10, n, 12);
+  it('יום ראשון נותן מטבעות בלבד, ופעם אחת ביום', () => {
+    const s = defaultSave(0);
+    expect(dailyState(s, d(1))).toMatchObject({ claimed: false, streak: 0, day: 1 });
+    const r = claimDailyReward(s, d(1));
+    expect(r).toMatchObject({ coins: DAILY_REWARDS[0].coins, gems: 0, day: 1 });
+    expect(claimDailyReward(s, d(1))).toBeNull();
+    expect(dailyState(s, d(1))).toMatchObject({ claimed: true, streak: 1, day: 1 });
+  });
+  it('ימים רצופים מעלים את היום ונותנים גם יהלומים', () => {
+    const s = defaultSave(0);
+    claimDailyReward(s, d(1));
+    const gems = s.gems;
+    const r = claimDailyReward(s, d(2));
+    expect(r.day).toBe(2);
+    expect(r.gems).toBe(DAILY_REWARDS[1].gems);
+    expect(s.gems).toBe(gems + DAILY_REWARDS[1].gems);
+  });
+  it('יום שלא נלקח מאפס את הרצף, ואחרי יום 7 חוזרים ליום 1', () => {
+    const s = defaultSave(0);
+    claimDailyReward(s, d(1)); claimDailyReward(s, d(2));
+    expect(dailyState(s, d(4))).toMatchObject({ streak: 0, day: 1 });
+    expect(claimDailyReward(s, d(4)).day).toBe(1);
+    const t = defaultSave(0);
+    for (let i = 1; i <= 7; i++) expect(claimDailyReward(t, d(i)).day).toBe(i);
+    expect(dailyState(t, d(8)).day).toBe(1);
+    expect(claimDailyReward(t, d(8)).day).toBe(1);
+  });
+});
+
+describe('מטבעות חינם', () => {
+  it('מחכים 4 שעות בין לקיחות', () => {
+    const s = defaultSave(0);
+    const t = 10 * FREE_COINS_MS;
+    expect(freeCoinsState(s, t).ready).toBe(true);
+    expect(claimFreeCoinsReward(s, t)).toEqual({ coins: FREE_COINS });
+    expect(s.coins).toBe(100 + FREE_COINS);
+    expect(claimFreeCoinsReward(s, t + 1000)).toBeNull();
+    expect(freeCoinsState(s, t + 1000)).toEqual({ ready: false, msLeft: FREE_COINS_MS - 1000 });
+    expect(claimFreeCoinsReward(s, t + FREE_COINS_MS)).not.toBeNull();
   });
 });
