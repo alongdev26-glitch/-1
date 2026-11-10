@@ -1,16 +1,17 @@
-import { QUESTIONS } from './questions.js?v=17';
-import { matchAnswer } from './checker.js?v=17';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=17';
+import { QUESTIONS } from './questions.js?v=18';
+import { matchAnswer } from './checker.js?v=18';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=18';
 import {
   MAX_ENERGY, COST, SHOP, DAILY_REWARDS, FREE_COINS, dailyState, claimDailyReward, freeCoinsState, claimFreeCoinsReward, buyItem, rewardsReady,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=17';
-import { I, emblem } from './icons.js?v=17';
-import { findMatch } from './net.js?v=17';
-import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=17';
-import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=17';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=17';
+} from './economy.js?v=18';
+import { BP_LEVELS, XP_PER_LEVEL, PREMIUM_COST, XP, bpState, addXp, xpForMatch, rewardFor, isClaimed, claimable, claimReward, claimAll, unlockPremium } from './battlepass.js?v=18';
+import { I, emblem } from './icons.js?v=18';
+import { findMatch } from './net.js?v=18';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=18';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=18';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=18';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -245,6 +246,8 @@ const GIFT = `<svg viewBox="0 0 120 120" class="w-36 h-36 gift-box" aria-hidden=
   <path d="M60 34C42 34 34 22 42 14c8-8 18 6 18 20zm0 0c18 0 26-12 18-20-8-8-18 6-18 20z" fill="#ffd23f" stroke="#4d0510" stroke-width="4" stroke-linejoin="round"/></g>
 </svg>`;
 
+const rewardIcon = (key, c = 'w-6 h-6') => (key === 'gems' ? I.gem(c) : key === 'energy' ? I.bolt(c) : I.coin(c));
+
 /** חלון פתיחת פרס: קופסה נפתחת, הפרסים עולים, ואז עפים אל הסרגל העליון. */
 async function rewardModal(title, items) {
   items.forEach((it) => hold.add(it.key));
@@ -255,13 +258,13 @@ async function rewardModal(title, items) {
     <h3 class="relative text-3xl font-black text-3d-banner">${esc(title)}</h3>
     <div id="gift" class="relative">${GIFT}</div>
     <div class="relative flex flex-wrap justify-center gap-2 min-h-12">
-      ${items.map((it, i) => `<div class="reward-item stat-pill rounded-lg px-4 py-2 text-xl font-black flex items-center gap-2" style="animation-delay:${1.1 + i * 0.25}s"><span dir="ltr">+${it.n}</span> ${it.key === 'gems' ? I.gem('w-6 h-6') : I.coin('w-6 h-6')}</div>`).join('')}
+      ${items.map((it, i) => `<div class="reward-item stat-pill rounded-lg px-4 py-2 text-xl font-black flex items-center gap-2" style="animation-delay:${1.1 + i * 0.25}s"><span dir="ltr">+${it.n}</span> ${rewardIcon(it.key)}</div>`).join('')}
     </div>
   </div>`;
   m.hidden = false;
   await sleep(reduced() ? 600 : 2300);
   const gift = $('#gift');
-  await Promise.all(items.map((it) => flyTo(gift, it.key, it.key === 'gems' ? I.gem('w-6 h-6') : I.coin('w-6 h-6'), Math.min(10, Math.max(4, Math.round(it.n / 8))))));
+  await Promise.all(items.map((it) => flyTo(gift, it.key, rewardIcon(it.key), Math.min(10, Math.max(4, Math.round(it.n / 8))))));
   closeModal();
   hold.clear();
   renderBar();
@@ -293,6 +296,7 @@ async function claimDaily() {
   if (rewarding) return;
   const r = claimDailyReward(save);
   if (!r) return toast('כבר לקחת היום. חוזרים מחר');
+  addXp(save, XP.daily);
   persist();
   rewarding = true;
   const items = [{ key: 'coins', n: r.coins }];
@@ -352,20 +356,103 @@ tabbar.addEventListener('click', (e) => {
 });
 function updateDots() {
   const r = rewardsReady(save);
-  document.querySelectorAll('[data-dot]').forEach((d) => { d.hidden = !(r.any && (d.dataset.dot === 'home' || d.dataset.dot === 'shop')); });
+  const bp = claimable(save).length > 0;
+  document.querySelectorAll('[data-dot]').forEach((d) => { d.hidden = !(d.dataset.dot === 'home' ? r.any || bp : d.dataset.dot === 'shop' && r.any); });
 }
 const ACTIONS = {
   back: () => backAction?.(),
   energy: () => shop('energy'), gems: () => shop('gems'), coins: () => shop('coins'), shop: () => shop(), invite,
-  daily: claimDaily, free: claimFree, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
+  daily: claimDaily, free: claimFree, bp: () => battlePass(), 'bp-claim': (el) => bpClaim(Number(el.dataset.lv), el.dataset.tr), 'bp-all': () => bpAll(), 'bp-premium': () => bpPremium(), leaderboard: () => leaderboard(), seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
   friend: (el) => startMatch(FRIENDS[Number(el.dataset.i)]),
   home: () => home(),
-  claim: () => { if (claimTask(save)) { persist(); renderBar(); toast(`קיבלת ${TASK_GEMS} יהלומים`); home(); } },
+  claim: () => { if (claimTask(save)) { addXp(save, XP.task); persist(); renderBar(); toast(`קיבלת ${TASK_GEMS} יהלומים`); home(); } },
 };
 screen.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (el) (ACTIONS[el.dataset.act] || (() => {}))(el);
 });
+
+// ---------- באטל פס ----------
+const bpItems = (r) => [r.coins && ['coins', r.coins], r.gems && ['gems', r.gems], r.energy && ['energy', r.energy]].filter(Boolean);
+const toRewardItems = (g) => bpItems(g).map(([key, n]) => ({ key, n }));
+async function bpClaim(level, track) {
+  if (rewarding) return;
+  const got = claimReward(save, level, track);
+  if (!got) return toast('אי אפשר לקחת פרס זה');
+  persist();
+  rewarding = true;
+  await rewardModal(`פרס באטל פס, רמה ${level}`, toRewardItems(got));
+  rewarding = false;
+  view();
+}
+async function bpAll() {
+  if (rewarding) return;
+  const t = claimAll(save);
+  if (!t.count) return toast('אין פרסים לקחת עכשיו');
+  persist();
+  rewarding = true;
+  await rewardModal(`${t.count} פרסים מהבאטל פס`, toRewardItems(t));
+  rewarding = false;
+  view();
+}
+function bpPremium() {
+  const st = bpState(save);
+  if (st.premium) return toast('הפרימיום כבר פעיל');
+  openModal(`פרימיום באטל פס`, `פותח פרסים גדולים בכל רמה, גם על רמות שכבר הושגו. עולה ${PREMIUM_COST} יהלומים.`, [
+    { label: `פתח ב-${PREMIUM_COST} ${I.gem('w-5 h-5')}`, run: () => {
+      const r = unlockPremium(save);
+      if (!r.ok) return toast(r.error === 'gems' ? `חסרים לך ${r.missing} יהלומים` : 'הפרימיום כבר פעיל');
+      persist(); renderBar(); toast('הפרימיום נפתח!'); battlePass();
+    } },
+    { label: 'אחר כך', ghost: true },
+  ]);
+}
+function battlePass() {
+  view = () => battlePass();
+  const st = bpState(save);
+  const can = claimable(save);
+  const cell = (level, track) => {
+    const reached = level <= st.level;
+    const locked = track === 'prem' && !st.premium;
+    const claimed = isClaimed(save, level, track);
+    const ready = reached && !locked && !claimed;
+    const body = bpItems(rewardFor(level, track)).map(([k, n]) => `<span class="flex items-center gap-0.5 font-extrabold text-sm">${n}${rewardIcon(k, 'w-4 h-4')}</span>`).join('');
+    const mark = claimed ? `<span class="bp-mark text-green-300">${I.check('w-4 h-4')}</span>` : locked ? `<span class="bp-mark text-white/70">${I.lock('w-4 h-4')}</span>` : '';
+    return `<button ${ready ? `data-act="bp-claim" data-lv="${level}" data-tr="${track}"` : 'disabled'} class="bp-cell ${track === 'prem' ? 'bp-prem' : ''} ${ready ? 'bp-ready' : ''} ${claimed ? 'bp-claimed' : ''} ${!reached || locked ? 'bp-locked' : ''}">${body}${mark}</button>`;
+  };
+  const rows = Array.from({ length: BP_LEVELS }, (_, i) => i + 1).map((l) => `
+    <div id="bp-l${l}" class="bp-row ${l === st.level + 1 ? 'bp-next' : ''}">
+      ${cell(l, 'free')}
+      <div class="bp-lvl ${l <= st.level ? 'bp-lvl-on' : ''}">${l}</div>
+      ${cell(l, 'prem')}
+    </div>`).join('');
+  show(`
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+  ${gameHeader()}
+  <div class="px-4 pt-1 pb-2">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-black text-3d-white">באטל פס</h1>
+      <span class="stat-pill rounded-lg px-3 py-1 text-xs font-extrabold">נשארו ${st.daysLeft} ימים</span>
+    </div>
+    <div class="flex items-center gap-3 mt-2">
+      <div class="bp-badge">${st.level}</div>
+      <div class="flex-1">
+        <div class="flex justify-between text-xs font-bold text-white/85 mb-1"><span>${st.maxed ? 'הושלם!' : `לרמה ${st.level + 1}`}</span><span class="tabular-nums" dir="ltr">${st.xpInLevel}/${XP_PER_LEVEL} XP</span></div>
+        <div class="h-3 bg-black/30 rounded-full overflow-hidden p-0.5"><div class="h-full rounded-full bg-gradient-to-l from-[#ffd23f] to-[#f59e0b]" style="width:${Math.round((st.xpInLevel / XP_PER_LEVEL) * 100)}%"></div></div>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-3">
+      ${st.premium ? '<div class="flex-1 stat-pill rounded-lg py-2 text-center text-sm font-extrabold text-yellow-300">פרימיום פעיל</div>' : `<button data-act="bp-premium" class="flex-1 play-btn-glow h-11 rounded-xl text-base font-extrabold reward-ready"><span class="text-3d-white">פתח פרימיום · ${PREMIUM_COST} ${I.gem('w-4 h-4')}</span></button>`}
+      ${can.length ? `<button data-act="bp-all" class="claim-btn !min-w-0 !px-4">קבל הכול (${can.length})</button>` : ''}
+      <button data-act="leaderboard" class="game-gloss-card rounded-xl px-4 text-sm font-black">מובילים</button>
+    </div>
+    <div class="grid grid-cols-[1fr_auto_1fr] gap-2 mt-3 text-center text-xs font-extrabold text-white/80"><span>חינם</span><span class="w-10"></span><span class="text-yellow-300">פרימיום</span></div>
+  </div>
+  <div id="bp-scroll" class="flex-1 min-h-0 overflow-y-auto px-4 pb-6 flex flex-col gap-2">${rows}</div>
+</div>`, home, 'home');
+  const target = can[0]?.level ?? Math.min(BP_LEVELS, st.level + 1);
+  $(`#bp-l${target}`)?.scrollIntoView({ block: 'center' });
+}
 
 // ---------- חנות ----------
 let view = () => home(); // המסך הנוכחי, לרענון אחרי פרס או קנייה
@@ -490,7 +577,7 @@ function questionnaire(first) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
   <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
-    <img src="./icon-512.png?v=17" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
+    <img src="./icon-512.png?v=18" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
     <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
     <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
     <label class="flex flex-col gap-1.5">
@@ -594,6 +681,8 @@ function home() {
   view = () => home();
   const dailySt = dailyState(save);
   const freeSt = freeCoinsState(save);
+  const bpSt = bpState(save);
+  const bpCan = claimable(save).length > 0;
   show(`
 <div class="flex-1 min-h-0 bg-game-swirls flex flex-col justify-between overflow-y-auto">
   ${homeHeader()}
@@ -612,10 +701,15 @@ function home() {
         <span data-free-cd class="text-xs font-bold text-yellow-300 z-10 mt-0.5 drop-shadow tabular-nums">${freeSt.ready ? 'זמין!' : fmtMs(freeSt.msLeft)}</span>
       </button>
     </section>
-    <section>
-      <button data-act="seasons" class="w-full game-gloss-card h-20 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><span class="text-pink-300">${I.trophy('w-16 h-16')}</span></div>
-        <h2 class="text-3xl font-black text-3d-white tracking-wide z-10">עונות</h2>
+    <section class="grid grid-cols-2 gap-3">
+      <button data-act="bp" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex flex-col items-center justify-center cursor-pointer ${bpCan ? 'reward-ready' : ''}">
+        <div class="absolute -left-1 -bottom-2 opacity-25 text-yellow-300">${I.spark('w-14 h-14')}</div>
+        <span class="text-2xl font-black text-3d-white z-10">באטל פס</span>
+        <span class="text-xs font-bold text-yellow-300 z-10 mt-0.5">${bpSt.maxed ? 'הושלם' : `רמה ${bpSt.level}/${BP_LEVELS}`}${bpCan ? ' · פרס מוכן' : ''}</span>
+      </button>
+      <button data-act="seasons" class="game-gloss-card h-20 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><span class="text-pink-300">${I.trophy('w-14 h-14')}</span></div>
+        <h2 class="text-2xl font-black text-3d-white tracking-wide z-10">עונות</h2>
       </button>
     </section>
     <section>
@@ -633,7 +727,7 @@ function home() {
     </section>
     ${taskCard()}
   </main>
-  <footer class="mt-auto pt-3 pb-8 text-center text-[10px] text-white/60 z-10">v17 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+  <footer class="mt-auto pt-3 pb-8 text-center text-[10px] text-white/60 z-10">v18 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
 </div>`, null, 'home');
 }
 
@@ -1306,11 +1400,13 @@ function finishMatch(outcome) {
   stopRound();
   M.finished = true;
   const local2 = M.mode === 'local2';
+  let bpXp = null;
   const r = local2 ? { trophies: 0, coins: 0 } : rewards(outcome, save.trophies, M.opp.trophies);
   if (!local2) {
     save.trophies = Math.max(0, save.trophies + r.trophies);
     save.coins += r.coins;
     if (outcome === 'win') { save.wins += 1; recordWin(save); }
+    bpXp = addXp(save, xpForMatch(outcome, M.score[0]));
     persist();
   }
   const mode = M.mode;
@@ -1331,7 +1427,9 @@ function finishMatch(outcome) {
     ${local2 ? '' : `<div class="flex justify-center gap-3">
       <div id="r-tp" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop"></div>
       <div id="r-co" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop" style="animation-delay:.15s"></div>
-    </div>`}
+      <div id="r-xp" class="stat-pill rounded-lg px-5 py-2 text-xl font-bold pop" style="animation-delay:.3s"></div>
+    </div>
+    ${bpXp?.levelsUp ? `<div class="text-yellow-200 font-black text-lg pop" style="animation-delay:.5s">עלית לרמה ${bpXp.level} בבאטל פס!</div>` : ''}`}
     <button data-act="again" class="play-btn-glow w-full h-20 rounded-xl text-3xl font-extrabold text-3d-white">שחק שוב</button>
     ${bigGloss('home', 'חזרה למסך הבית', '!text-xl')}
   </section>
@@ -1339,6 +1437,7 @@ function finishMatch(outcome) {
   if (!local2) {
     countUp($('#r-tp'), Math.abs(r.trophies), r.trophies < 0 ? '-' : '+', I.trophy('w-5 h-5'));
     countUp($('#r-co'), r.coins, '+', I.coin('w-5 h-5'));
+    countUp($('#r-xp'), bpXp.gained, '+', '<span class="text-sm">XP</span>');
   }
   if (outcome === 'win' && !local2) confetti(screen, 40);
   if (M.conn && mode !== 'bot') { const c = M.conn; setTimeout(() => c.close(), 500); }
