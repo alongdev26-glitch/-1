@@ -11,6 +11,10 @@ export const I = {
   cross: (c = 'w-4 h-4') => svg(c, '<path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>'),
   gift: (c = 'w-8 h-8') => svg(c, '<rect x="3" y="9" width="18" height="12" rx="1.5" fill="#ff7ab8"/><rect x="2" y="6" width="20" height="4.5" rx="1.5" fill="#ff9ccc"/><path d="M12 6v15" stroke="#fff" stroke-width="2.4"/><path d="M12 6C9 6 7 4.8 7.6 3.4 8.6 1.6 11.4 3.2 12 6zm0 0c3 0 5-1.2 4.4-2.6C15.4 1.6 12.6 3.2 12 6z" fill="#fff"/>'),
   spark: (c = 'w-4 h-4') => svg(c, '<path d="M12 1.5c.7 5.2 3.3 7.8 8.5 10.5-5.2 2.7-7.8 5.3-8.5 10.5C11.3 17.3 8.700 14.700 3.500 12 8.700 9.300 11.300 6.700 12 1.500z" fill="currentColor"/>'),
+  home: (c = 'w-6 h-6') => svg(c, '<path d="M3 11.5 12 4l9 7.500V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'),
+  bag: (c = 'w-6 h-6') => svg(c, '<path d="M5 8h14l-1.200 12.200a1 1 0 0 1-1 .8H7.200a1 1 0 0 1-1-.8z" fill="currentColor"/><path d="M9 8V6.500a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'),
+  users: (c = 'w-6 h-6') => svg(c, '<circle cx="9" cy="8" r="3.500" fill="currentColor"/><path d="M2.500 20c0-3.600 2.900-6 6.500-6s6.500 2.400 6.500 6z" fill="currentColor"/><circle cx="17" cy="9" r="2.800" fill="currentColor" opacity=".7"/><path d="M16.500 14.200c3 .1 5 2 5 5.800h-4.200c0-2.200-.4-4.200-.8-5.800z" fill="currentColor" opacity=".7"/>'),
+  user: (c = 'w-6 h-6') => svg(c, '<circle cx="12" cy="8" r="4.200" fill="currentColor"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7z" fill="currentColor"/>'),
   smile: (c = 'w-6 h-6') => svg(c, '<circle cx="12" cy="12" r="9.5" fill="#ffd34d" stroke="#c98a00" stroke-width="1.4"/><circle cx="8.8" cy="10" r="1.4" fill="#5a2a00"/><circle cx="15.2" cy="10" r="1.4" fill="#5a2a00"/><path d="M7.8 14.2c1 2.2 7.400 2.200 8.400 0" fill="none" stroke="#5a2a00" stroke-width="1.6" stroke-linecap="round"/>'),
 };
 

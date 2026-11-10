@@ -1,16 +1,16 @@
-import { QUESTIONS } from './questions.js?v=16';
-import { matchAnswer } from './checker.js?v=16';
-import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=16';
+import { QUESTIONS } from './questions.js?v=17';
+import { matchAnswer } from './checker.js?v=17';
+import { makeOpponent, botSkill, planBotTurn, TURN_SECONDS, NAMES } from './bot.js?v=17';
 import {
-  MAX_ENERGY, COST, SHOP, DAILY_REWARDS, FREE_COINS, dailyState, claimDailyReward, freeCoinsState, claimFreeCoinsReward, buyItem,
+  MAX_ENERGY, COST, SHOP, DAILY_REWARDS, FREE_COINS, dailyState, claimDailyReward, freeCoinsState, claimFreeCoinsReward, buyItem, rewardsReady,
   defaultSave, tickEnergy, energyCountdownMs, spendEnergy, spend, rewards, pickQuestion,
   TASK_WINS, TASK_GEMS, taskState, recordWin, claimTask,
-} from './economy.js?v=16';
-import { I, emblem } from './icons.js?v=16';
-import { findMatch } from './net.js?v=16';
-import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=16';
-import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=16';
-import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=16';
+} from './economy.js?v=17';
+import { I, emblem } from './icons.js?v=17';
+import { findMatch } from './net.js?v=17';
+import { toGuest, acceptAnswer, cleanName, cleanLogo } from './protocol.js?v=17';
+import { LOGOS, ageGroup, validateProfile, MIN_AGE, MAX_AGE } from './profile.js?v=17';
+import { newRound, hit as ruleHit, miss as ruleMiss, LIVES } from './rules.js?v=17';
 
 const KEY = 'rosh-brosh-save-v1';
 const PRE_SECONDS = 6;
@@ -196,6 +196,7 @@ function confetti(parent, n = 30) {
 }
 setInterval(() => {
   renderBar();
+  updateDots();
   const f = freeCoinsState(save);
   document.querySelectorAll('[data-free-cd]').forEach((el) => { el.textContent = f.ready ? (el.closest('.claim-btn') ? 'קבל' : 'זמין!') : fmtMs(f.msLeft); });
   document.querySelectorAll('[data-free-btn]').forEach((el) => el.classList.toggle('reward-ready', f.ready));
@@ -321,14 +322,41 @@ async function buyShopItem(item, fromEl) {
 
 // ---------- navigation + events ----------
 let backAction = null;
-function show(html, back = null) {
+function show(html, back = null, tab = null) {
   backAction = back;
   screen.innerHTML = html;
+  setTab(tab);
   renderBar();
+}
+
+// ---------- בר טאבים ----------
+const TABS = [['home', 'בית', 'home'], ['shop', 'חנות', 'bag'], ['friends', 'חברים', 'users'], ['profile', 'פרופיל', 'user']];
+const tabbar = $('#tabbar');
+let currentTab = null;
+function setTab(tab) {
+  if (!tab) { tabbar.hidden = true; currentTab = null; return; }
+  const changed = currentTab !== tab;
+  currentTab = tab;
+  tabbar.innerHTML = TABS.map(([id, label, icon]) => `
+    <button data-tab="${id}" aria-label="${label}" ${id === tab ? 'aria-current="page"' : ''} class="tab ${id === tab ? 'tab-on' : ''} ${id === tab && changed ? 'tab-pop' : ''}">
+      <span class="tab-ico">${I[icon]('w-6 h-6')}<i data-dot="${id}" class="tab-dot" hidden></i></span>
+      <span class="text-[11px] font-extrabold">${label}</span>
+    </button>`).join('');
+  tabbar.hidden = false;
+  updateDots();
+}
+const GO = { home: () => home(), shop: () => shop(), friends: () => friends(), profile: () => profileScreen() };
+tabbar.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab]');
+  if (b && !rewarding) GO[b.dataset.tab]?.();
+});
+function updateDots() {
+  const r = rewardsReady(save);
+  document.querySelectorAll('[data-dot]').forEach((d) => { d.hidden = !(r.any && (d.dataset.dot === 'home' || d.dataset.dot === 'shop')); });
 }
 const ACTIONS = {
   back: () => backAction?.(),
-  energy: () => shop('energy'), gems: () => shop('gems'), coins: () => shop('coins'), shop: () => shop(),
+  energy: () => shop('energy'), gems: () => shop('gems'), coins: () => shop('coins'), shop: () => shop(), invite,
   daily: claimDaily, free: claimFree, seasons: () => leaderboard(), play: () => startOnline(), local2: () => startLocal2(), bot: () => startMatch(), rename: () => profileScreen(), profile: () => profileScreen(), 'edit-profile': () => questionnaire(false),
   friend: (el) => startMatch(FRIENDS[Number(el.dataset.i)]),
   home: () => home(),
@@ -379,9 +407,10 @@ function shop(section) {
       <button data-buy="${it.id}" class="rounded-lg px-3 py-2 font-black bg-black/30 border border-white/20 text-sm">${it.price}<span class="block text-[10px] font-bold text-yellow-200">בקרוב</span></button>
     </div>`).join('');
   show(`
-<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+<div class="relative flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-hidden">
+  <div class="reward-rays pointer-events-none" style="opacity:.35;animation:spin 40s linear infinite"></div>
   ${gameHeader()}
-  <div id="shop-scroll" class="flex-1 min-h-0 overflow-y-auto pb-8">
+  <div id="shop-scroll" class="relative flex-1 min-h-0 overflow-y-auto pb-8">
     <h1 class="text-center text-4xl font-black text-3d-white pt-1">חנות</h1>
     ${shopSection('free', 'חינם', `
       <div class="grid grid-cols-1 gap-3">
@@ -402,7 +431,7 @@ function shop(section) {
     ${shopSection('energy', 'אנרגיה', `<div class="grid grid-cols-2 gap-3">${energy}</div>`)}
     ${shopSection('gems', 'יהלומים', `<div class="grid grid-cols-2 gap-3">${gems}</div><p class="text-xs text-white/70 mt-2">רכישה בכסף אמיתי תתאפשר בגרסה המלאה.</p>`)}
   </div>
-</div>`, home);
+</div>`, home, 'shop');
   view = () => shop();
   if (section) $(`#sec-${section}`)?.scrollIntoView({ block: 'start' });
 }
@@ -418,6 +447,39 @@ screen.addEventListener('click', (e) => {
   if (card && !item.price) { card.classList.remove('shop-pop'); void card.offsetWidth; card.classList.add('shop-pop'); }
 });
 
+// ---------- חברים ----------
+const GAME_URL = 'https://alongdev26-glitch.github.io/-1/rosh-brosh/';
+function friends() {
+  view = () => friends();
+  show(`
+<div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col">
+  ${gameHeader()}
+  <div class="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
+    <h1 class="text-center text-4xl font-black text-3d-white pt-1 pb-3">חברים</h1>
+    <div class="flex flex-col gap-3">
+      ${FRIENDS.map((f, i) => `
+      <div class="friend-row">
+        ${avatar(f, 'w-14 h-14', 'border-2 border-white/90 shadow-lg')}
+        <div class="flex-1 text-right min-w-0"><b class="block font-black text-lg truncate">${esc(f.name)}</b><span class="stat-pill rounded-lg px-2 py-0.5 text-xs font-extrabold inline-flex items-center gap-1">${f.trophies} ${I.trophy('w-3.5 h-3.5')}</span></div>
+        <button data-act="friend" data-i="${i}" class="friend-play">שחק</button>
+      </div>`).join('')}
+    </div>
+    <button data-act="invite" class="play-btn-glow w-full h-16 rounded-xl text-2xl font-extrabold mt-5"><span class="text-3d-white">הזמן חבר</span></button>
+    <p class="text-center text-xs text-white/70 mt-2">שולח קישור למשחק. כשחבר ייכנס, אפשר לשחק אונליין.</p>
+  </div>
+</div>`, home, 'friends');
+}
+async function invite() {
+  const data = { title: 'ראש בראש', text: 'בוא נשחק ראש בראש! משחק טריוויה בעברית', url: GAME_URL };
+  try {
+    if (navigator.share) { await navigator.share(data); return; }
+    await navigator.clipboard.writeText(GAME_URL);
+    toast('הקישור הועתק, שלח אותו לחבר');
+  } catch (e) {
+    if (e?.name !== 'AbortError') toast(GAME_URL);
+  }
+}
+
 // ---------- פרופיל ושאלון ----------
 const LOGO_LABEL = { crown: 'כתר', bolt: 'ברק', star: 'כוכב', shield: 'מגן', flame: 'להבה', gem: 'יהלום' };
 
@@ -428,7 +490,7 @@ function questionnaire(first) {
   show(`
 <div class="flex-1 min-h-0 ${SCREEN_BG} flex flex-col overflow-y-auto">
   <form id="qform" class="px-5 pt-8 pb-6 flex flex-col gap-5" autocomplete="off">
-    <img src="./icon-512.png?v=16" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
+    <img src="./icon-512.png?v=17" alt="ראש בראש" class="w-28 h-28 mx-auto drop-shadow-lg" />
     <h1 class="text-4xl font-black text-3d-white text-center">${first ? 'ברוך הבא!' : 'עריכת פרופיל'}</h1>
     <p class="text-center text-white/85 -mt-2">${first ? 'כמה שאלות קצרות לפני שמתחילים' : 'אפשר לשנות בכל זמן'}</p>
     <label class="flex flex-col gap-1.5">
@@ -500,7 +562,7 @@ function profileScreen() {
     </div>
     <button data-act="edit-profile" class="play-btn-glow w-full h-16 rounded-xl text-2xl font-extrabold mt-2"><span class="text-3d-white">ערוך פרופיל</span></button>
   </section>
-</div>`, home);
+</div>`, home, 'profile');
 }
 
 // ---------- משימה יומית ----------
@@ -550,13 +612,9 @@ function home() {
         <span data-free-cd class="text-xs font-bold text-yellow-300 z-10 mt-0.5 drop-shadow tabular-nums">${freeSt.ready ? 'זמין!' : fmtMs(freeSt.msLeft)}</span>
       </button>
     </section>
-    <section class="grid grid-cols-2 gap-3">
-      <button data-act="shop" class="game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
-        <div class="absolute -left-2 -bottom-3 opacity-25">${I.coin('w-20 h-20')}</div>
-        <h2 class="text-3xl font-black text-3d-white tracking-wide z-10">חנות</h2>
-      </button>
-      <button data-act="seasons" class="game-gloss-card h-24 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><span class="text-pink-300">${I.trophy('w-20 h-20')}</span></div>
+    <section>
+      <button data-act="seasons" class="w-full game-gloss-card h-20 rounded-xl relative overflow-hidden flex items-center justify-center cursor-pointer">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><span class="text-pink-300">${I.trophy('w-16 h-16')}</span></div>
         <h2 class="text-3xl font-black text-3d-white tracking-wide z-10">עונות</h2>
       </button>
     </section>
@@ -574,21 +632,9 @@ function home() {
       <button data-act="bot" class="game-gloss-card h-14 rounded-xl text-base font-black text-3d-white cursor-pointer">מול הבוט</button>
     </section>
     ${taskCard()}
-    <section class="mt-1">
-      <div class="flex justify-start mb-2">
-        <div class="bg-[#7d0c1f] border-r-4 border-l border-t border-b border-[#f53450] px-5 py-1 rounded-r-xl rounded-l-md shadow-md"><h3 class="text-sm font-bold text-[#ffe8ed]">החברים שלי</h3></div>
-      </div>
-      <div class="grid grid-cols-3 gap-2 px-1 text-center">
-        ${FRIENDS.map((f, i) => `
-        <button data-act="friend" data-i="${i}" class="flex flex-col items-center">
-          ${avatar(f, 'w-16 h-16 sm:w-20 sm:h-20', 'border-2 border-white/90 shadow-xl !bg-[#871c2b]')}
-          <span class="mt-1 text-xs font-bold text-white drop-shadow truncate w-full text-center">${esc(f.name)}</span>
-        </button>`).join('')}
-      </div>
-    </section>
   </main>
-  <footer class="mt-auto pt-3 pb-8 text-center text-[10px] text-white/60 z-10">v16 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
-</div>`);
+  <footer class="mt-auto pt-3 pb-8 text-center text-[10px] text-white/60 z-10">v17 · <a href="./privacy.html" class="underline">מדיניות פרטיות</a></footer>
+</div>`, null, 'home');
 }
 
 const CROWN = (cls, gems = false) => `
