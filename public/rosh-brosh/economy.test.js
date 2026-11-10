@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SHOP, buyItem, dailyState, claimDailyReward, DAILY_REWARDS, freeCoinsState, claimFreeCoinsReward, FREE_COINS, FREE_COINS_MS, COST, taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
+import { rewardsReady, SHOP, buyItem, dailyState, claimDailyReward, DAILY_REWARDS, freeCoinsState, claimFreeCoinsReward, FREE_COINS, FREE_COINS_MS, COST, taskState, recordWin, claimTask, TASK_GEMS, defaultSave, tickEnergy, spendEnergy, energyCountdownMs, rewards, pickQuestion, ENERGY_MS, MAX_ENERGY } from './economy.js';
 import { planBotTurn, makeOpponent, botSkill } from './bot.js';
 
 describe('אנרגיה', () => {
@@ -147,5 +147,18 @@ describe('מטבעות חינם', () => {
     expect(claimFreeCoinsReward(s, t + 1000)).toBeNull();
     expect(freeCoinsState(s, t + 1000)).toEqual({ ready: false, msLeft: FREE_COINS_MS - 1000 });
     expect(claimFreeCoinsReward(s, t + FREE_COINS_MS)).not.toBeNull();
+  });
+});
+
+describe('נקודות על הטאבים', () => {
+  it('מופיעות כשיש פרס מוכן ונעלמות אחרי שלוקחים הכול', () => {
+    const now = Date.UTC(2026, 10, 5, 12);
+    const s = defaultSave(0);
+    expect(rewardsReady(s, now)).toEqual({ free: true, daily: true, any: true });
+    claimFreeCoinsReward(s, now);
+    expect(rewardsReady(s, now)).toEqual({ free: false, daily: true, any: true });
+    claimDailyReward(s, now);
+    expect(rewardsReady(s, now)).toEqual({ free: false, daily: false, any: false });
+    expect(rewardsReady(s, now + FREE_COINS_MS).any).toBe(true);
   });
 });

@@ -167,3 +167,10 @@ export function buyItem(s, item, now = Date.now()) {
   s.coins += item.coins;
   return { ok: true, coins: item.coins };
 }
+
+/** האם יש פרס מוכן (מטבעות חינם או פרס יומי), בשביל נקודה על הטאבים. */
+export function rewardsReady(s, now = Date.now()) {
+  const free = freeCoinsState(s, now).ready;
+  const daily = !dailyState(s, now).claimed;
+  return { free, daily, any: free || daily };
+}
