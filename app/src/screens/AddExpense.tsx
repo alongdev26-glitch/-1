@@ -76,7 +76,7 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
         <span className="text-sm text-mute">הוצאה חדשה</span>
       </div>
 
-      <div className="glass mb-3 p-5 text-center">
+      <div className="glass mb-4 p-6 text-center">
         <div className="num flex items-baseline justify-center gap-2" dir="ltr">
           <span className="text-xl text-mint">{info.code}</span>
           <span className={`text-5xl font-bold ${raw ? '' : 'text-white/25'}`}>{raw || '0'}</span>
@@ -106,7 +106,7 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
-      <div className="mb-3 grid grid-cols-6 gap-2">
+      <div className="mb-4 grid grid-cols-6 gap-2">
         {CATEGORIES.map((c) => (
           <button
             key={c.id}
@@ -121,7 +121,7 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
 
       <input className="field mb-3" placeholder="פה תאי ושתייה (אופציונלי)" value={note} onChange={(e) => setNote(e.target.value)} />
 
-      <button className="glass mb-3 flex items-center justify-between p-3 text-start" onClick={() => setSheet('split')}>
+      <button className="glass mb-4 flex items-center justify-between p-4 text-start" onClick={() => setSheet('split')}>
         <div>
           <div className="text-sm font-semibold">שולם ע״י: {payer?.name}</div>
           <div className="text-xs text-mint">{splitLabel}</div>
@@ -129,9 +129,9 @@ export function AddExpense({ onClose }: { onClose: () => void }) {
         <Icon name="back" size={18} className="text-mute" />
       </button>
 
-      <div className="mb-3 grid grid-cols-3 gap-2" dir="ltr">
+      <div className="mb-4 grid grid-cols-3 gap-3" dir="ltr">
         {KEYS.map((k) => (
-          <button key={k} onClick={() => press(k)} className="rounded-2xl border border-line bg-white/5 py-3.5 text-2xl font-semibold active:bg-white/15" aria-label={k === '⌫' ? 'מחק' : k}>
+          <button key={k} onClick={() => press(k)} className="rounded-3xl border border-line bg-white/5 py-3.5 text-2xl font-semibold active:bg-white/15" aria-label={k === '⌫' ? 'מחק' : k}>
             {k === '⌫' ? <Icon name="backspace" size={26} className="mx-auto" /> : k}
           </button>
         ))}

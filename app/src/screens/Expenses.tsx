@@ -42,8 +42,8 @@ export function Expenses({ onOpenExpense }: { onOpenExpense: (id: string) => voi
   }, [expenses, q, filter, now, app.members]);
 
   return (
-    <div className="space-y-4">
-      <section className="glass p-5">
+    <div className="space-y-6">
+      <section className="glass p-6">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-xs text-mute">סה״כ הוצאות הטיול</div>
@@ -58,7 +58,7 @@ export function Expenses({ onOpenExpense }: { onOpenExpense: (id: string) => voi
 
       <div className="relative"><Icon name="search" size={18} className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-mute" /><input className="field ps-11" placeholder="חפש הוצאה, מקום, חבר קבוצה..." value={q} onChange={(e) => setQ(e.target.value)} /></div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
+      <div className="-mx-5 flex gap-2 overflow-x-auto px-5">
         <Chip active={filter === 'all'} onClick={() => setFilter('all')}>הכל {expenses.length}</Chip>
         <Chip active={filter === 'today'} onClick={() => setFilter('today')}>היום</Chip>
         {CATEGORIES.map((c) => (
@@ -70,7 +70,7 @@ export function Expenses({ onOpenExpense }: { onOpenExpense: (id: string) => voi
 
       {groups.length === 0 && <Empty icon="receipt" text={expenses.length ? 'לא נמצאו הוצאות' : 'עוד אין הוצאות בטיול'} />}
       {groups.map(([date, list]) => (
-        <section key={date} className="space-y-2">
+        <section key={date} className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold">{formatDayTitle(date, now)}</span>
             <span className="num pill px-3 py-0.5 text-xs text-mint">סה״כ ליום: {money(sumHome(list))}</span>

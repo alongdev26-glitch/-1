@@ -99,8 +99,8 @@ function Shell() {
   const [detail, setDetail] = useState<string | null>(null);
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md px-4 pb-28">
-      <header className="sticky top-0 z-30 -mx-4 flex items-center justify-between gap-2 bg-bg/80 px-4 py-3 backdrop-blur-xl">
+    <div className="mx-auto min-h-dvh max-w-md px-5 pb-40">
+      <header className="sticky top-0 z-30 -mx-5 flex items-center justify-between gap-2 bg-gradient-to-b from-bg via-bg/95 to-transparent px-5 pb-6 pt-4">
         <button className="glass flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-start" onClick={() => setOverlay('trips')} aria-label="החלף טיול">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-mute">טיול פעיל</div>
@@ -114,7 +114,7 @@ function Shell() {
         </span>
       </header>
 
-      <main className="pt-2">
+      <main key={tab} className="rise -mt-2">
         {tab === 'home' && <Home onSummary={() => setOverlay('summary')} onOpenExpense={setDetail} />}
         {tab === 'expenses' && <Expenses onOpenExpense={setDetail} />}
         {tab === 'group' && <Group />}
