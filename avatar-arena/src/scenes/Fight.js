@@ -5,14 +5,13 @@ import { bakeFor, bakedKey, FRAMES, BAKE_SCALE } from '../anim/bake.js';
 import { makeFxTextures } from '../fx/textures.js';
 import { CAST, EV, chargeSpark } from '../fx/moves.js';
 import { isUnlocked } from '../data/progress.js';
+import { MAPS } from '../data/maps.js';
 
 const STOCKS = 3;
 const SPRITE_H = 100, BODY_W = 34, BODY_H = 74;
 const ATTACK_POSE_MS = 260, POP_MS = 130;
 const BLAST = { left: -120, right: 1080, top: -160, bottom: 660 };
-// מיקום הפלטפורמות מותאם לאיור של האי והסלעים ב-HUD של Stitch (במה של 960x540)
-const MAIN = { x: 480, top: 348, w: 330, h: 30 };
-const FLOATS = [{ x: 153.6, top: 224, w: 104 }, { x: 806.4, top: 224, w: 104 }];
+// הפלטפורמות באות מהמפה שנבחרה (src/data/maps.js), וגם הציור שלהן (src/ui/maps.js)
 const ULT = 4; // אינדקס המכה הסודית ב-useMove
 
 export default class Fight extends Phaser.Scene {
@@ -20,6 +19,8 @@ export default class Fight extends Phaser.Scene {
 
   init() {
     this.cfg = this.registry.get('cfg') || { p1: 'aang', bots: ['zuko'] };
+    this.map = this.cfg.map || MAPS[0];
+    this.main = { ...this.map.platforms.find((p) => p.main), h: 30 };
     this.ready = false; this.started = false; this.over = false; this.stopCount = 0;
   }
 
@@ -39,8 +40,10 @@ export default class Fight extends Phaser.Scene {
     bakeFor(this, ids);
 
     this.platforms = this.physics.add.staticGroup();
-    this.addPlatform(MAIN.x, MAIN.top + MAIN.h / 2, MAIN.w, MAIN.h, true);
-    FLOATS.forEach((f) => this.addPlatform(f.x, f.top + 7, f.w, 14, false));
+    this.map.platforms.forEach((p) => {
+      if (p.main) this.addPlatform(p.x, p.top + 15, p.w, 30, true);
+      else this.addPlatform(p.x, p.top + 7, p.w, 14, false);
+    });
 
     this.keys = this.input.keyboard.addKeys({
       left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', a: 'A', d: 'D', w: 'W', s: 'S',
@@ -48,8 +51,8 @@ export default class Fight extends Phaser.Scene {
     });
 
     this.projectiles = this.physics.add.group({ allowGravity: false });
-    const xs = { 1: [480], 2: [410, 550], 3: [380, 480, 580], 4: [360, 440, 520, 600] }[ids.length];
-    this.fighters = ids.map((id, i) => this.spawnFighter(byId(id), i, xs[i], i === 0));
+    const gap = Math.min(110, this.main.w / (ids.length + 1));
+    this.fighters = ids.map((id, i) => this.spawnFighter(byId(id), i, this.main.x + (i - (ids.length - 1) / 2) * gap, i === 0));
     this.fighters.forEach((f) => {
       this.physics.add.collider(f, this.platforms, null, (fi, p) =>
         p.solid || (fi.body.velocity.y >= 0 && fi.body.bottom <= p.body.top + 14 && this.time.now > fi.dropUntil));
@@ -78,11 +81,12 @@ export default class Fight extends Phaser.Scene {
   // הגוף הפיזיקלי (f) בלתי נראה וקבוע. הדמות המצוירת (f.vis) היא שכבה נפרדת,
   // כדי שמתיחות, הטיות והחלפת פוזה לא ישנו את אזור הפגיעה.
   spawnFighter(def, idx, x, human) {
-    const f = this.physics.add.sprite(x, 150, 'px').setVisible(false);
+    const y0 = this.main.top - 90;
+    const f = this.physics.add.sprite(x, y0, 'px').setVisible(false);
     f.setDisplaySize(BODY_W, BODY_H);
     f.body.setSize(4, 4);
     f.setDragX(1400).setMaxVelocity(700, 900);
-    f.vis = this.add.image(x, 150, 'spr_' + def.id).setOrigin(0.5, 1).setDepth(3);
+    f.vis = this.add.image(x, y0, 'spr_' + def.id).setOrigin(0.5, 1).setDepth(3);
     Object.assign(f, {
       def, idx, human, uid: idx, percent: 0, stocks: STOCKS, facing: x < 480 ? 1 : -1,
       jumpsLeft: def.stats.doubleJumps, stun: 0, invuln: 1500, jumpHeld: false, dropUntil: 0,
@@ -305,9 +309,9 @@ export default class Fight extends Phaser.Scene {
     const o = this.nearest(f);
     if (!o) return inp;
     const dx = o.x - f.x, dist = Math.abs(dx);
-    const edge = MAIN.w / 2 - 15;
-    if (f.y > MAIN.top - 10 || (Math.abs(f.x - MAIN.x) > edge && f.y > MAIN.top - 60)) { // חזרה לזירה
-      inp.move = f.x < MAIN.x ? 1 : -1; inp.jump = this.time.now % 400 < 80; return inp;
+    const edge = this.main.w / 2 - 15;
+    if (f.y > this.main.top - 10 || (Math.abs(f.x - this.main.x) > edge && f.y > this.main.top - 60)) { // חזרה לזירה
+      inp.move = f.x < this.main.x ? 1 : -1; inp.jump = this.time.now % 400 < 80; return inp;
     }
     if (dist > 90) inp.move = Math.sign(dx);
     if (o.y < f.y - 60 && f.body.blocked.down) inp.jump = true;
@@ -335,7 +339,7 @@ export default class Fight extends Phaser.Scene {
     if (p.wobble) p.setFlipX(Math.floor(now / 90) % 2 === 0);
     if (p.glowImg) p.glowImg.setPosition(p.x, p.y);
     const out = now > p.dieAt || p.x < -140 || p.x > 1100 || p.y > 620 ||
-      (p.ground && (p.x < MAIN.x - MAIN.w / 2 - 20 || p.x > MAIN.x + MAIN.w / 2 + 20));
+      (p.ground && (p.x < this.main.x - this.main.w / 2 - 20 || p.x > this.main.x + this.main.w / 2 + 20));
     if (out) return this.killProjectile(p);
     for (const e of this.enemiesOf(p.owner)) {
       if (!Phaser.Geom.Intersects.RectangleToRectangle(p.getBounds(), this.hurt(e))) continue;

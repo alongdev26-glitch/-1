@@ -2,6 +2,8 @@
 // כל מחלקה כתובה כאן במלואה (בלי הרכבה בקוד) כדי ש-Tailwind יזהה אותה.
 import { CHARACTERS } from '../data/characters.js';
 import { moveIcon } from './icons.js';
+import { MAPS } from '../data/maps.js';
+import { mapPreview, ambientHTML } from './maps.js';
 
 export const face = (c) => `sprites/${c.id}_face.png`;
 const stars = (n, on, off) => Array.from({ length: 5 }, (_, i) => `<span class="${i < n ? on : off}">★</span>`).join('');
@@ -193,90 +195,106 @@ export const selectScreen = (selId, bots) => `
   </footer>
 </main>`;
 
-// ---------- VS ----------
-const vsOpponent = (c) => {
-  const e = EL[c.element];
-  return `
-  <div class="flex flex-col items-center">
-    <div class="w-24 aspect-[4/5] ${e.vsBg} rounded-md border-2 ${e.vsBorder} p-1 flex flex-col justify-between character-card shadow-lg relative">
-      <div class="w-full flex-1 ${e.vsInner} rounded flex items-center justify-center overflow-hidden relative">
-        <img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
+// ---------- בחירת מפה ----------
+export const mapScreen = (selId) => {
+  const card = (m) => {
+    const sel = m.id === selId;
+    return `
+    <article data-map="${m.id}" class="relative flex flex-col rounded-xl overflow-hidden cursor-pointer transform hover:-translate-y-1 transition duration-200 ${sel ? 'border-2 border-[#f7d358] selected-card-glow' : 'border border-slate-700 hover:border-slate-400'} bg-[#0e1726]">
+      ${mapPreview(m, 244)}
+      <div class="flex items-center justify-between px-3 py-1.5 bg-[#0b1420]/95">
+        <span class="text-sm font-bold text-white">${m.name}</span><span class="text-base">${EL[m.element].emoji}</span>
       </div>
-      <div class="mt-1 text-center font-bold text-sm text-white drop-shadow">רמה ${c.tier}</div>
-    </div>
-    <div class="mt-2 flex flex-col items-center">
-      <div class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-full ${e.vsDot} inline-block"></span><span class="text-[10px] text-slate-300">${'●'.repeat(Math.min(3, c.tier))}</span></div>
-      <span class="text-sm font-semibold text-slate-200 mt-0.5">${c.en}</span>
-    </div>
-  </div>`;
-};
-
-export const vsScreen = (player, bots) => {
-  const e = EL[player.element];
+    </article>`;
+  };
+  const rnd = `
+    <article data-map="random" class="relative flex flex-col rounded-xl overflow-hidden cursor-pointer transform hover:-translate-y-1 transition duration-200 ${selId === 'random' ? 'border-2 border-[#f7d358] selected-card-glow' : 'border border-slate-700 hover:border-slate-400'} bg-[#0e1726]">
+      <div class="flex items-center justify-center" style="width:244px;height:137px;background:radial-gradient(circle at 50% 40%,#2a3c53,#0b121c)"><span class="text-6xl">🎲</span></div>
+      <div class="flex items-center justify-between px-3 py-1.5 bg-[#0b1420]/95"><span class="text-sm font-bold text-white">אקראי</span><span class="text-base">✦</span></div>
+    </article>`;
   return `
-<main class="screen vs-bg text-white overflow-hidden flex flex-col justify-between p-10 select-none font-sans">
-  <div class="diagonal-line"></div>
-  <header class="w-full flex items-center justify-between z-10 opacity-70">
-    <div class="text-xs tracking-widest text-slate-400 font-semibold uppercase">PRE-FIGHT / VS SCREEN</div>
-    <div class="text-xs text-slate-400 tracking-wider">AVATAR ARENA</div>
+<main dir="rtl" class="screen flex flex-col justify-between select-none overflow-hidden bg-twilight-mountains font-rubik">
+  <header class="relative z-10 pt-4 pb-1 text-center">
+    <h1 class="text-lg tracking-widest text-slate-300 font-bold uppercase drop-shadow-md">בחר מפה / CHOOSE ARENA</h1>
   </header>
-  <section class="relative z-10 w-full flex-1 flex items-center justify-between px-12 my-auto">
-    <article class="flex flex-col items-center">
-      <div class="w-48 aspect-[4/5] bg-[#3a4454] rounded-lg border-2 border-slate-300/80 character-card p-1.5 flex flex-col overflow-hidden relative">
-        <div class="w-full h-full bg-[#e8a36e] rounded overflow-hidden relative flex items-end justify-center">
-          <img src="${face(player)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
-        </div>
-        <div class="absolute bottom-2 left-2 right-2 bg-black/60 py-0.5 rounded flex items-center justify-center gap-1 border border-yellow-500/30">
-          ${stars(starCount(player), 'text-yellow-400 text-xs', 'text-slate-600 text-xs')}
-        </div>
-      </div>
-      <div class="mt-3 flex flex-col items-center gap-1.5">
-        <h2 class="text-xl font-bold tracking-wide text-white drop-shadow">${player.en}</h2>
-        <div class="flex items-center gap-1.5 bg-[#182030] px-2 py-1 rounded-full border border-slate-700/80">
-          <div class="w-5 h-5 rounded-full ${e.vsBg} flex items-center justify-center shadow-inner text-[10px]">${e.emoji}</div>
-          <div class="w-24 h-2 bg-slate-700 rounded-full overflow-hidden"><div class="h-full ${e.vsBg} rounded-full" style="width:${statsOf(player).spd}%"></div></div>
-        </div>
-      </div>
-    </article>
-    <article class="flex flex-col items-center justify-center px-4">
-      <h1 class="text-7xl font-extrabold text-[#f6c344] vs-text tracking-tighter transform -rotate-3 select-none">VS</h1>
-    </article>
-    <article class="flex flex-col items-center">
-      <div class="flex items-center gap-5">
-        ${bots.map((b, i) => (i ? `<span class="text-sm font-bold text-slate-400 uppercase italic">VS</span>` : '') + vsOpponent(b)).join('')}
-      </div>
-    </article>
+  <section class="relative z-10 flex-1 flex items-center justify-center px-8 py-2">
+    <div class="grid grid-cols-3 gap-x-5 gap-y-4">${MAPS.map(card).join('')}${rnd}</div>
   </section>
-  <footer class="relative z-10 w-full flex flex-col items-center pb-2">
-    <div class="w-96 h-2.5 bg-[#172031] rounded-full overflow-hidden border border-slate-700/60 p-0.5">
-      <div id="vs-progress" class="h-full bg-gradient-to-r from-[#f6c344] to-yellow-300 rounded-full loading-pulse transition-all duration-300" style="width:8%"></div>
-    </div>
-    <span dir="rtl" class="mt-1.5 text-xs text-slate-400 font-medium tracking-wider">טוען...</span>
+  <footer class="relative z-10 w-full px-12 py-4 flex items-center justify-between border-t border-slate-800/80 bg-gradient-to-t from-[#060a11] via-[#09101c]/95 to-transparent">
+    <button data-act="back" class="px-8 py-2.5 rounded-xl font-bold text-base text-slate-200 bg-[#141b28] border border-[#28354b] hover:bg-[#1e283b] active:scale-95 transition" type="button">חזור</button>
+    <button data-act="go" class="relative px-12 py-2.5 rounded-xl font-black text-base tracking-wider text-amber-950 bg-gradient-to-b from-[#ffea79] via-[#f7cb45] to-[#d89e1b] hover:brightness-110 active:scale-95 shadow-[0_4px_16px_rgba(247,203,69,0.35)] border-t border-yellow-200 transition-all duration-150 ease-out cursor-pointer flex items-center gap-2" type="button">
+      <span>קדימה</span>
+      <svg class="w-4 h-4 text-amber-950 transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
   </footer>
 </main>`;
 };
 
-// ---------- קרב: רקע, HUD, בקרות מגע ----------
-export const fightBackground = () => `
-<div class="absolute inset-0 bg-sunset-sky overflow-hidden">
-  <div class="absolute left-1/2 -translate-x-1/2 bottom-[26%] w-[22%] aspect-square rounded-full sun-glow pointer-events-none"></div>
-  <div class="absolute left-1/2 -translate-x-1/2 bottom-[27%] w-[12%] aspect-square rounded-full bg-[#fffae4] opacity-95 pointer-events-none"></div>
-  <svg class="absolute bottom-0 w-full h-[55%] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1000 300"><path d="M0,300 L0,220 L110,165 L240,240 L380,140 L500,225 L650,110 L790,205 L910,135 L1000,195 L1000,300 Z" fill="#b97864" fill-opacity="0.5"></path></svg>
-  <svg class="absolute bottom-0 w-full h-[48%] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1000 300"><path d="M0,300 L0,185 L90,120 L210,210 L310,150 L440,230 L550,180 L680,85 L810,210 L940,150 L1000,200 L1000,300 Z" fill="#8f574d" fill-opacity="0.75"></path></svg>
-  <svg class="absolute bottom-0 w-full h-[38%] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1000 300"><path d="M0,300 L0,140 L120,70 L260,180 L350,125 L470,220 L580,240 L690,130 L850,220 L1000,110 L1000,300 Z" fill="#673c38" fill-opacity="0.9"></path></svg>
-</div>
-<div class="absolute inset-0 pointer-events-none">
-  <div class="absolute left-[8%] top-[40%] w-[16%] h-[7%] flex flex-col items-center">
-    <svg class="w-full h-full drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)]" viewBox="0 0 200 65"><ellipse cx="100" cy="18" fill="#58616a" rx="90" ry="12" stroke="#717c88" stroke-width="2"></ellipse><ellipse cx="100" cy="17" fill="#75828f" rx="84" ry="9"></ellipse><polygon fill="#353c44" points="12,18 25,32 50,42 85,55 105,62 125,52 160,40 188,18" stroke="#252a30" stroke-width="1.5"></polygon><polygon fill="#2c333a" points="40,24 60,48 85,55 90,30"></polygon><polygon fill="#434c56" points="110,24 135,46 155,30"></polygon></svg>
-  </div>
-  <div class="absolute right-[8%] top-[40%] w-[16%] h-[7%] flex flex-col items-center">
-    <svg class="w-full h-full drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)]" viewBox="0 0 200 65"><ellipse cx="100" cy="18" fill="#58616a" rx="90" ry="12" stroke="#717c88" stroke-width="2"></ellipse><ellipse cx="100" cy="17" fill="#75828f" rx="84" ry="9"></ellipse><polygon fill="#353c44" points="12,18 35,36 60,48 100,62 135,50 170,36 188,18" stroke="#252a30" stroke-width="1.5"></polygon><polygon fill="#2b3138" points="35,24 55,42 75,28"></polygon><polygon fill="#434c56" points="90,26 100,62 125,40"></polygon></svg>
-  </div>
-  <div class="absolute left-1/2 -translate-x-1/2 bottom-[13%] w-[46%] h-[28%] flex flex-col items-center">
-    <svg class="w-full h-full drop-shadow-[0_16px_25px_rgba(0,0,0,0.65)]" viewBox="0 0 540 220"><polygon fill="#303840" points="25,48 60,95 110,140 180,185 240,215 285,212 345,175 420,125 480,80 515,48" stroke="#1f2429" stroke-width="3"></polygon><polygon fill="#242b31" points="60,95 130,110 180,185 110,140"></polygon><polygon fill="#3d4650" points="130,110 240,120 240,215 180,185"></polygon><polygon fill="#293037" points="240,120 330,110 345,175 285,212 240,215"></polygon><polygon fill="#39424c" points="330,110 420,125 345,175"></polygon><polygon fill="#21272d" points="420,125 480,80 435,70"></polygon><polygon fill="#434e5a" points="130,55 190,75 240,120 130,110"></polygon><polygon fill="#4e5a66" points="240,120 310,70 330,110"></polygon><polygon fill="#293138" points="40,55 130,55 90,85"></polygon><ellipse cx="270" cy="46" fill="#555f69" rx="245" ry="32" stroke="#363d44" stroke-width="3"></ellipse><ellipse cx="270" cy="44" fill="#75818d" rx="238" ry="28"></ellipse><ellipse cx="270" cy="43" fill="#8d99a6" rx="226" ry="24"></ellipse><ellipse cx="270" cy="43" fill="none" rx="205" ry="20" stroke="#68737e" stroke-dasharray="8 4" stroke-width="2"></ellipse></svg>
-  </div>
-</div>`;
+// ---------- VS ----------
+// כל צד נצבע לפי האלמנט של הדמות: מים כחול, אש אדום, אדמה חום-ירוק, אוויר תכלת
+const VS_THEME = {
+  air:   { bg: 'linear-gradient(155deg,#eaf7ff 0%,#8cc8f2 50%,#3a7fc0 100%)', glow: '#bfe6ff', amb: ['cloud', '#ffffff'] },
+  water: { bg: 'linear-gradient(155deg,#071a3d 0%,#0f4a8c 50%,#2a8fd8 100%)', glow: '#5fb4ff', amb: ['bubble', '#bfe6ff'] },
+  earth: { bg: 'linear-gradient(155deg,#2b1d0d 0%,#6a4a22 50%,#5a8a34 100%)', glow: '#b9d68a', amb: ['dust', '#e4c895'] },
+  fire:  { bg: 'linear-gradient(155deg,#240705 0%,#8a1d0b 50%,#ff7a1c 100%)', glow: '#ff9a3a', amb: ['ember', '#ffb34a'] },
+};
+const OPP_W = { 1: 200, 2: 150, 3: 118 };
 
+const vsCard = (c, w) => {
+  const t = VS_THEME[c.element], e = EL[c.element];
+  const fs = w >= 190 ? 22 : w >= 140 ? 18 : 15;
+  return `
+  <div class="flex flex-col items-center" style="width:${w}px">
+    <div class="relative rounded-xl overflow-hidden" style="width:${w}px;height:${Math.round(w * 1.25)}px;border:3px solid ${t.glow};box-shadow:0 0 32px ${t.glow}aa,0 10px 24px rgba(0,0,0,.6);background:${t.bg}">
+      <img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
+      <div class="absolute bottom-1.5 left-1.5 right-1.5 bg-black/55 py-0.5 rounded flex items-center justify-center gap-0.5 border border-yellow-500/30">
+        ${stars(starCount(c), 'text-yellow-400 text-xs', 'text-slate-500 text-xs')}
+      </div>
+    </div>
+    <h2 class="mt-2 font-extrabold tracking-wide text-white" style="font-size:${fs}px;text-shadow:0 2px 6px rgba(0,0,0,.8)">${c.en}</h2>
+    <div class="mt-1 flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-full text-xs text-white" style="border:1px solid ${t.glow}">
+      <span>${e.emoji}</span><span dir="rtl">${e.label}</span>
+    </div>
+  </div>`;
+};
+
+export const vsScreen = (player, bots, map) => {
+  const tp = VS_THEME[player.element], to = VS_THEME[bots[0].element];
+  const w = OPP_W[bots.length] || 118;
+  return `
+<main class="screen text-white overflow-hidden select-none font-sans" style="background:#0a0f1a">
+  <div class="absolute inset-0" style="background:${tp.bg}">${ambientHTML(tp.amb[0], tp.amb[1], 14)}
+    <div class="absolute rounded-full" style="left:6%;top:50%;width:460px;height:460px;transform:translateY(-50%);background:radial-gradient(circle,${tp.glow}55,transparent 65%)"></div></div>
+  <div class="absolute inset-0" style="background:${to.bg};clip-path:polygon(64% 0,100% 0,100% 100%,54% 100%)">${ambientHTML(to.amb[0], to.amb[1], 14)}
+    <div class="absolute rounded-full" style="right:4%;top:50%;width:460px;height:460px;transform:translateY(-50%);background:radial-gradient(circle,${to.glow}55,transparent 65%)"></div></div>
+  <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <line x1="64" y1="0" x2="54" y2="100" stroke="#f6c344" stroke-width="3" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 8px rgba(246,195,68,.9))"/>
+  </svg>
+  <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 55%,transparent 45%,rgba(0,0,0,.45) 100%)"></div>
+
+  <header class="absolute top-8 left-10 right-10 flex items-center justify-between z-10 opacity-80">
+    <div class="text-xs tracking-widest text-white/80 font-semibold uppercase">PRE-FIGHT / VS SCREEN</div>
+    <div class="text-xs text-white/80 tracking-wider">AVATAR ARENA</div>
+  </header>
+
+  <section class="absolute left-12 top-1/2 z-10" style="transform:translateY(-54%)">${vsCard(player, 200)}</section>
+  <section class="absolute right-12 top-1/2 z-10 flex items-center gap-4" style="transform:translateY(-54%)">${bots.map((b) => vsCard(b, w)).join('')}</section>
+
+  <div class="absolute z-20 flex flex-col items-center" style="left:59%;top:50%;transform:translate(-50%,-56%)">
+    <h1 class="text-7xl font-extrabold text-[#f6c344] vs-text tracking-tighter transform -rotate-3">VS</h1>
+    <div dir="rtl" class="mt-2 px-3 py-1 rounded-full bg-black/55 border border-white/25 text-xs text-white font-semibold">🗺 ${map.name}</div>
+  </div>
+
+  <footer class="absolute bottom-4 left-0 right-0 z-10 flex flex-col items-center">
+    <div class="w-96 h-2.5 bg-black/45 rounded-full overflow-hidden border border-white/20 p-0.5">
+      <div id="vs-progress" class="h-full bg-gradient-to-r from-[#f6c344] to-yellow-300 rounded-full loading-pulse transition-all duration-300" style="width:8%"></div>
+    </div>
+    <span dir="rtl" class="mt-1.5 text-xs text-white/80 font-medium tracking-wider">טוען...</span>
+  </footer>
+</main>`;
+};
+
+// ---------- קרב: HUD ובקרות מגע (הרקע והפלטפורמות ב-src/ui/maps.js) ----------
 export const hudCard = (c, human, uid) => {
   const e = EL[c.element];
   return `

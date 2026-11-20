@@ -5,11 +5,13 @@ import { touch } from './input.js';
 import { isUnlocked } from '../data/progress.js';
 import { moveIcon } from './icons.js';
 import {
-  menuScreen, selectScreen, vsScreen, fightBackground, hudScreen, pauseScreen, resultsScreen,
+  menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen,
 } from './screens.js';
+import { fightBackground } from './maps.js';
+import { MAPS, mapById } from '../data/maps.js';
 
 const $ = (id) => document.getElementById(id);
-const state = { sel: 'aang', bots: 1, cfg: null, game: null, last: null };
+const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null };
 let vsTimer = null;
 
 // ---- במה: 960x540 שמוקטנת/מוגדלת למסך ----
@@ -54,7 +56,21 @@ export function showSelect() {
       if (card) { state.sel = card.dataset.char; return render(); }
       const bots = e.target.closest('[data-bots]');
       if (bots) { state.bots = +bots.dataset.bots; return render(); }
-      if (e.target.closest('[data-act="go"]')) startVs();
+      if (e.target.closest('[data-act="go"]')) showMap();
+    };
+  };
+  render();
+}
+
+export function showMap() {
+  const render = () => {
+    setScreen(mapScreen(state.map));
+    $('screen').onclick = (e) => {
+      const card = e.target.closest('[data-map]');
+      if (card) { state.map = card.dataset.map; return render(); }
+      const a = e.target.closest('[data-act]')?.dataset.act;
+      if (a === 'back') showSelect();
+      if (a === 'go') startVs();
     };
   };
   render();
@@ -64,8 +80,9 @@ function startVs() {
   const player = byId(state.sel);
   const others = Phaser.Utils.Array.Shuffle(CHARACTERS.filter((c) => c.id !== player.id));
   const bots = others.slice(0, state.bots);
-  state.cfg = { p1: player.id, bots: bots.map((b) => b.id) };
-  setScreen(vsScreen(player, bots));
+  const map = state.map === 'random' ? Phaser.Utils.Array.GetRandom(MAPS) : mapById(state.map);
+  state.cfg = { p1: player.id, bots: bots.map((b) => b.id), map };
+  setScreen(vsScreen(player, bots, map));
   $('screen').onclick = null;
   launchFight(); // טוענים את הקרב ברקע בזמן ש-VS מוצג
 
@@ -102,7 +119,7 @@ function launchFight() {
 
 function beginFight(scene) {
   const fighters = scene.fighters;
-  $('fight-bg').innerHTML = fightBackground();
+  $('fight-bg').innerHTML = fightBackground(state.cfg.map);
   $('hud').innerHTML = hudScreen(fighters);
   $('fight-layer').hidden = false;
   $('screen').hidden = true; $('screen').innerHTML = '';

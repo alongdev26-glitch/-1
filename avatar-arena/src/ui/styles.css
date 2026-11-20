@@ -68,3 +68,10 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 #banner { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font: 900 40px Rubik, Heebo, sans-serif; color: #fff;
   text-shadow: 0 0 20px currentColor, 0 3px 6px rgba(0,0,0,.8); pointer-events: none; z-index: 120; animation: banner 1.4s ease-out forwards; direction: rtl; }
 @keyframes banner { 0% { opacity: 0; transform: scale(1.8); } 15% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
+
+/* חלקיקי רקע */
+.amb { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.amb i { position: absolute; display: block; border-radius: 50%; }
+@keyframes fall { from { transform: translate(0, -20px); } to { transform: translate(var(--dx, 0px), 580px); } }
+@keyframes rise { from { transform: translate(0, 580px); opacity: 0; } 15% { opacity: 1; } to { transform: translate(var(--dx, 0px), -30px); opacity: 0; } }
+@keyframes drift { from { transform: translateX(-260px); } to { transform: translateX(1200px); } }
