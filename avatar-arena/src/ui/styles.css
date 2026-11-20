@@ -61,3 +61,10 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 #rotate span { font-size: 56px; display: block; animation: spin 2.2s ease-in-out infinite; }
 @keyframes spin { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 @media (orientation: portrait) and (pointer: coarse) { #rotate { display: flex; } }
+
+.virtual-btn.ult-ready { background: rgba(255,200,60,.45); border-color: #ffd166; box-shadow: 0 0 18px 4px rgba(255,200,60,.7); animation: ultpulse 0.9s ease-in-out infinite; }
+@keyframes ultpulse { 50% { transform: scale(1.08); } }
+.virtual-btn.locked { opacity: .35; }
+#banner { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font: 900 40px Rubik, Heebo, sans-serif; color: #fff;
+  text-shadow: 0 0 20px currentColor, 0 3px 6px rgba(0,0,0,.8); pointer-events: none; z-index: 120; animation: banner 1.4s ease-out forwards; direction: rtl; }
+@keyframes banner { 0% { opacity: 0; transform: scale(1.8); } 15% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }

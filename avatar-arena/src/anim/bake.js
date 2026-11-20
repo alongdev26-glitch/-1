@@ -4,7 +4,8 @@
 import { CHARACTERS } from '../data/characters.js';
 import { RIGS } from '../data/rigs.js';
 
-export const PAD = 14;      // שוליים למתיחה (בצדדים ולמעלה)
+export const PAD = 14;      // שוליים למתיחה (בצדדים ולמעלה), בפיקסלים של הספרייט
+export const BAKE_SCALE = 0.5; // הפריימים נאפים בחצי רזולוציה
 const CELL = 6;             // גודל תא ברשת
 const smooth = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
@@ -13,7 +14,7 @@ const clamp01 = (t) => Math.max(0, Math.min(1, t));
 // torso/head/sway/bob: גוף. arm[i] = {s: כתף, e: מרפק}. leg[i] = {h: ירך, k: ברך, a: קרסול}.
 // *f = "קדימה": הקוד כופל בכיוון שהדמות פונה אליו ובסימן היד, כך שזה נכון לכל דמות.
 const F = (o = {}) => ({ torso: 0, head: 0, sway: 0, bob: 0, torsoF: 0, headF: 0, strike: 0, strikeE: 0, off: 0,
-  arm: [{ s: 0, e: 0 }, { s: 0, e: 0 }], leg: [{ h: 0, k: 0, a: 0 }, { h: 0, k: 0, a: 0 }], stepF: 0, kneeBoth: 0, ...o });
+  arm: [{ s: 0, e: 0 }, { s: 0, e: 0 }], leg: [{ h: 0, k: 0, a: 0 }, { h: 0, k: 0, a: 0 }], stepF: 0, kneeBoth: 0, legF: 0, legK: 0, ...o });
 
 const walk = Array.from({ length: 8 }, (_, i) => {
   const p = (i / 8) * Math.PI * 2, s = Math.sin(p), c = Math.cos(p);
@@ -37,21 +38,37 @@ const jump = [F({
   arm: [{ s: -0.3, e: 0.3 }, { s: 0.3, e: 0.3 }],
   leg: [{ h: 0.25, k: 0.6, a: -0.2 }, { h: -0.15, k: 0.45, a: 0.2 }],
 })];
-// התקפה: מתיחה לאחור, מכה קדימה (היד המכה), צעד, וחזרה
-const SF = [-0.5, -0.8, 0.1, 0.95, 0.75, 0.25], SE = [0.5, 0.7, 0.25, 0, 0.12, 0.3];
-const TF = [-0.08, -0.14, 0.1, 0.26, 0.18, 0.05], HF = [0.05, 0.1, -0.05, -0.12, -0.05, 0];
-const ST = [0, 0, 0.1, 0.22, 0.16, 0.05];
-const attack = SF.map((sf, i) => F({ strike: sf, strikeE: SE[i], torsoF: TF[i], headF: HF[i], stepF: ST[i], bob: i === 3 ? 2 : 0 }));
-// יכולת: שתי ידיים קדימה, גוף נטען לאחור ואז נדחף קדימה
-const CS = [0.1, 0.4, 0.7, 1.0, 0.8, 0.6], CT = [-0.06, -0.16, -0.2, -0.1, 0.16, 0.1];
-const special = CS.map((sf, i) => F({ strike: sf, strikeE: 0.15, torsoF: CT[i], headF: i < 4 ? -0.1 : 0.1, kneeBoth: i < 4 ? 0.28 : 0.1, bob: i < 4 ? 3 : 0, off: sf }));
+// אנימציות מכות (8 פריימים, שלושה רבעים הכנה ורבע התאוששות). *F = קדימה (הקוד כופל בכיוון הדמות)
+const seq = (o) => Array.from({ length: 8 }, (_, i) => F(Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Array.isArray(v) ? v[i] : v]))));
+// m1: יריה עם שתי ידיים. הכנה ארוכה (ידיים נאספות לחזה, גוף אחורה, ברכיים כפופות) ואז דחיפה
+const m1 = seq({ off: 1, strike: [-0.15, -0.4, -0.7, -0.9, -1.0, 0.95, 0.7, 0.3], strikeE: [0.4, 0.6, 0.8, 0.9, 0.9, 0, 0.1, 0.2],
+  torsoF: [-0.04, -0.1, -0.16, -0.2, -0.22, 0.2, 0.12, 0.04], headF: [0.05, 0.08, 0.1, 0.1, 0.1, -0.1, -0.05, 0],
+  kneeBoth: [0.05, 0.12, 0.2, 0.26, 0.28, 0.1, 0.05, 0], bob: [0, 1, 2, 3, 3, -1, 0, 0], stepF: [0, 0, 0, 0, 0, 0.12, 0.08, 0] });
+// m2: מכה בקשת עם יד אחת וצעד
+const m2 = seq({ strike: [-0.4, -0.8, -1, -1, 0.6, 1.0, 0.6, 0.2], strikeE: [0.4, 0.6, 0.6, 0.5, 0, 0, 0.2, 0.3],
+  torsoF: [-0.1, -0.2, -0.28, -0.28, 0.1, 0.28, 0.18, 0.05], stepF: [0, 0, 0, 0, 0.1, 0.22, 0.15, 0.05], headF: [0.05, 0.08, 0.1, 0.1, -0.05, -0.1, -0.05, 0] });
+// m3: סיבוב סערה. גוף מתפתל, ידיים פרוסות לצדדים
+const m3 = seq({ off: 1, strike: [0.2, 0.5, 0.7, 0.7, 0.7, 0.7, 0.4, 0.1], torso: [0, 0.3, -0.3, 0.42, -0.42, 0.3, -0.15, 0],
+  head: [0, -0.1, 0.1, -0.15, 0.15, -0.1, 0.05, 0], kneeBoth: [0.1, 0.24, 0.3, 0.3, 0.3, 0.24, 0.14, 0.05], bob: [0, 2, 3, 3, 3, 2, 1, 0] });
+// m4: משב חזק. הכנה עמוקה לאחור ואז דחיפה קדימה עם צעד גדול
+const m4 = seq({ off: 1, strike: [-0.2, -0.5, -0.9, -1.0, -1.0, 1.1, 1.0, 0.5], strikeE: [0.3, 0.5, 0.8, 0.9, 0.9, 0, 0, 0.2],
+  torsoF: [-0.06, -0.14, -0.22, -0.26, -0.26, 0.3, 0.24, 0.1], stepF: [0, 0, 0, 0, 0, 0.25, 0.25, 0.1], kneeBoth: [0.05, 0.15, 0.25, 0.3, 0.3, 0.1, 0.05, 0],
+  headF: [0.04, 0.08, 0.1, 0.1, 0.1, -0.12, -0.05, 0] });
+// ult: ידיים מורמות מעל הראש, גוף ורגליים כפופות, ואז מכה קדימה
+const ult = seq({ off: 1, strike: [-0.3, -0.8, -1.3, -1.5, -1.5, -1.5, 1.2, 0.6], strikeE: [0.2, 0.3, 0.2, 0.1, 0.1, 0.1, 0, 0.2],
+  torsoF: [-0.05, -0.12, -0.2, -0.26, -0.28, -0.28, 0.3, 0.1], headF: [0, -0.1, -0.2, -0.3, -0.3, -0.3, 0.1, 0],
+  kneeBoth: [0.1, 0.2, 0.3, 0.34, 0.34, 0.34, 0.1, 0.05], bob: [0, 2, 4, 5, 5, 5, -2, 0] });
+// stomp (טוף): מכה חלשה, רגל מורמת, דריכה חזקה, ואז מכה שמשגרת את הקיר
+const stomp = seq({ strike: [0.45, 0.9, 0.2, 0, -0.8, -1.0, 1.0, 0.3], strikeE: [0.3, 0, 0.3, 0.3, 0.6, 0.7, 0, 0.2],
+  torsoF: [0.04, 0.1, -0.04, 0.02, -0.18, -0.22, 0.24, 0.06], legF: [0, 0, 0.5, 0, 0, 0, 0.1, 0], legK: [0, 0, 0.95, 0.2, 0, 0, 0, 0],
+  kneeBoth: [0.05, 0.05, 0.1, 0.4, 0.25, 0.3, 0.1, 0], bob: [0, 0, -2, 5, 2, 2, -1, 0], headF: [0, 0.05, 0.05, 0.08, 0.1, 0.1, -0.1, 0] });
 // פגיעה: ראש נזרק אחורה, גב מקושת, ידיים מתעופפות
 const hit = [
   F({ torsoF: -0.3, headF: -0.35, arm: [{ s: 0.55, e: 0.3 }, { s: -0.55, e: 0.3 }], kneeBoth: 0.2, bob: 2 }),
   F({ torsoF: -0.2, headF: -0.2, arm: [{ s: 0.35, e: 0.2 }, { s: -0.35, e: 0.2 }], kneeBoth: 0.12, bob: 1 }),
 ];
 
-const ANIMS = { walk, idle, jump, attack, special, hit };
+const ANIMS = { walk, idle, jump, hit, m1, m2, m3, m4, ult, stomp };
 export const FRAMES = Object.fromEntries(Object.entries(ANIMS).map(([k, v]) => [k, v.length]));
 export const bakedKey = (id, anim, i) => `bk_${id}_${anim}_${i}`;
 
@@ -80,10 +97,10 @@ function makeWarp(rig, H, fr, faces) {
     rig.legs.forEach((L, i) => {
       const side = i === 0 ? sR : 1 - sR;
       const w = wy * side;
-      const st = fr.stepF ? (i === frontLeg ? -faces * fr.stepF : faces * fr.stepF * 0.6) : 0;
+      const st = (fr.stepF ? (i === frontLeg ? -faces * fr.stepF : faces * fr.stepF * 0.6) : 0) + (i === frontLeg ? -faces * fr.legF : 0);
       const p = fr.leg[i];
       mix(w * smooth((y - L.ankle[1]) / 10 + 0.5), rot(cp, L.ankle, p.a));
-      mix(w * smooth((y - L.knee[1]) / 16 + 0.5), rot(cp, L.knee, p.k + fr.kneeBoth * (i === frontLeg ? 1 : -0.6)));
+      mix(w * smooth((y - L.knee[1]) / 16 + 0.5), rot(cp, L.knee, p.k + fr.kneeBoth * (i === frontLeg ? 1 : -0.6) + (i === frontLeg ? fr.legK : 0)));
       mix(w, rot(cp, L.hip, p.h + st));
     });
 
@@ -130,7 +147,7 @@ function occupancy(img, w, h) {
 }
 
 function bakeFrame(img, w, h, rig, fr, occInfo, faces) {
-  const cw = w + PAD * 2, ch = h + PAD;
+  const S = BAKE_SCALE, cw = Math.ceil((w + PAD * 2) * S), ch = Math.ceil((h + PAD) * S);
   const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
   const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
   const warp = makeWarp(rig, h, fr, faces);
@@ -141,15 +158,15 @@ function bakeFrame(img, w, h, rig, fr, occInfo, faces) {
   for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
     if (!occ[j * nx + i]) continue;
     const a = V(i, j), b = V(i + 1, j), d = V(i, j + 1);
-    g.setTransform((b[0] - a[0]) / CELL, (b[1] - a[1]) / CELL, (d[0] - a[0]) / CELL, (d[1] - a[1]) / CELL, a[0] + PAD, a[1] + PAD);
+    g.setTransform(S * (b[0] - a[0]) / CELL, S * (b[1] - a[1]) / CELL, S * (d[0] - a[0]) / CELL, S * (d[1] - a[1]) / CELL, S * (a[0] + PAD), S * (a[1] + PAD));
     const sx = i * CELL, sy = j * CELL, sw = Math.min(CELL, w - sx), sh = Math.min(CELL, h - sy);
     g.drawImage(img, sx, sy, sw, sh, 0, 0, sw + 0.7, sh + 0.7); // חפיפה קטנה נגד סדקים
   }
   return canvas;
 }
 
-export function bakeAll(scene) {
-  CHARACTERS.forEach((def) => {
+export function bakeFor(scene, ids) {
+  CHARACTERS.filter((c) => ids.includes(c.id)).forEach((def) => {
     const rig = RIGS[def.id];
     const key = 'spr_' + def.id;
     if (!rig || !scene.textures.exists(key) || scene.textures.exists(bakedKey(def.id, 'walk', 0))) return;

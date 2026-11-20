@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Fight from '../scenes/Fight.js';
 import { CHARACTERS, byId } from '../data/characters.js';
 import { touch } from './input.js';
+import { isUnlocked } from '../data/progress.js';
 import {
   menuScreen, selectScreen, vsScreen, fightBackground, hudScreen, pauseScreen, resultsScreen,
 } from './screens.js';
@@ -81,6 +82,7 @@ function startVs() {
 function launchFight() {
   state.cfg.onHud = updateHud;
   state.cfg.onEnd = showResults;
+  state.cfg.onBanner = banner;
   $('canvas-wrap').hidden = false;
   if (!state.game) {
     state.game = new Phaser.Game({
@@ -109,15 +111,80 @@ function beginFight(scene) {
   scene.go();
 }
 
+function stagePoint(e) {
+  const r = $('stage').getBoundingClientRect(), k = r.width / 960;
+  return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k };
+}
+
+// ג'ויסטיק צף: מופיע מתחת לאצבע בחצי השמאלי של המסך ועוקב אחריה
+function bindJoystick() {
+  const zone = $('joy-zone'), base = $('joy-base'), knob = $('joy-knob'), hint = $('joy-hint');
+  if (!zone) return;
+  const R = 60;                       // רדיוס הג'ויסטיק
+  let id = null, cx = 0, cy = 0;
+  const flags = (dx, dy) => {
+    touch.left = dx < -16; touch.right = dx > 16;
+    touch.up = dy < -34; touch.down = dy > 34;
+  };
+  const reset = () => { id = null; base.hidden = true; hint.hidden = false; flags(0, 0); };
+  zone.addEventListener('pointerdown', (e) => {
+    if (id !== null) return;
+    e.preventDefault(); zone.setPointerCapture(e.pointerId); id = e.pointerId;
+    const p = stagePoint(e); cx = p.x; cy = p.y;
+    base.style.left = cx - R + 'px'; base.style.top = cy - R + 'px';
+    knob.style.left = '34px'; knob.style.top = '34px';
+    base.hidden = false; hint.hidden = true;
+  });
+  zone.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== id) return;
+    const p = stagePoint(e);
+    let dx = p.x - cx, dy = p.y - cy;
+    const d = Math.hypot(dx, dy);
+    if (d > R) { // האצבע חרגה מהטבעת: הבסיס זז אחריה
+      const over = d - R;
+      cx += (dx / d) * over; cy += (dy / d) * over;
+      dx = p.x - cx; dy = p.y - cy;
+      base.style.left = cx - R + 'px'; base.style.top = cy - R + 'px';
+    }
+    knob.style.left = 34 + dx + 'px'; knob.style.top = 34 + dy + 'px';
+    flags(dx, dy);
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => zone.addEventListener(ev, (e) => { if (e.pointerId === id || ev === 'lostpointercapture') reset(); }));
+}
+
 function bindHud() {
   const hud = $('hud');
   hud.querySelector('[data-act="pause"]').onclick = pause;
+  bindJoystick();
   hud.querySelectorAll('[data-hold]').forEach((el) => {
     const key = el.dataset.hold;
     const set = (v) => { touch[key] = v; el.classList.toggle('on', v); };
-    el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); set(true); });
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => el.addEventListener(ev, () => set(false)));
+    let downAt = 0;
+    // נגיעה קצרה נשארת לחוצה לפחות 90ms, כדי שהמשחק (שקורא קלט בכל פריים) לא יפספס אותה
+    const release = () => setTimeout(() => set(false), Math.max(0, 90 - (performance.now() - downAt)));
+    el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); downAt = performance.now(); set(true); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => el.addEventListener(ev, release));
   });
+}
+
+function updateButtons(f) {
+  const set = (key, frac, locked) => {
+    const el = document.querySelector(`[data-hold="${key}"]`), ring = document.querySelector(`[data-ring="${key}"]`);
+    if (ring) ring.setAttribute('stroke-dashoffset', String(113 * Math.min(1, Math.max(0, frac))));
+    if (el) el.classList.toggle('locked', !!locked);
+  };
+  f.def.moves.forEach((m, i) => set('m' + (i + 1), f.cd[i] / m.cooldown, !isUnlocked(m)));
+  const ready = f.ult >= 100;
+  set('ult', ready ? 0 : 1 - f.ult / 100, !isUnlocked(f.def.ult));
+  document.querySelector('[data-hold="ult"]')?.classList.toggle('ult-ready', ready);
+}
+
+function banner(text, color) {
+  const el = document.createElement('div');
+  el.id = 'banner'; el.textContent = text;
+  el.style.color = '#' + color.toString(16).padStart(6, '0');
+  $('overlay').appendChild(el);
+  setTimeout(() => el.remove(), 1500);
 }
 
 const hudCache = {};
@@ -131,10 +198,9 @@ function updateHud(fighters) {
       card.querySelector('[data-pct]').textContent = Math.round(f.percent) + '%';
       [...card.querySelector('[data-stocks]').children].forEach((d, i) => d.classList.toggle('opacity-25', i >= f.stocks));
     }
-    if (f.human) {
-      const ring = $('sp-ring');
-      if (ring) ring.setAttribute('stroke-dashoffset', String(100.5 * Math.min(1, f.spCd / f.def.special.cooldown)));
-    }
+    const bar = card.querySelector('[data-ultbar]');
+    if (bar) bar.style.width = Math.round(f.ult) + '%';
+    if (f.human) updateButtons(f);
   });
 }
 

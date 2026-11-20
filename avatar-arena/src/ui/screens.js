@@ -7,7 +7,7 @@ const stars = (n, on, off) => Array.from({ length: 5 }, (_, i) => `<span class="
 const starCount = (c) => Math.min(5, c.tier + 1);
 const pct = (v, max) => Math.round(Math.max(8, Math.min(100, (v / max) * 100)));
 const statsOf = (c) => ({
-  atk: pct(c.attack.dmg + c.special.dmg, 23),
+  atk: pct(c.moves.reduce((a, m) => a + m.dmg, 0) / c.moves.length, 14),
   def: pct(c.stats.weight, 1.4),
   spd: pct(c.stats.speed, 280),
 });
@@ -285,6 +285,7 @@ export const hudCard = (c, human, uid) => {
         <span data-pct class="text-sm font-black text-white">0%</span>
       </div>
     </div>
+    <div class="w-full h-1.5 mt-0.5 rounded-full bg-black/50 overflow-hidden border border-white/10"><div data-ultbar class="h-full bg-gradient-to-r from-yellow-300 to-orange-400" style="width:0%"></div></div>
     <div data-stocks class="flex gap-1 mt-0.5 items-center">
       ${[0, 1, 2].map(() => `<span class="w-1.5 h-1.5 rounded-full ${e.hudDot} border"></span>`).join('')}
     </div>
@@ -300,24 +301,36 @@ export const hudScreen = (fighters) => `
     </button>
   </header>
   <div id="touch-ui" class="absolute inset-0 z-30" hidden>
-    <nav class="absolute left-6 bottom-6 w-36 h-36 rounded-full d-pad-base pointer-events-auto flex items-center justify-center p-2">
-      <div class="relative w-full h-full flex items-center justify-center">
-        <button data-hold="up" aria-label="Up" class="dp absolute top-1 left-1/2 -translate-x-1/2 w-9 h-9 flex items-center justify-center" type="button"><svg class="w-7 h-7 d-pad-arrow" viewBox="0 0 24 24"><polygon points="12,4 4,16 20,16"></polygon></svg></button>
-        <button data-hold="down" aria-label="Down" class="dp absolute bottom-1 left-1/2 -translate-x-1/2 w-9 h-9 flex items-center justify-center" type="button"><svg class="w-7 h-7 d-pad-arrow" viewBox="0 0 24 24"><polygon points="12,20 4,8 20,8"></polygon></svg></button>
-        <button data-hold="left" aria-label="Left" class="dp absolute left-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center" type="button"><svg class="w-7 h-7 d-pad-arrow" viewBox="0 0 24 24"><polygon points="4,12 16,4 16,20"></polygon></svg></button>
-        <button data-hold="right" aria-label="Right" class="dp absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center" type="button"><svg class="w-7 h-7 d-pad-arrow" viewBox="0 0 24 24"><polygon points="20,12 8,4 8,20"></polygon></svg></button>
-        <div class="w-6 h-6 rounded-full bg-white/20 border border-white/30 pointer-events-none"></div>
-      </div>
-    </nav>
-    <nav class="absolute right-5 bottom-5 w-52 h-52 pointer-events-none">
-      <button data-hold="attack" aria-label="Attack" class="virtual-btn pointer-events-auto absolute right-0 top-3 w-20 h-20 rounded-full flex items-center justify-center text-white/90 font-medium text-sm tracking-wide" type="button">Attack</button>
-      <div class="absolute left-0 top-10 flex flex-col items-center gap-0.5">
-        <span class="text-xs text-white/80 font-medium tracking-wide">Special</span>
-        <button data-hold="special" aria-label="Special" class="virtual-btn pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center relative p-1.5" type="button">
-          <svg class="w-full h-full text-white/80" viewBox="0 0 40 40"><circle id="sp-ring" cx="20" cy="20" fill="none" r="16" stroke="currentColor" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-width="2.5" transform="rotate(-90 20 20)"></circle><circle cx="20" cy="20" fill="none" opacity="0.6" r="10" stroke="currentColor" stroke-width="2"></circle></svg>
-        </button>
-      </div>
-      <button data-hold="jump" aria-label="Jump" class="virtual-btn pointer-events-auto absolute right-1 bottom-0 w-16 h-16 rounded-full flex items-center justify-center text-white/90 font-medium text-sm tracking-wide" type="button">Jump</button>
+    <div id="joy-zone" class="absolute left-0 top-0 w-1/2 h-full pointer-events-auto" style="touch-action:none"></div>
+    <div id="joy-base" class="absolute rounded-full pointer-events-none" hidden style="width:120px;height:120px;border:2px solid rgba(255,255,255,.35);background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,.05))">
+      <div id="joy-knob" class="absolute rounded-full" style="width:52px;height:52px;left:34px;top:34px;background:rgba(255,255,255,.4);border:2px solid rgba(255,255,255,.6)"></div>
+    </div>
+    <div id="joy-hint" class="absolute left-12 bottom-14 text-white/40 text-xs pointer-events-none">גע כאן כדי לזוז</div>
+    <nav class="absolute right-4 bottom-4 pointer-events-none" style="width:300px;height:262px">
+      <button data-hold="m1" aria-label="1" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:218px;top:150px;width:72px;height:72px;font-size:28px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="m1" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">1</span>
+      </button>
+      <button data-hold="m2" aria-label="2" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:140px;top:184px;width:58px;height:58px;font-size:23px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="m2" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">2</span>
+      </button>
+      <button data-hold="m3" aria-label="3" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:148px;top:108px;width:58px;height:58px;font-size:23px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="m3" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">3</span>
+      </button>
+      <button data-hold="m4" aria-label="4" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:228px;top:62px;width:58px;height:58px;font-size:23px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="m4" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">4</span>
+      </button>
+      <button data-hold="ult" aria-label="★" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold data-ultbtn" style="left:64px;top:52px;width:62px;height:62px;font-size:24px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="ult" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">★</span>
+      </button>
+      <button data-hold="jump" aria-label="⤒" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:52px;top:150px;width:58px;height:58px;font-size:23px" type="button">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="jump" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>
+        <span class="relative">⤒</span>
+      </button>
     </nav>
   </div>
 </div>`;
