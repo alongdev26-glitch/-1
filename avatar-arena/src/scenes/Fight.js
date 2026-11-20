@@ -152,13 +152,21 @@ export default class Fight extends Phaser.Scene {
     } else if (inp.move) {
       ang = Math.sin(now / 60) * 5; sy = 1 + 0.02 * Math.sin(now / 30);
     }
-    // פריימים מוכנים (הליכה / עמידה / קפיצה) כשאין לפוזה תמונה משלה. בפגיעה נשארים על האיור הקפוא
-    if (f.pose !== 'hit' && !f.poseHasTex) {
-      const anim = !grounded ? 'jump' : (inp.move || Math.abs(f.body.velocity.x) > 30) ? 'walk' : 'idle';
-      const i = anim === 'jump' ? 0 : Math.floor(now / (anim === 'walk' ? 70 : 150)) % FRAMES[anim];
+    // פריימים מוכנים לפי הפעולה: כל חלק בגוף זז בנפרד (ראש, פלג גוף, ידיים, רגליים).
+    // כשיש לפוזה תמונה משלה היא מחליפה אותם.
+    let baked = false;
+    if (!f.poseHasTex) {
+      let anim, i;
+      if (f.pose === 'hit') { anim = 'hit'; i = t < 140 ? 0 : 1; }
+      else if (f.pose === 'attack') { anim = 'attack'; i = Math.min(FRAMES.attack - 1, Math.floor((t / ATTACK_POSE_MS) * FRAMES.attack)); }
+      else if (f.pose === 'special') { anim = 'special'; i = Math.min(FRAMES.special - 1, Math.floor((t / CAST_MS) * FRAMES.special)); }
+      else if (!grounded) { anim = 'jump'; i = 0; }
+      else if (inp.move || Math.abs(f.body.velocity.x) > 30) { anim = 'walk'; i = Math.floor(now / 70) % FRAMES.walk; }
+      else { anim = 'idle'; i = Math.floor(now / 150) % FRAMES.idle; }
       const k = bakedKey(d.id, anim, i);
-      if (this.textures.exists(k)) v.setTexture(k);
+      if (this.textures.exists(k)) { v.setTexture(k); baked = true; }
     }
+    if (baked) { sx = 1; sy = 1; ang = 0; if (now - f.landT < 110) { sy = 0.9; sx = 1.08; } } // התנועה כבר בפריימים
     const pop = 1 + 0.15 * Math.max(0, 1 - t / POP_MS);
     const ps = (d.poseScale?.[f.pose] ?? 1) * (f.poseHasTex ? 1 : 1);
     const base = (SPRITE_H * ps) / 256; // כל הספרייטים בגובה 256 (לטקסטורות מוכנות יש שוליים)
