@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { CHARACTERS, byId, ELEMENTS } from '../data/characters.js';
 import { touch } from '../ui/input.js';
+import { bakeAll, bakedKey, FRAMES } from '../anim/bake.js';
 
 const STOCKS = 3;
 const SPRITE_H = 100, BODY_W = 34, BODY_H = 74;
@@ -29,6 +30,7 @@ export default class Fight extends Phaser.Scene {
 
   create() {
     this.makeTextures();
+    bakeAll(this);
     this.platforms = this.physics.add.staticGroup();
     this.addPlatform(MAIN.x, MAIN.top + MAIN.h / 2, MAIN.w, MAIN.h, true);
     FLOATS.forEach((f) => this.addPlatform(f.x, f.top + 7, f.w, 14, false));
@@ -150,9 +152,16 @@ export default class Fight extends Phaser.Scene {
     } else if (inp.move) {
       ang = Math.sin(now / 60) * 5; sy = 1 + 0.02 * Math.sin(now / 30);
     }
+    // פריימים מוכנים (הליכה / עמידה / קפיצה) כשאין לפוזה תמונה משלה. בפגיעה נשארים על האיור הקפוא
+    if (f.pose !== 'hit' && !f.poseHasTex) {
+      const anim = !grounded ? 'jump' : (inp.move || Math.abs(f.body.velocity.x) > 30) ? 'walk' : 'idle';
+      const i = anim === 'jump' ? 0 : Math.floor(now / (anim === 'walk' ? 70 : 150)) % FRAMES[anim];
+      const k = bakedKey(d.id, anim, i);
+      if (this.textures.exists(k)) v.setTexture(k);
+    }
     const pop = 1 + 0.15 * Math.max(0, 1 - t / POP_MS);
     const ps = (d.poseScale?.[f.pose] ?? 1) * (f.poseHasTex ? 1 : 1);
-    const base = (SPRITE_H * ps) / v.height;
+    const base = (SPRITE_H * ps) / 256; // כל הספרייטים בגובה 256 (לטקסטורות מוכנות יש שוליים)
     v.setScale(base * sx * pop, base * sy * pop).setAngle(ang);
     const faces = f.pose !== 'idle' && f.poseHasTex ? (d.poseFaces ?? 1) : d.faces;
     v.setFlipX(f.facing !== faces);
