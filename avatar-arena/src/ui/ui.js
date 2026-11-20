@@ -3,6 +3,7 @@ import Fight from '../scenes/Fight.js';
 import { CHARACTERS, byId } from '../data/characters.js';
 import { touch } from './input.js';
 import { isUnlocked } from '../data/progress.js';
+import { moveIcon } from './icons.js';
 import {
   menuScreen, selectScreen, vsScreen, fightBackground, hudScreen, pauseScreen, resultsScreen,
 } from './screens.js';
@@ -108,6 +109,7 @@ function beginFight(scene) {
   clearOverlay();
   $('touch-ui').hidden = !isTouch();
   bindHud();
+  applyIcons(fighters[0].def);
   scene.go();
 }
 
@@ -165,6 +167,19 @@ function bindHud() {
     el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); downAt = performance.now(); set(true); });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => el.addEventListener(ev, release));
   });
+}
+
+// איור המכה על כל כפתור, ומספר קטן בפינה
+function applyIcons(def) {
+  const put = (key, move, num) => {
+    const sp = document.querySelector(`[data-hold="${key}"] span`);
+    if (!sp) return;
+    const size = key === 'm1' ? 36 : key === 'ult' ? 32 : 30;
+    sp.innerHTML = moveIcon(move, def.element, size) +
+      `<b class="absolute -bottom-1 -right-1 text-[11px] leading-none rounded-full bg-black/55 px-1 py-0.5">${num}</b>`;
+  };
+  def.moves.forEach((m, i) => put('m' + (i + 1), m, i + 1));
+  put('ult', def.ult, '★');
 }
 
 function updateButtons(f) {

@@ -1,6 +1,7 @@
 // תבניות המסכים. המבנה והמחלקות לקוחים מקוד ה-Tailwind ש-Stitch יצר.
 // כל מחלקה כתובה כאן במלואה (בלי הרכבה בקוד) כדי ש-Tailwind יזהה אותה.
 import { CHARACTERS } from '../data/characters.js';
+import { moveIcon } from './icons.js';
 
 export const face = (c) => `sprites/${c.id}_face.png`;
 const stars = (n, on, off) => Array.from({ length: 5 }, (_, i) => `<span class="${i < n ? on : off}">★</span>`).join('');
@@ -130,6 +131,10 @@ const selectCard = (c, selected) => {
     <div class="bg-[#0b1420]/95 px-2 py-2 flex flex-col items-center border-t border-slate-700/60">
       <div class="flex items-center gap-0.5 text-[9px] mb-0.5">${stars(starCount(c), e.stars, 'text-slate-600')}</div>
       <h3 class="text-sm font-bold text-white tracking-wide">${c.name} <span dir="ltr" class="inline-block">(${c.en})</span></h3>
+      <div class="flex items-center justify-center gap-1.5 mt-1.5" title="${c.moves.map((m) => m.name).join(' · ')}">
+        ${c.moves.map((m) => moveIcon(m, c.element, 18)).join('')}
+        <span class="w-px h-3 bg-slate-600"></span>${moveIcon(c.ult, c.element, 18)}
+      </div>
       <div class="w-full mt-1.5 space-y-1">
         ${row('⚡', 'text-yellow-400', s.atk, 'bg-amber-400')}
         ${row('🛡️', 'text-sky-400', s.def, 'bg-sky-400')}
