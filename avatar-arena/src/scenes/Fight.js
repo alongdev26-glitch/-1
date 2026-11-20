@@ -1,137 +1,93 @@
 import Phaser from 'phaser';
-import { byId, ELEMENTS } from '../data/characters.js';
+import { CHARACTERS, byId, ELEMENTS } from '../data/characters.js';
+import { touch } from '../ui/input.js';
 
 const STOCKS = 3;
 const SPRITE_H = 100, BODY_W = 34, BODY_H = 74;
 const BLAST = { left: -120, right: 1080, top: -160, bottom: 660 };
+// מיקום הפלטפורמות מותאם לאיור של האי והסלעים ב-HUD של Stitch (במה של 960x540)
+const MAIN = { x: 480, top: 348, w: 330, h: 30 };
+const FLOATS = [{ x: 153.6, top: 224, w: 104 }, { x: 806.4, top: 224, w: 104 }];
 
 export default class Fight extends Phaser.Scene {
   constructor() { super('Fight'); }
 
-  init(data) { this.cfg = { p1: data.p1 || 'aang', bots: data.bots || ['zuko'] }; }
+  init() {
+    this.cfg = this.registry.get('cfg') || { p1: 'aang', bots: ['zuko'] };
+    this.ready = false; this.started = false; this.over = false;
+  }
+
+  preload() {
+    CHARACTERS.forEach((c) => { if (!this.textures.exists('spr_' + c.id)) this.load.image('spr_' + c.id, `sprites/${c.id}.png`); });
+  }
 
   create() {
-    this.over = false;
     this.makeTextures();
-    this.drawBackground();
-
     this.platforms = this.physics.add.staticGroup();
-    this.addPlatform(480, 430, 560, 28, true);
-    this.addPlatform(300, 305, 150, 14, false);
-    this.addPlatform(660, 305, 150, 14, false);
+    this.addPlatform(MAIN.x, MAIN.top + MAIN.h / 2, MAIN.w, MAIN.h, true);
+    FLOATS.forEach((f) => this.addPlatform(f.x, f.top + 7, f.w, 14, false));
 
     this.keys = this.input.keyboard.addKeys({
-      left: 'LEFT', right: 'RIGHT', up: 'UP', a: 'A', d: 'D', w: 'W', j: 'J', k: 'K', space: 'SPACE',
+      left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', a: 'A', d: 'D', w: 'W', s: 'S', j: 'J', k: 'K', space: 'SPACE',
     });
-    this.touch = { left: false, right: false, jump: false, attack: false, special: false };
-    this.buildTouch();
 
     this.projectiles = this.physics.add.group({ allowGravity: false });
     const ids = [this.cfg.p1, ...this.cfg.bots];
-    const xs = { 1: [480], 2: [360, 600], 3: [300, 480, 660], 4: [260, 400, 560, 700] }[ids.length];
+    const xs = { 1: [480], 2: [410, 550], 3: [380, 480, 580], 4: [360, 440, 520, 600] }[ids.length];
     this.fighters = ids.map((id, i) => this.spawnFighter(byId(id), i, xs[i], i === 0));
     this.fighters.forEach((f) => {
-      this.physics.add.collider(f, this.platforms, null, (fi, p) => p.solid || (fi.body.velocity.y >= 0 && fi.body.bottom <= p.body.top + 14));
+      this.physics.add.collider(f, this.platforms, null, (fi, p) =>
+        p.solid || (fi.body.velocity.y >= 0 && fi.body.bottom <= p.body.top + 14 && this.time.now > fi.dropUntil));
     });
-    this.buildHud();
+    this.physics.pause(); // מחכים ל-go() אחרי מסך ה-VS
+    this.ready = true;
   }
 
-  drawBackground() {
-    const g = this.add.graphics().setDepth(-10);
-    g.fillGradientStyle(0x2a3a6b, 0x2a3a6b, 0xf0a868, 0xf0a868, 1).fillRect(0, 0, 960, 540);
-    g.fillStyle(0xffe9a8, 0.9).fillCircle(760, 170, 54);
-    g.fillStyle(0x3a2f5b, 1).fillTriangle(-40, 440, 180, 200, 400, 440).fillTriangle(260, 440, 520, 150, 780, 440).fillTriangle(620, 440, 840, 230, 1040, 440);
-    g.fillStyle(0x24203f, 1).fillTriangle(-100, 440, 100, 290, 300, 440).fillTriangle(500, 440, 720, 280, 960, 440);
-  }
+  go() { this.started = true; this.physics.resume(); }
 
   addPlatform(x, y, w, h, solid) {
-    const p = this.platforms.create(x, y, solid ? 'plat_main' : 'plat_float');
+    const p = this.platforms.create(x, y, 'px').setAlpha(0);
     p.setDisplaySize(w, h).refreshBody();
     p.solid = solid;
   }
 
   makeTextures() {
-    if (this.textures.exists('plat_main')) return;
+    if (this.textures.exists('px')) return;
     const g = this.make.graphics({ x: 0, y: 0, add: false });
-    g.fillStyle(0x6b4f3a).fillRect(0, 0, 8, 8).fillStyle(0x4f8f4f).fillRect(0, 0, 8, 3).generateTexture('plat_main', 8, 8);
-    g.clear().fillStyle(0xb9a27a).fillRect(0, 0, 8, 8).fillStyle(0x8a7550).fillRect(0, 5, 8, 3).generateTexture('plat_float', 8, 8);
+    g.fillStyle(0xffffff).fillRect(0, 0, 4, 4).generateTexture('px', 4, 4);
     g.clear().fillStyle(0xffffff).fillCircle(16, 16, 16).generateTexture('orb', 32, 32);
     g.clear().fillStyle(0xffffff).fillCircle(4, 4, 4).generateTexture('spark', 8, 8);
     g.destroy();
   }
 
   spawnFighter(def, idx, x, human) {
-    const f = this.physics.add.sprite(x, 250, 'spr_' + def.id);
+    const f = this.physics.add.sprite(x, 150, 'spr_' + def.id);
     const sc = SPRITE_H / f.height;
     f.setScale(sc);
-    // גוף פיזיקלי מוסט לרגליים, בקואורדינטות של התמונה המקורית
     f.body.setSize(BODY_W / sc, BODY_H / sc).setOffset((f.width - BODY_W / sc) / 2, f.height - BODY_H / sc);
     f.setDragX(1400).setMaxVelocity(700, 900);
-    f.def = def; f.idx = idx; f.human = human;
-    f.percent = 0; f.stocks = STOCKS; f.facing = x < 480 ? 1 : -1;
-    f.jumpsLeft = def.stats.doubleJumps; f.stun = 0; f.invuln = 1500;
-    f.atkCd = 0; f.spCd = 0; f.attackBox = null; f.jumpHeld = false;
-    f.skill = human ? 1 : 0.7 + Math.random() * 0.5; // בוטים נבדלים בחדות
+    Object.assign(f, {
+      def, idx, human, uid: idx, percent: 0, stocks: STOCKS, facing: x < 480 ? 1 : -1,
+      jumpsLeft: def.stats.doubleJumps, stun: 0, invuln: 1500, atkCd: 0, spCd: 0, attackBox: null,
+      jumpHeld: false, dropUntil: 0, kos: 0, taken: 0, lastHitBy: null,
+      skill: human ? 1 : 0.7 + Math.random() * 0.5,
+    });
     return f;
   }
 
   hurt(f) { return new Phaser.Geom.Rectangle(f.body.x, f.body.y, f.body.width, f.body.height); }
-
   alive() { return this.fighters.filter((f) => f.stocks > 0); }
   enemiesOf(f) { return this.alive().filter((o) => o !== f); }
-  nearest(f) {
-    return this.enemiesOf(f).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0];
-  }
-
-  // ---- בקרות מגע: נבדקות כל פריים מכל האצבעות, אז אפשר ללחוץ כמה כפתורים ולהחליק ביניהם ----
-  buildTouch() {
-    this.touchOn = this.sys.game.device.input.touch;
-    if (!this.touchOn) return;
-    this.buttons = [
-      { key: 'left', x: 80, y: 470, r: 52, label: '◀' },
-      { key: 'right', x: 215, y: 470, r: 52, label: '▶' },
-      { key: 'attack', x: 880, y: 470, r: 52, label: '⚔' },
-      { key: 'special', x: 770, y: 490, r: 46, label: '✦' },
-      { key: 'jump', x: 840, y: 360, r: 50, label: '⤒' },
-    ];
-    this.buttons.forEach((b) => {
-      b.circle = this.add.circle(b.x, b.y, b.r, 0xffffff, 0.16).setStrokeStyle(3, 0xffffff, 0.5).setDepth(50);
-      this.add.text(b.x, b.y, b.label, { fontSize: '34px', color: '#fff' }).setOrigin(0.5).setDepth(51);
-    });
-  }
-
-  pollTouch() {
-    if (!this.touchOn) return;
-    Object.keys(this.touch).forEach((k) => (this.touch[k] = false));
-    this.input.manager.pointers.forEach((p) => {
-      if (!p.isDown) return;
-      this.buttons.forEach((b) => {
-        if (Phaser.Math.Distance.Between(p.x, p.y, b.x, b.y) <= b.r + 14) this.touch[b.key] = true;
-      });
-    });
-    this.buttons.forEach((b) => b.circle.setFillStyle(0xffffff, this.touch[b.key] ? 0.38 : 0.16));
-  }
-
-  buildHud() {
-    const n = this.fighters.length, gap = 230;
-    const x0 = 480 - ((n - 1) * gap) / 2;
-    this.hud = this.fighters.map((f, i) => {
-      const x = x0 + i * gap, c = ELEMENTS[f.def.element].color;
-      this.add.rectangle(x, 36, 210, 56, 0x0b1220, 0.8).setStrokeStyle(3, c).setDepth(40);
-      this.add.text(x - 96, 22, f.human ? `${f.def.name} (אתה)` : f.def.name, { fontSize: '15px', color: '#fff' }).setDepth(41);
-      const pct = this.add.text(x - 96, 38, '0%', { fontSize: '26px', fontStyle: 'bold', color: '#fff' }).setDepth(41);
-      const lives = this.add.text(x + 96, 52, '', { fontSize: '14px', color: '#ffd166' }).setOrigin(1, 0.5).setDepth(41);
-      return { pct, lives };
-    });
-  }
+  nearest(f) { return this.enemiesOf(f).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0]; }
 
   // ---- קלט ----
   readInput(f) {
     if (f.human) {
-      const k = this.keys, t = this.touch;
+      const k = this.keys, t = touch;
       return {
         move: (k.right.isDown || k.d.isDown || t.right ? 1 : 0) - (k.left.isDown || k.a.isDown || t.left ? 1 : 0),
-        jump: k.up.isDown || k.w.isDown || k.space.isDown || t.jump,
+        jump: k.up.isDown || k.w.isDown || k.space.isDown || t.up || t.jump,
+        down: k.down.isDown || k.s.isDown || t.down,
         attack: k.j.isDown || t.attack, special: k.k.isDown || t.special,
       };
     }
@@ -139,12 +95,13 @@ export default class Fight extends Phaser.Scene {
   }
 
   ai(f) {
-    const inp = { move: 0, jump: false, attack: false, special: false };
+    const inp = { move: 0, jump: false, down: false, attack: false, special: false };
     const o = this.nearest(f);
     if (!o) return inp;
     const dx = o.x - f.x, dist = Math.abs(dx);
-    if (f.y > 430 || ((f.x < 190 || f.x > 770) && f.y > 380)) { // חזרה לזירה
-      inp.move = f.x < 480 ? 1 : -1; inp.jump = this.time.now % 400 < 80; return inp;
+    const edge = MAIN.w / 2 - 15;
+    if (f.y > MAIN.top - 10 || (Math.abs(f.x - MAIN.x) > edge && f.y > MAIN.top - 60)) { // חזרה לזירה
+      inp.move = f.x < MAIN.x ? 1 : -1; inp.jump = this.time.now % 400 < 80; return inp;
     }
     if (dist > 90) inp.move = Math.sign(dx);
     if (o.y < f.y - 60 && f.body.blocked.down) inp.jump = true;
@@ -156,7 +113,7 @@ export default class Fight extends Phaser.Scene {
   // ---- התקפות ----
   doAttack(f) {
     f.atkCd = 380;
-    f.attackBox = { until: this.time.now + 140, hit: new Set(), w: f.def.attack.range, h: 40 };
+    f.attackBox = { until: this.time.now + 140, hit: new Set(), w: f.def.attack.range };
     const col = ELEMENTS[f.def.element].color;
     const arc = this.add.arc(f.x + f.facing * 30, f.y, 34, f.facing > 0 ? -60 : 120, f.facing > 0 ? 60 : 240, false, col, 0.7).setDepth(5);
     this.tweens.add({ targets: arc, alpha: 0, duration: 160, onComplete: () => arc.destroy() });
@@ -178,9 +135,9 @@ export default class Fight extends Phaser.Scene {
 
   killProjectile(p) { p.trail?.stop(); this.time.delayedCall(300, () => p.trail?.destroy()); p.destroy(); }
 
-  hit(target, dmg, kb, dir) {
+  hit(target, from, dmg, kb, dir) {
     if (target.invuln > 0) return;
-    target.percent += dmg;
+    target.percent += dmg; target.taken += dmg; target.lastHitBy = from;
     const power = (kb + target.percent * 4.2) / target.def.stats.weight;
     target.setVelocity(dir * power, -power * 0.55);
     target.stun = 160 + Math.min(power, 600) * 0.4;
@@ -191,22 +148,18 @@ export default class Fight extends Phaser.Scene {
 
   // ---- לולאה ----
   update(_, dt) {
-    if (this.over) return;
-    this.pollTouch();
+    if (!this.started || this.over) return;
     this.alive().forEach((f) => this.updateFighter(f, dt));
     this.projectiles.getChildren().slice().forEach((p) => {
       if (this.time.now > p.dieAt || p.x < -100 || p.x > 1060 || p.y > 600) return this.killProjectile(p);
       const t = this.enemiesOf(p.owner).find((e) => Phaser.Geom.Intersects.RectangleToRectangle(p.getBounds(), this.hurt(e)));
       if (t) {
         const s = p.owner.def.special;
-        this.hit(t, s.dmg, s.kb, Math.sign(p.body.velocity.x) || 1);
+        this.hit(t, p.owner, s.dmg, s.kb, Math.sign(p.body.velocity.x) || 1);
         this.killProjectile(p);
       }
     });
-    this.fighters.forEach((f, i) => {
-      this.hud[i].pct.setText(Math.round(f.percent) + '%');
-      this.hud[i].lives.setText('●'.repeat(Math.max(0, f.stocks)));
-    });
+    this.cfg.onHud?.(this.fighters);
   }
 
   updateFighter(f, dt) {
@@ -223,6 +176,7 @@ export default class Fight extends Phaser.Scene {
     if (f.stun <= 0) {
       if (inp.move) { f.setVelocityX(inp.move * f.def.stats.speed); f.facing = inp.move; }
       f.setFlipX(f.facing !== f.def.faces);
+      if (inp.down && grounded) f.dropUntil = this.time.now + 250; // נפילה דרך פלטפורמה צפה
       if (inp.jump && !f.jumpHeld && (grounded || f.jumpsLeft > 0)) {
         if (!grounded) f.jumpsLeft--;
         f.setVelocityY(-f.def.stats.jump);
@@ -231,7 +185,6 @@ export default class Fight extends Phaser.Scene {
       if (inp.special && f.spCd <= 0) this.doSpecial(f);
     }
     f.jumpHeld = inp.jump;
-    // תנועת הליכה / אוויר פשוטה
     f.setAngle(f.stun > 0 ? f.body.velocity.x * 0.04 : grounded && inp.move ? Math.sin(this.time.now / 60) * 5 : 0);
 
     const box = f.attackBox;
@@ -242,7 +195,7 @@ export default class Fight extends Phaser.Scene {
         this.enemiesOf(f).forEach((e) => {
           if (!box.hit.has(e) && Phaser.Geom.Intersects.RectangleToRectangle(r, this.hurt(e))) {
             box.hit.add(e);
-            this.hit(e, f.def.attack.dmg, f.def.attack.kb, f.facing);
+            this.hit(e, f, f.def.attack.dmg, f.def.attack.kb, f.facing);
           }
         });
       }
@@ -252,25 +205,27 @@ export default class Fight extends Phaser.Scene {
 
   ko(f) {
     f.stocks--;
+    if (f.lastHitBy && f.lastHitBy !== f) f.lastHitBy.kos++;
     this.cameras.main.flash(180, 255, 255, 255);
     if (f.stocks <= 0) {
       f.setActive(false).setVisible(false); f.body.enable = false;
-      if (f.human) return this.endGame(false);
-      if (this.alive().length === 1) return this.endGame(true);
+      this.cfg.onHud?.(this.fighters);
+      const me = this.fighters[0];
+      if (f.human) return this.finish(false);
+      if (this.alive().length === 1 && this.alive()[0] === me) return this.finish(true);
       return;
     }
-    f.percent = 0; f.invuln = 1800; f.stun = 0;
+    f.percent = 0; f.invuln = 1800; f.stun = 0; f.lastHitBy = null;
     f.setPosition(480, -20).setVelocity(0, 0);
   }
 
-  endGame(won) {
+  finish(won) {
     this.over = true;
     this.physics.pause();
-    this.add.rectangle(480, 270, 960, 540, 0x000000, 0.6).setDepth(60);
-    this.add.text(480, 210, won ? 'ניצחת! 🏆' : 'הפסדת...', { fontSize: '60px', fontStyle: 'bold', color: '#ffd166' }).setOrigin(0.5).setDepth(61);
-    const mk = (y, label, fn) => this.add.text(480, y, label, { fontSize: '28px', color: '#0b0f1a', backgroundColor: '#ffd166', padding: { x: 24, y: 10 } })
-      .setOrigin(0.5).setDepth(61).setInteractive({ useHandCursor: true }).on('pointerdown', fn);
-    mk(310, '↻ שוב', () => this.scene.restart(this.cfg));
-    mk(380, 'לתפריט', () => this.scene.start('Menu'));
+    const me = this.fighters[0];
+    this.cfg.onEnd?.({
+      won, def: me.def, kos: me.kos, dmg: Math.round(me.taken),
+      place: won ? 1 : this.alive().length + 1,
+    });
   }
 }

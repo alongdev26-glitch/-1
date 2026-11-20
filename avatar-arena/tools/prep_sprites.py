@@ -62,3 +62,15 @@ for name, (fn, box, tol, wipes) in JOBS.items():
     img = img.resize((max(1, round(img.width * H / img.height)), H), Image.LANCZOS)
     img.save(OUT / f'{name}.png')
     print(name, img.size)
+
+# פורטרטים: חיתוך הראש מכל ספרייט (x0, y0, x1, y1 בפיקסלים של הספרייט שגובהו 256)
+FACES = {
+    'aang':   (78, 40, 178, 140),
+    'katara': (70, 30, 190, 150),
+    'toph':   (40, 0, 150, 110),
+    'zuko':   (80, 0, 190, 110),
+}
+for name, box in FACES.items():
+    im = Image.open(OUT / f'{name}.png')
+    f = im.crop(box)
+    f.save(OUT / f'{name}_face.png')
