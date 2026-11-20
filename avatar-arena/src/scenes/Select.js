@@ -13,7 +13,8 @@ export default class Select extends Phaser.Scene {
       const col = ELEMENTS[c.element].color;
       const bg = this.add.rectangle(x, 270, 210, 360, 0x1e293b).setStrokeStyle(4, 0x334155)
         .setInteractive({ useHandCursor: true });
-      this.add.rectangle(x, 150, 70, 100, col).setStrokeStyle(2, 0xffffff);
+      const img = this.add.image(x, 150, 'spr_' + c.id);
+      img.setScale(Math.min(125 / img.height, 180 / img.width));
       this.add.text(x, 235, c.name, { fontSize: '30px', fontStyle: 'bold', color: '#fff' }).setOrigin(0.5);
       this.add.text(x, 270, `${ELEMENTS[c.element].name} · רמה ${c.tier}`, { fontSize: '18px', color: '#cbd5e1' }).setOrigin(0.5);
       this.add.text(x, 320, `מהירות ${c.stats.speed}\nמשקל ${c.stats.weight}\nיכולת: ${c.special.name}\nנזק ${c.special.dmg}`, {

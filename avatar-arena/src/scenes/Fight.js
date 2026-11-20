@@ -2,15 +2,8 @@ import Phaser from 'phaser';
 import { byId, ELEMENTS } from '../data/characters.js';
 
 const STOCKS = 3;
+const SPRITE_H = 100, BODY_W = 34, BODY_H = 74;
 const BLAST = { left: -120, right: 1080, top: -160, bottom: 660 };
-
-// פרטי עיצוב לכל דמות (2D מצויר בקוד, עד שתהיה גרפיקה אמיתית)
-const LOOKS = {
-  aang:   { skin: 0xf1c27d, cloth: 0xf2b134, accent: 0x3a8dde, hair: null },
-  katara: { skin: 0xb98a5a, cloth: 0x3a8dde, accent: 0xffffff, hair: 0x4a2c17 },
-  toph:   { skin: 0xf3dcc0, cloth: 0x4f8f4f, accent: 0xd9c27a, hair: 0x111111 },
-  zuko:   { skin: 0xf1c27d, cloth: 0xc0392b, accent: 0x222222, hair: 0x111111 },
-};
 
 export default class Fight extends Phaser.Scene {
   constructor() { super('Fight'); }
@@ -64,26 +57,15 @@ export default class Fight extends Phaser.Scene {
     g.clear().fillStyle(0xb9a27a).fillRect(0, 0, 8, 8).fillStyle(0x8a7550).fillRect(0, 5, 8, 3).generateTexture('plat_float', 8, 8);
     g.clear().fillStyle(0xffffff).fillCircle(16, 16, 16).generateTexture('orb', 32, 32);
     g.clear().fillStyle(0xffffff).fillCircle(4, 4, 4).generateTexture('spark', 8, 8);
-    Object.entries(LOOKS).forEach(([id, L]) => {
-      g.clear();
-      g.fillStyle(0x222222, 0.35).fillEllipse(20, 58, 28, 6);                       // צל
-      g.fillStyle(L.cloth).fillRoundedRect(8, 24, 24, 30, 6);                       // גוף
-      g.fillStyle(L.accent).fillRect(8, 38, 24, 4);                                 // חגורה
-      g.fillStyle(L.skin).fillCircle(20, 14, 11);                                   // ראש
-      if (L.hair) g.fillStyle(L.hair).fillRoundedRect(8, 2, 24, 9, 4);              // שיער
-      if (id === 'aang') g.fillStyle(L.accent).fillTriangle(20, 3, 15, 10, 25, 10); // חץ
-      if (id === 'katara') g.fillStyle(L.hair).fillCircle(8, 18, 4);                // קוקו
-      if (id === 'zuko') g.fillStyle(0xb03030).fillCircle(26, 10, 3.5).fillStyle(L.hair).fillRect(17, -1, 6, 4);
-      if (id === 'toph') g.fillStyle(L.hair).fillCircle(20, 3, 4);
-      g.fillStyle(0xffffff).fillCircle(25, 14, 3).fillStyle(0x000000).fillCircle(26, 14, 1.6); // עין
-      g.generateTexture('char_' + id, 40, 62);
-    });
     g.destroy();
   }
 
   spawnFighter(def, idx, x, human) {
-    const f = this.physics.add.sprite(x, 250, 'char_' + def.id);
-    f.body.setSize(26, 56).setOffset(7, 4);
+    const f = this.physics.add.sprite(x, 250, 'spr_' + def.id);
+    const sc = SPRITE_H / f.height;
+    f.setScale(sc);
+    // גוף פיזיקלי מוסט לרגליים, בקואורדינטות של התמונה המקורית
+    f.body.setSize(BODY_W / sc, BODY_H / sc).setOffset((f.width - BODY_W / sc) / 2, f.height - BODY_H / sc);
     f.setDragX(1400).setMaxVelocity(700, 900);
     f.def = def; f.idx = idx; f.human = human;
     f.percent = 0; f.stocks = STOCKS; f.facing = x < 480 ? 1 : -1;
@@ -92,6 +74,8 @@ export default class Fight extends Phaser.Scene {
     f.skill = human ? 1 : 0.7 + Math.random() * 0.5; // בוטים נבדלים בחדות
     return f;
   }
+
+  hurt(f) { return new Phaser.Geom.Rectangle(f.body.x, f.body.y, f.body.width, f.body.height); }
 
   alive() { return this.fighters.filter((f) => f.stocks > 0); }
   enemiesOf(f) { return this.alive().filter((o) => o !== f); }
@@ -212,7 +196,7 @@ export default class Fight extends Phaser.Scene {
     this.alive().forEach((f) => this.updateFighter(f, dt));
     this.projectiles.getChildren().slice().forEach((p) => {
       if (this.time.now > p.dieAt || p.x < -100 || p.x > 1060 || p.y > 600) return this.killProjectile(p);
-      const t = this.enemiesOf(p.owner).find((e) => Phaser.Geom.Intersects.RectangleToRectangle(p.getBounds(), e.getBounds()));
+      const t = this.enemiesOf(p.owner).find((e) => Phaser.Geom.Intersects.RectangleToRectangle(p.getBounds(), this.hurt(e)));
       if (t) {
         const s = p.owner.def.special;
         this.hit(t, s.dmg, s.kb, Math.sign(p.body.velocity.x) || 1);
@@ -238,7 +222,7 @@ export default class Fight extends Phaser.Scene {
     const inp = this.readInput(f);
     if (f.stun <= 0) {
       if (inp.move) { f.setVelocityX(inp.move * f.def.stats.speed); f.facing = inp.move; }
-      f.setFlipX(f.facing < 0);
+      f.setFlipX(f.facing !== f.def.faces);
       if (inp.jump && !f.jumpHeld && (grounded || f.jumpsLeft > 0)) {
         if (!grounded) f.jumpsLeft--;
         f.setVelocityY(-f.def.stats.jump);
@@ -254,9 +238,9 @@ export default class Fight extends Phaser.Scene {
     if (box) {
       if (this.time.now > box.until) f.attackBox = null;
       else {
-        const r = new Phaser.Geom.Rectangle(f.facing > 0 ? f.x + 14 : f.x - 14 - box.w, f.y - 20, box.w, box.h);
+        const r = new Phaser.Geom.Rectangle(f.facing > 0 ? f.x + 12 : f.x - 12 - box.w, f.y - 30, box.w, 60);
         this.enemiesOf(f).forEach((e) => {
-          if (!box.hit.has(e) && Phaser.Geom.Intersects.RectangleToRectangle(r, e.getBounds())) {
+          if (!box.hit.has(e) && Phaser.Geom.Intersects.RectangleToRectangle(r, this.hurt(e))) {
             box.hit.add(e);
             this.hit(e, f.def.attack.dmg, f.def.attack.kb, f.facing);
           }
