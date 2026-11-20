@@ -53,3 +53,11 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 
 #toast { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff;
   padding: 8px 18px; border-radius: 999px; font-size: 14px; z-index: 100; pointer-events: none; }
+
+/* רמז סיבוב: מופיע רק בטלפון במצב אנכי */
+#rotate { display: none; position: fixed; inset: 0; z-index: 1000; background: #0b0f19; color: #ffd166;
+  align-items: center; justify-content: center; flex-direction: column; gap: 14px; text-align: center;
+  font: 700 22px Rubik, Heebo, sans-serif; direction: rtl; padding: 24px; }
+#rotate span { font-size: 56px; display: block; animation: spin 2.2s ease-in-out infinite; }
+@keyframes spin { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (pointer: coarse) { #rotate { display: flex; } }
