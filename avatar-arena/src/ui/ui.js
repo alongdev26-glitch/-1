@@ -4,6 +4,7 @@ import { CHARACTERS, byId } from '../data/characters.js';
 import { touch } from './input.js';
 import { isUnlocked } from '../data/progress.js';
 import { moveIcon } from './icons.js';
+import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
   menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen,
 } from './screens.js';
@@ -11,7 +12,7 @@ import { fightBackground } from './maps.js';
 import { MAPS, mapById } from '../data/maps.js';
 
 const $ = (id) => document.getElementById(id);
-const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null };
+const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null, mode: 'menu', paused: false };
 let vsTimer = null;
 
 // ---- במה: 960x540 שמוקטנת/מוגדלת למסך ----
@@ -38,6 +39,7 @@ function clearOverlay() { $('overlay').innerHTML = ''; }
 
 // ---- מסכים ----
 export function showMenu() {
+  state.mode = 'menu'; state.paused = false;
   stopFight();
   $('fight-layer').hidden = true;
   setScreen(menuScreen());
@@ -77,6 +79,7 @@ export function showMap() {
 }
 
 function startVs() {
+  state.mode = 'vs';
   const player = byId(state.sel);
   const others = Phaser.Utils.Array.Shuffle(CHARACTERS.filter((c) => c.id !== player.id));
   const bots = others.slice(0, state.bots);
@@ -101,6 +104,7 @@ function launchFight() {
   state.cfg.onHud = updateHud;
   state.cfg.onEnd = showResults;
   state.cfg.onBanner = banner;
+  state.cfg.onRumble = rumble;
   $('canvas-wrap').hidden = false;
   if (!state.game) {
     state.game = new Phaser.Game({
@@ -127,6 +131,8 @@ function beginFight(scene) {
   $('touch-ui').hidden = !isTouch();
   bindHud();
   applyIcons(fighters[0].def);
+  state.mode = 'fight';
+  blockInput(400);
   scene.go();
 }
 
@@ -142,7 +148,10 @@ function bindJoystick() {
   const R = 60;                       // רדיוס הג'ויסטיק
   let id = null, cx = 0, cy = 0;
   const flags = (dx, dy) => {
-    touch.left = dx < -16; touch.right = dx > 16;
+    // תנועה פרופורציונית: ככל שהאצבע רחוקה יותר מהמרכז הדמות מהירה יותר (אזור מת קטן וקימור עדין)
+    const m = Math.min(1, Math.abs(dx) / R), DEAD = 0.16;
+    touch.axis = m < DEAD ? 0 : Math.sign(dx) * Math.pow((m - DEAD) / (1 - DEAD), 1.2);
+    touch.left = touch.axis < -0.05; touch.right = touch.axis > 0.05;
     touch.up = dy < -34; touch.down = dy > 34;
   };
   const reset = () => { id = null; base.hidden = true; hint.hidden = false; flags(0, 0); };
@@ -248,6 +257,7 @@ function pause() {
   const scene = state.game?.scene.getScene('Fight');
   if (!scene || scene.over || !scene.started) return;
   state.game.scene.pause('Fight');
+  state.paused = true;
   Object.keys(touch).forEach((k) => (touch[k] = false));
   $('overlay').innerHTML = pauseScreen();
   $('overlay').style.pointerEvents = 'auto';
@@ -260,6 +270,8 @@ function pause() {
 }
 
 function resume(silent) {
+  state.paused = false;
+  blockInput(350);
   clearOverlay();
   $('overlay').style.pointerEvents = 'none';
   $('overlay').onclick = null;
@@ -267,6 +279,7 @@ function resume(silent) {
 }
 
 function showResults(r) {
+  state.mode = 'results';
   stopFightKeepLayer();
   state.last = r;
   setTimeout(() => {
@@ -282,6 +295,73 @@ function showResults(r) {
 
 function stopFightKeepLayer() { Object.keys(touch).forEach((k) => (touch[k] = false)); }
 
+// ---- שלט: ניווט בתפריטים לפי כיוון, A = אישור, B = חזרה, Start = עצירה ----
+const SELECTABLE = '[data-act],[data-char],[data-bots],[data-map]';
+let focusEl = null;
+function setFocus(el) {
+  document.querySelectorAll('.gp-focus').forEach((x) => x.classList.remove('gp-focus'));
+  focusEl = el;
+  if (el) el.classList.add('gp-focus');
+}
+function focusables() {
+  const root = $('overlay').querySelector('[data-act]') ? $('overlay') : $('screen');
+  return [...root.querySelectorAll(SELECTABLE)].filter((e) => e.offsetParent !== null && !e.closest('[hidden]'));
+}
+function moveFocus(dir) {
+  const list = focusables();
+  if (!list.length) return;
+  if (!focusEl || !list.includes(focusEl)) {
+    setFocus(list.find((e) => e.classList.contains('selected-card-glow') || e.classList.contains('bg-sky-600')) || list[0]);
+    return;
+  }
+  const c = (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const [cx, cy] = c(focusEl);
+  const v = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[dir];
+  let best = null, bestScore = Infinity;
+  list.forEach((e) => {
+    if (e === focusEl) return;
+    const [x, y] = c(e), dx = x - cx, dy = y - cy;
+    const along = dx * v[0] + dy * v[1];
+    if (along <= 4) return;
+    const across = Math.abs(dx * v[1]) + Math.abs(dy * v[0]);
+    const score = along + across * 2.2;
+    if (score < bestScore) { bestScore = score; best = e; }
+  });
+  if (best) setFocus(best);
+}
+function goBack() {
+  if (state.paused) return resume();
+  const back = $('screen').querySelector('[data-act="back"]');
+  if (back) return back.click();
+  if ($('screen').querySelector('[data-act="again"]')) return showMenu();
+  if ($('screen').querySelector('[data-char]')) return showMenu();
+}
+let padWas = false;
+function gpTick() {
+  const ev = pollPad();
+  if (pad.active !== padWas) {
+    padWas = pad.active;
+    toast(pad.active ? '🎮 שלט מחובר' : 'השלט נותק');
+    if (!pad.active) setFocus(null);
+  }
+  if (pad.active) {
+    if (state.mode === 'fight' && !state.paused) { if (ev.start) pause(); }
+    else if (state.mode === 'fight' && state.paused) {
+      if (ev.start || ev.back) resume();
+      else { if (ev.nav) moveFocus(ev.nav); if (ev.confirm) (focusEl && focusEl.isConnected ? focusEl : focusables()[0])?.click(); }
+    } else if (state.mode === 'menu' || state.mode === 'results') {
+      if (ev.nav) moveFocus(ev.nav);
+      if (ev.confirm) {
+        const el = focusEl && focusEl.isConnected ? focusEl : null;
+        if (el) el.click(); else moveFocus('down');
+      }
+      if (ev.back) goBack();
+      if (ev.start) { const go = $('screen').querySelector('[data-act="go"],[data-act="start"],[data-act="again"]'); go?.click(); }
+    }
+  }
+  requestAnimationFrame(gpTick);
+}
+
 export function initUI() {
   window.__arena = state; // לבדיקות
   fit();
@@ -292,4 +372,5 @@ export function initUI() {
     }
   });
   showMenu();
+  requestAnimationFrame(gpTick);
 }

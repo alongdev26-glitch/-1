@@ -75,3 +75,6 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 @keyframes fall { from { transform: translate(0, -20px); } to { transform: translate(var(--dx, 0px), 580px); } }
 @keyframes rise { from { transform: translate(0, 580px); opacity: 0; } 15% { opacity: 1; } to { transform: translate(var(--dx, 0px), -30px); opacity: 0; } }
 @keyframes drift { from { transform: translateX(-260px); } to { transform: translateX(1200px); } }
+
+/* סימון הבחירה בשלט */
+.gp-focus { outline: 3px solid #fff !important; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255,209,102,.55), 0 0 24px 6px rgba(255,209,102,.5) !important; z-index: 5; }

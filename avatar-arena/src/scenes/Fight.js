@@ -5,6 +5,7 @@ import { bakeFor, bakedKey, FRAMES, BAKE_SCALE } from '../anim/bake.js';
 import { makeFxTextures } from '../fx/textures.js';
 import { CAST, EV, chargeSpark } from '../fx/moves.js';
 import { isUnlocked } from '../data/progress.js';
+import { pad } from '../ui/gamepad.js';
 import { MAPS } from '../data/maps.js';
 
 const STOCKS = 3;
@@ -186,6 +187,7 @@ export default class Fight extends Phaser.Scene {
     target.vis.setTintFill(0xffffff);
     this.time.delayedCall(70, () => target.vis.clearTint());
     this.cameras.main.shake(70, 0.003);
+    if (target.human) this.cfg.onRumble?.(140, 0.7); else if (from && from.human) this.cfg.onRumble?.(70, 0.3);
     return true;
   }
 
@@ -207,7 +209,7 @@ export default class Fight extends Phaser.Scene {
     return 'idle';
   }
 
-  animate(f, inp, grounded) {
+  animate(f, inp, grounded, dt = 16) {
     const now = this.time.now, d = f.def, v = f.vis;
     this.setPose(f, this.choosePose(f, grounded));
     if (grounded && !f.wasGrounded) f.landT = now;
@@ -225,7 +227,12 @@ export default class Fight extends Phaser.Scene {
         const p = Math.max(0, Math.min(0.999, (now - f.act.start) / (mv.windup + mv.recover)));
         i = Math.floor(p * FRAMES[anim]);
       } else if (!grounded) { anim = 'jump'; i = 0; }
-      else if (inp.move || Math.abs(f.body.velocity.x) > 30) { anim = 'walk'; i = Math.floor(now / 70) % FRAMES.walk; }
+      else if (Math.abs(inp.move) > 0.05 || Math.abs(f.body.velocity.x) > 30) {
+        // קצב הצעדים לפי המהירות בפועל: הליכה איטית כשהסטיק מוטה מעט, ריצה מהירה כשמלא
+        anim = 'walk';
+        f.walkPhase = (f.walkPhase || 0) + (dt / 70) * (0.45 + 0.9 * Math.min(1, Math.abs(f.body.velocity.x) / f.def.stats.speed));
+        i = Math.floor(f.walkPhase) % FRAMES.walk;
+      }
       else { anim = 'idle'; i = Math.floor(now / 150) % FRAMES.idle; }
       const k = bakedKey(d.id, anim, i);
       if (this.textures.exists(k)) { v.setTexture(k); baked = true; }
@@ -257,6 +264,7 @@ export default class Fight extends Phaser.Scene {
     if (i === ULT) {
       f.ult = 0;
       this.cfg.onBanner?.(f.def.name + ': ' + mv.name, ELEMENTS[f.def.element].color);
+      if (f.human) this.cfg.onRumble?.(320, 1);
     } else f.cd[i] = mv.cooldown;
     if (mv.charge) {
       f.glow = this.add.circle(f.x, f.y - 16, 6, ELEMENTS[f.def.element].color, 0.55).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
@@ -293,12 +301,15 @@ export default class Fight extends Phaser.Scene {
   readInput(f) {
     if (f.human) {
       const k = this.keys, t = touch;
+      // מקלדת = מלא (1 או -1). ג'ויסטיק ושלט = פרופורציוני: ככל שמטים רחוק יותר הדמות מהירה יותר
+      const kb = (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0);
+      const analog = Math.abs(t.axis) > Math.abs(pad.axis) ? t.axis : pad.axis;
       return {
-        move: (k.right.isDown || k.d.isDown || t.right ? 1 : 0) - (k.left.isDown || k.a.isDown || t.left ? 1 : 0),
-        jump: k.up.isDown || k.w.isDown || k.space.isDown || t.up || t.jump,
-        down: k.down.isDown || k.s.isDown || t.down,
-        m: [k.j.isDown || t.m1, k.k.isDown || t.m2, k.l.isDown || t.m3, k.i.isDown || t.m4],
-        ult: k.u.isDown || t.ult,
+        move: kb || analog,
+        jump: k.up.isDown || k.w.isDown || k.space.isDown || t.up || t.jump || pad.up || pad.jump,
+        down: k.down.isDown || k.s.isDown || t.down || pad.down,
+        m: [k.j.isDown || t.m1 || pad.m[0], k.k.isDown || t.m2 || pad.m[1], k.l.isDown || t.m3 || pad.m[2], k.i.isDown || t.m4 || pad.m[3]],
+        ult: k.u.isDown || t.ult || pad.ult,
       };
     }
     return this.ai(f);
@@ -363,7 +374,7 @@ export default class Fight extends Phaser.Scene {
     const inp = this.readInput(f);
     if (f.act) this.tickAct(f, grounded);
     else if (f.stun <= 0) {
-      if (inp.move) { f.setVelocityX(inp.move * f.def.stats.speed); f.facing = inp.move; }
+      if (Math.abs(inp.move) > 0.05) { f.setVelocityX(inp.move * f.def.stats.speed); f.facing = Math.sign(inp.move); }
       if (inp.down && grounded) f.dropUntil = this.time.now + 250; // נפילה דרך פלטפורמה צפה
       if (inp.jump && !f.jumpHeld && (grounded || f.jumpsLeft > 0)) {
         if (!grounded) f.jumpsLeft--;
@@ -373,7 +384,7 @@ export default class Fight extends Phaser.Scene {
       else for (let i = 0; i < 4; i++) if (inp.m[i] && this.useMove(f, i)) break;
     }
     f.jumpHeld = inp.jump;
-    this.animate(f, inp, grounded);
+    this.animate(f, inp, grounded, dt);
 
     if (f.x < BLAST.left || f.x > BLAST.right || f.y < BLAST.top || f.y > BLAST.bottom) this.ko(f);
   }
