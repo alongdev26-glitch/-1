@@ -426,10 +426,11 @@ export const resultsScreen = (r) => {
 };
 
 // ======================= מסלול סיפור =======================
-import { REALMS, realmById } from '../data/story.js';
+import { REALMS, realmById, realmOpen } from '../data/story.js';
 import { byId } from '../data/characters.js';
 
 const ico = (n, cls = '', fill = false) => `<span class="material-symbols-outlined ${cls}"${fill ? ` style="font-variation-settings:'FILL' 1"` : ''}>${n}</span>`;
+const ORN = { air: '✦', water: '❄', earth: '◈', fire: '✹' };
 const ROLE = { air: 'כשף אוויר', water: 'כשפית מים', earth: 'כשפית אדמה', fire: 'כשף אש' };
 const starRow = (earned, size = 'text-[13px]') => [0, 1, 2].map((i) => ico('star', `${size} ${earned[i] ? 'text-primary' : 'text-outline-variant'}`, !!earned[i])).join('');
 
@@ -455,6 +456,20 @@ function curvePath(pts) {
   return d;
 }
 
+
+// שביל המסע: חומר שונה לכל עולם (רוח, קרח, אבן, לבה)
+function trailSvg(id, pts, done) {
+  const d = curvePath(pts), dd = done.length > 1 ? curvePath(done) : null;
+  const L = (path, attrs, glow) => `<path d="${path}" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" ${attrs}${glow ? ` style="filter:drop-shadow(0 0 6px ${glow})"` : ''}/>`;
+  const T = {
+    air: () => L(d, 'stroke="rgba(10,13,23,.6)" stroke-width="9"') + L(d, 'stroke="rgba(220,230,255,.55)" stroke-width="3" stroke-dasharray="3 8"') + (dd ? L(dd, 'stroke="#ffb779" stroke-width="4"', 'rgba(255,183,121,.9)') : ''),
+    water: () => L(d, 'stroke="rgba(2,10,30,.65)" stroke-width="10"') + L(d, 'stroke="rgba(160,215,255,.55)" stroke-width="6"', 'rgba(124,196,255,.6)') + L(d, 'stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-dasharray="1 14"') + (dd ? L(dd, 'stroke="#7cc4ff" stroke-width="5"', 'rgba(124,196,255,.95)') : ''),
+    earth: () => L(d, 'stroke="rgba(15,8,3,.7)" stroke-width="12"') + L(d, 'stroke="#a98456" stroke-width="8" stroke-dasharray="11 7"').replace('stroke-linecap="round"', 'stroke-linecap="butt"') + (dd ? L(dd, 'stroke="#9fd08a" stroke-width="3" stroke-dasharray="11 7"', 'rgba(159,208,138,.8)').replace('stroke-linecap="round"', 'stroke-linecap="butt"') : ''),
+    fire: () => L(d, 'stroke="rgba(10,2,2,.8)" stroke-width="12"') + L(d, 'stroke="#e8541c" stroke-width="8"', 'rgba(255,122,28,.9)') + L(d, 'stroke="#ffd36a" stroke-width="3"') + (dd ? L(dd, 'stroke="#fff0c0" stroke-width="2"', 'rgba(255,240,192,.9)') : ''),
+  };
+  return (T[id] || T.air)();
+}
+
 export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
   const { list, cur } = stageStates(realm, st);
   const selected = list.find((x) => x.s.id === sel) || list.find((x) => x.s.id === cur) || list[0];
@@ -469,25 +484,24 @@ export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
   // --- צמתי המפה ---
   const pts = list.map((x) => x.s.pos);
   const trailDone = list.filter((x) => x.done).map((x) => x.s.pos);
-  const nodes = list.map(({ s, done, open }) => {
+  const nodes = list.map(({ s, done, open }, idx) => {
     const isCur = s.id === cur, isSel = s.id === S.id, boss = !!s.boss;
-    const size = boss ? 72 : isCur ? 58 : 50;
-    const ring = isSel ? 'ring-2 ring-primary ring-offset-2 ring-offset-transparent' : '';
+    const size = boss ? 78 : isCur ? 62 : 54;
     const inner = !open ? ico('lock', 'text-outline text-[20px]')
-      : boss ? `<img src="sprites/aang_face.png" alt="" class="w-full h-full object-cover object-top rounded-full" style="image-rendering:pixelated;${open ? '' : 'filter:grayscale(1)'}">`
+      : boss ? `<img src="sprites/${s.opp}_face.png" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated">`
       : ico(done ? 'check_circle' : s.icon, `${done ? 'text-primary' : 'text-secondary'} text-[24px]`, done);
     const badge = isCur ? `<div class="absolute -top-8 px-2.5 py-0.5 rounded-full bg-primary text-on-primary text-label-md shadow-lg flex items-center gap-1 whitespace-nowrap" style="animation:bob 1.2s ease-in-out infinite">${ico('swords', 'text-[13px]')}קרב פעיל!</div>`
       : boss && open && !done ? `<div class="absolute -top-8 px-2.5 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-label-md shadow-lg whitespace-nowrap">שלב בוס</div>` : '';
+    const glow = isCur || isSel || (boss && open) ? 'filter:drop-shadow(0 0 12px rgb(var(--c-primary) / .75))' : 'filter:drop-shadow(0 4px 8px rgb(0 0 0 / .6))';
     return `
     <button data-stage="${s.id}" class="absolute flex flex-col items-center group ${open ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}" style="left:${s.pos[0]}%;top:${s.pos[1]}%;transform:translate(-50%,-50%)" type="button">
       ${badge}
-      <div class="relative rounded-full bg-surface-container-lowest/90 shadow-xl flex items-center justify-center p-1 transition-transform group-hover:scale-110 ${ring}"
-        style="width:${size}px;height:${size}px;${boss && open ? 'box-shadow:0 0 22px 6px rgba(255,183,121,.55)' : ''}${isCur ? ';box-shadow:0 0 18px 4px rgba(255,183,121,.55)' : ''}">
-        ${isCur ? '<span class="absolute inset-0 rounded-full bg-primary/30 animate-ping pointer-events-none"></span>' : ''}
-        <div class="relative w-full h-full rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">${inner}</div>
-        ${done ? `<div class="absolute -bottom-2.5 flex items-center px-1.5 py-0.5 rounded-full bg-surface-container-lowest shadow">${starRow(earnedOf(s.id), 'text-[11px]')}</div>` : ''}
+      <div class="rn ${done ? 'done' : ''} ${isSel ? 'sel' : ''} transition-transform group-hover:scale-110" style="width:${size}px;height:${size}px;${glow}">
+        <div class="rn-in">${inner}</div>
+        ${isCur ? '<span class="absolute inset-0 rounded-full bg-primary/25 animate-ping pointer-events-none"></span>' : ''}
+        ${done ? `<div class="absolute -bottom-3 flex items-center px-1.5 py-0.5 rounded-full bg-surface-container-lowest shadow">${starRow(earnedOf(s.id), 'text-[11px]')}</div>` : ''}
       </div>
-      <span class="mt-3 px-2 py-0.5 rounded-lg bg-surface-container-lowest/90 text-label-md ${open ? 'text-on-surface' : 'text-outline'} shadow whitespace-nowrap">${s.id.replace('air', '')}. ${s.short}</span>
+      <span class="mt-3.5 px-2 py-0.5 rounded-lg bg-surface-container-lowest/90 text-label-md ${open ? 'text-on-surface' : 'text-outline'} shadow whitespace-nowrap">${idx + 1}. ${s.short}</span>
     </button>`;
   }).join('');
 
@@ -509,13 +523,13 @@ export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
   const perk = S.perk ? `<span class="flex items-center gap-1 text-secondary">${ico(S.perk.kind === 'char' ? 'person_add' : S.perk.kind === 'title' ? 'military_tech' : 'bolt', 'text-[15px]')}${S.perk.text}</span>` : '';
 
   const tabs = REALMS.map((r) => {
-    const act = r.id === realm.id;
-    return `<button data-tab="${r.id}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-md transition ${act ? 'bg-gradient-to-r from-primary-container to-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-container-highest'} ${r.ready ? '' : 'opacity-70'}" type="button">
-      ${ico(r.ready ? r.icon : 'lock', 'text-[17px]')}<span>${r.name}</span>${act ? `<span class="px-1.5 rounded-full bg-on-primary/20">${doneIdx}/${list.length}</span>` : ''}</button>`;
+    const act = r.id === realm.id, open = r.ready && realmOpen(r, st.cleared);
+    return `<button data-tab="${r.id}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-md transition ${act ? 'bg-gradient-to-r from-primary-container to-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-container-highest'} ${open ? '' : 'opacity-60'}" type="button">
+      ${ico(open ? r.icon : 'lock', 'text-[17px]')}<span>${r.name}</span>${act ? `<span class="px-1.5 rounded-full bg-on-primary/20">${doneIdx}/${list.length}</span>` : ''}</button>`;
   }).join('');
 
   return `
-<div dir="rtl" class="screen flex flex-col select-none overflow-hidden font-assistant text-on-surface">
+<div dir="rtl" class="screen flex flex-col select-none overflow-hidden font-assistant text-on-surface realm-${realm.id}">
   <div class="absolute inset-0">${bg}</div>
   <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(180deg,rgba(10,13,23,.75),rgba(10,13,23,.15) 35%,rgba(10,13,23,.55))"></div>
 
@@ -537,15 +551,11 @@ export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
       <div class="absolute top-0 right-0 flex flex-col">
         <div class="flex items-center gap-1.5 text-primary text-label-md tracking-wider">${ico('explore', 'text-[15px]')}<span>מפת המסע • ${realm.name}</span></div>
       </div>
-      <svg class="absolute inset-0 w-full h-full pointer-events-none overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
-        <path d="${curvePath(pts)}" stroke="rgba(10,13,23,.65)" stroke-width="9" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-        <path d="${curvePath(pts)}" stroke="rgba(181,196,255,.45)" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-        ${trailDone.length > 1 ? `<path d="${curvePath(trailDone)}" stroke="#ffb779" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 5px rgba(255,183,121,.9))"/>` : ''}
-      </svg>
+      <svg class="absolute inset-0 w-full h-full pointer-events-none overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">${trailSvg(realm.id, pts, trailDone)}</svg>
       ${nodes}
     </section>
 
-    <aside class="w-[400px] flex flex-col rounded-xl bg-surface-container-lowest/92 backdrop-blur-xl p-3 shadow-2xl relative overflow-hidden gap-1.5">
+    <aside data-orn="${ORN[realm.id]}" class="rp w-[400px] flex flex-col bg-surface-container-lowest/92 backdrop-blur-xl p-3 shadow-2xl relative overflow-hidden gap-1.5">
       <div class="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none"></div>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-1.5">
@@ -561,7 +571,7 @@ export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
           <img src="sprites/${opp.id}_face.png" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated;${lockedMsg ? 'filter:grayscale(1) brightness(.6)' : ''}">
         </div>
         <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-1 text-primary text-label-md">${ico('sports_martial_arts', 'text-[14px]')}<span>${S.boss ? 'בוס • מצב אווטאר' : 'יריב'} • ${ROLE[opp.element]}</span></div>
+          <div class="flex items-center gap-1 text-primary text-label-md">${ico('sports_martial_arts', 'text-[14px]')}<span>${S.boss ? 'בוס' + (S.bossLabel ? ' • ' + S.bossLabel : ' • מצב אווטאר') : 'יריב'} • ${ROLE[opp.element]}</span></div>
           <h3 class="text-title-md truncate">${opp.name} <span dir="ltr" class="text-body-sm text-outline">(${opp.en})</span></h3>
           <p class="text-body-sm text-on-surface-variant line-clamp-2">${S.desc}</p>
         </div>
@@ -608,7 +618,7 @@ export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
 };
 
 // תוצאות קרב סיפור: כוכבים, יעדים, פרסים והדמות החדשה
-export const storyResultsScreen = ({ r, stage, got, rec }) => {
+export const storyResultsScreen = ({ r, stage, got, rec, realmId = 'air' }) => {
   const stars = got.filter(Boolean).length;
   const unlocked = rec.unlockedChar ? byId(rec.unlockedChar) : null;
   const title = r.won ? (stage.boss ? 'ניצחת את האווטאר!' : 'ניצחת!') : 'הפסדת...';
@@ -617,7 +627,7 @@ export const storyResultsScreen = ({ r, stage, got, rec }) => {
       <span class="text-[12px] flex-1 ${got[i] ? 'text-on-surface' : 'text-outline'}">${o.text}</span>
       ${ico(got[i] ? 'check_circle' : 'cancel', `text-[16px] ${got[i] ? 'text-primary' : 'text-outline'}`, !!got[i])}</div>`).join('');
   return `
-<div dir="rtl" class="screen flex flex-col items-center justify-center select-none overflow-hidden font-assistant text-on-surface bg-mountain-gradient">
+<div dir="rtl" class="screen flex flex-col items-center justify-center select-none overflow-hidden font-assistant text-on-surface bg-mountain-gradient realm-${realmId}">
   <div class="absolute inset-0 pointer-events-none opacity-40" style="background:radial-gradient(circle at 50% 30%,rgba(255,183,121,.35),transparent 60%)"></div>
   <main class="relative z-10 w-[460px] rounded-2xl bg-surface-container-lowest/92 border-2 border-secondary-container shadow-[0_15px_35px_rgba(0,0,0,.65)] px-6 py-4 flex flex-col items-center gap-2.5">
     <h1 class="text-[30px] font-extrabold ${r.won ? 'text-primary' : 'text-error'}" style="text-shadow:0 2px 6px rgba(0,0,0,.7)">${title}</h1>

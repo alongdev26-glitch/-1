@@ -3,7 +3,7 @@ import Fight from '../scenes/Fight.js';
 import { CHARACTERS, byId } from '../data/characters.js';
 import { touch } from './input.js';
 import { isUnlocked, setMode, story as storyData, recordStory } from '../data/progress.js';
-import { realmById, REALMS, evalObjectives } from '../data/story.js';
+import { realmById, REALMS, evalObjectives, realmOpen } from '../data/story.js';
 import { moveIcon } from './icons.js';
 import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
@@ -62,7 +62,7 @@ export function showStory() {
     const realm = realmById(state.story.realm), st = storyData();
     if (!st.unlocked.includes(state.story.chosen)) state.story.chosen = st.unlocked[0];
     if (!state.story.sel) state.story.sel = stageStates(realm, st).cur || realm.stages[0].id;
-    setScreen(storyScreen({ realm, sel: state.story.sel, st, chosen: state.story.chosen, bg: storyBackground() }));
+    setScreen(storyScreen({ realm, sel: state.story.sel, st, chosen: state.story.chosen, bg: storyBackground(realm) }));
     $('screen').onclick = (e) => {
       const stage = e.target.closest('[data-stage]');
       if (stage) {
@@ -78,7 +78,7 @@ export function showStory() {
       const tab = e.target.closest('[data-tab]');
       if (tab) {
         const r = realmById(tab.dataset.tab);
-        if (!r.ready) return toast('הממלכה הזו תיפתח בקרוב');
+        if (!r.ready || !realmOpen(r, st.cleared)) return toast('נצח את הבוס של הממלכה הקודמת כדי לפתוח');
         state.story.realm = r.id; state.story.sel = null; return render();
       }
       const a = e.target.closest('[data-act]')?.dataset.act;
@@ -89,8 +89,8 @@ export function showStory() {
   render();
 }
 
-function storyBackground() {
-  return fightBackground(mapById('air'), { ambient: true, platforms: false, scenery: true });
+function storyBackground(realm) {
+  return fightBackground(mapById(realm.map), { ambient: true, platforms: false, scenery: realm.id });
 }
 
 function startStory() {
@@ -349,7 +349,7 @@ function showResults(r) {
       const realm = realmById(state.cfg.story.realm), stage = realm.stages.find((x) => x.id === state.cfg.story.stage);
       const got = evalObjectives(stage, r);
       const rec = recordStory(stage, got);
-      setScreen(storyResultsScreen({ r, stage, got, rec }));
+      setScreen(storyResultsScreen({ r, stage, got, rec, realmId: realm.id }));
       if (r.won) state.story.sel = null; // ממשיכים לשלב הבא
       $('screen').onclick = (e) => {
         const a = e.target.closest('[data-act]')?.dataset.act;

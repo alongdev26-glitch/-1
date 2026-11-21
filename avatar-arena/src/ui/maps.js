@@ -99,6 +99,77 @@ function temples() {
   </svg>`;
 }
 
+// ---- עולם המים: קרחונים, איגלו, מפל קפוא וארמון קרח ----
+function iceWorld() {
+  const peak = (x, h, w, c) => `<polygon points="${x - w},540 ${x - w * 0.35},${540 - h * 0.7} ${x - w * 0.15},${540 - h * 0.62} ${x + w * 0.05},${540 - h} ${x + w * 0.4},${540 - h * 0.55} ${x + w},540" fill="${c}"/>`;
+  const igloo = (x, y, r) => `<g><path d="M${x - r},${y} A${r},${r} 0 0 1 ${x + r},${y}Z" fill="#cfeaff"/><path d="M${x - r * 0.9},${y - r * 0.35} H${x + r * 0.9}M${x - r * 0.55},${y - r * 0.78} H${x + r * 0.55}M${x - r * 0.3},${y} V${y - r * 0.35}M${x + r * 0.3},${y} V${y - r * 0.35}" stroke="#8fc1e6" stroke-width="2" fill="none"/><path d="M${x - r * 0.28},${y} V${y - r * 0.3} Q${x},${y - r * 0.52} ${x + r * 0.28},${y - r * 0.3} V${y}Z" fill="#0a1a38"/></g>`;
+  return `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px">
+    <g opacity=".55">${peak(140, 250, 190, '#1f4a7e')}${peak(470, 300, 230, '#1a4175')}${peak(820, 260, 200, '#1f4a7e')}</g>
+    <g opacity=".9">${peak(320, 190, 170, '#2d6aa8')}${peak(660, 210, 190, '#2a6199')}</g>
+    <!-- ארמון קרח זוהר -->
+    <g transform="translate(120 190)"><g opacity=".92">
+      <polygon points="0,150 0,70 14,70 22,20 30,70 56,70 70,0 84,70 110,70 118,28 126,70 140,70 140,150" fill="#a8dcff"/>
+      <polygon points="56,150 56,95 70,80 84,95 84,150" fill="#12306a"/>
+      <polygon points="70,0 84,70 56,70" fill="#e6f7ff" opacity=".7"/></g></g>
+    <!-- מפל קפוא -->
+    <g opacity=".85"><polygon points="640,230 700,230 696,470 644,470" fill="#9fd8ff"/>
+    <path d="M652,240 V460 M664,236 V466 M676,238 V464 M688,236 V462" stroke="#e6f7ff" stroke-width="3" opacity=".7"/></g>
+    ${igloo(790, 478, 46)}${igloo(880, 486, 34)}${igloo(700, 492, 28)}
+    <path d="M0 540 L0 470 Q140 440 300 470 T620 462 T960 450 L960 540Z" fill="#dcefff"/>
+    <path d="M0 540 L0 500 Q180 480 360 504 T960 490 L960 540Z" fill="#b6d6f0"/>
+  </svg>`;
+}
+
+// ---- עולם האדמה: מסות סלע, חומת בה סינג סה ויער ירוק ----
+function earthWorld() {
+  const mesa = (x, w, h, c) => `<polygon points="${x},540 ${x + 14},${540 - h} ${x + w - 14},${540 - h} ${x + w},540" fill="${c}"/>
+    <path d="M${x + 12},${540 - h * 0.55} H${x + w - 12}M${x + 8},${540 - h * 0.28} H${x + w - 8}" stroke="rgba(0,0,0,.18)" stroke-width="4"/>`;
+  const tower = (x, y) => `<rect x="${x}" y="${y}" width="26" height="46" fill="#6d4e2d"/><polygon points="${x - 6},${y} ${x + 13},${y - 16} ${x + 32},${y}" fill="#8f5f33"/>`;
+  const tree = (x, y, r) => `<rect x="${x - 3}" y="${y}" width="6" height="${r}" fill="#3b2a15"/><circle cx="${x}" cy="${y}" r="${r}" fill="#3f7a3a"/><circle cx="${x + r * 0.5}" cy="${y - r * 0.3}" r="${r * 0.7}" fill="#4f9448"/>`;
+  return `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px">
+    <g opacity=".55">${mesa(120, 190, 260, '#9a6b3c')}${mesa(620, 230, 240, '#8d6034')}</g>
+    <g opacity=".85">${mesa(330, 170, 190, '#7d5430')}${mesa(820, 150, 210, '#6e4a29')}</g>
+    <!-- חומת בה סינג סה -->
+    <g opacity=".95"><rect x="0" y="330" width="960" height="74" fill="#6a4a2a"/>
+    ${Array.from({ length: 24 }, (_, i) => `<rect x="${i * 40 + 6}" y="316" width="22" height="16" fill="#6a4a2a"/>`).join('')}
+    <rect x="0" y="336" width="960" height="5" fill="rgba(0,0,0,.25)"/>${tower(230, 288)}${tower(560, 288)}${tower(850, 288)}</g>
+    ${tree(70, 440, 24)}${tree(140, 452, 18)}${tree(860, 444, 22)}${tree(920, 456, 16)}
+    <path d="M0 540 L0 450 Q200 420 420 452 T960 440 L960 540Z" fill="#4b3319"/>
+    <path d="M0 540 L0 500 Q260 480 520 504 T960 492 L960 540Z" fill="#33220f"/>
+  </svg>`;
+}
+
+// ---- עולם האש: הר געש, נהר לבה ומבצר ארגמן ----
+function fireWorld() {
+  const roof = (x, y, w, tiers) => {
+    let out = '', ty = y;
+    for (let i = 0; i < tiers; i++) {
+      const tw = w * (1 - i * 0.18);
+      out += `<polygon points="${x - tw / 2 - 16},${ty + 2} ${x},${ty - 22} ${x + tw / 2 + 16},${ty + 2} ${x + tw / 2},${ty + 10} ${x - tw / 2},${ty + 10}" fill="#4a0f0a"/>`;
+      out += `<rect x="${x - tw / 2 + 6}" y="${ty + 10}" width="${tw - 12}" height="22" fill="#2b0807"/><rect x="${x - 4}" y="${ty + 14}" width="8" height="12" rx="4" fill="#ff9a3a" opacity=".9"/>`;
+      ty += 38;
+    }
+    return out;
+  };
+  return `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px">
+    <defs><linearGradient id="lavaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36a"/><stop offset="1" stop-color="#e8541c"/></linearGradient></defs>
+    <!-- הר געש עם לוע זוהר -->
+    <g opacity=".95"><polygon points="250,540 420,170 470,150 520,170 700,540" fill="#2a0a08"/>
+      <polygon points="420,170 470,150 520,170 500,185 440,185" fill="url(#lavaG)"/>
+      <path d="M470,160 L462,250 L482,330 L460,430 L486,540 M452,200 L420,300 L430,420" stroke="#ff7a1c" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9"/></g>
+    <g opacity=".5"><ellipse cx="470" cy="120" rx="90" ry="34" fill="#2a1512" filter="blur(0)"/><ellipse cx="520" cy="70" rx="110" ry="30" fill="#3a1d18"/><ellipse cx="440" cy="30" rx="120" ry="26" fill="#2a1512"/></g>
+    <!-- מבצר ארגמן -->
+    <g opacity=".95">${roof(170, 280, 130, 3)}${roof(780, 300, 120, 3)}${roof(900, 350, 80, 2)}</g>
+    <path d="M0 540 L0 450 Q200 420 420 456 T960 440 L960 540Z" fill="#1a0605"/>
+    <path d="M0 520 Q180 490 360 515 T720 506 T960 500 L960 540 L0 540Z" fill="url(#lavaG)" opacity=".9"/>
+    <path d="M0 530 Q200 506 400 528 T960 516" stroke="#ffd36a" stroke-width="3" fill="none" opacity=".8"/>
+  </svg>`;
+}
+
+function sceneryFor(kind) {
+  return { air: temples, water: iceWorld, earth: earthWorld, fire: fireWorld }[kind === true ? 'air' : kind]?.() || '';
+}
+
 export function fightBackground(m, { ambient = true, platforms = true, scenery = false } = {}) {
   const [s0, s1, s2] = m.sky;
   const sun = m.sun;
@@ -127,7 +198,7 @@ export function fightBackground(m, { ambient = true, platforms = true, scenery =
   ${hills}
   ${ambient ? ambientHTML(m.ambient.type, m.ambient.color, 16) : ''}
 </div>
-${scenery ? temples() : ''}
+${scenery ? sceneryFor(scenery) : ''}
 ${platforms ? `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px;filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))">
   ${m.platforms.map((p, i) => slab(p, m, i)).join('')}
 </svg>` : ''}`;
