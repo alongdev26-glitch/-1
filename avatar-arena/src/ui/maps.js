@@ -79,7 +79,27 @@ const hillPath = (variant) => [
   'M0,300 L0,140 L120,70 L260,180 L350,125 L470,220 L580,240 L690,130 L850,220 L1000,110 L1000,300 Z',
 ][variant];
 
-export function fightBackground(m, { ambient = true } = {}) {
+// צללית מקדשי אוויר (פגודות מדורגות) למסך הסיפור
+function temples() {
+  const tower = (x, y, w, tiers, c) => {
+    let out = '', ty = y;
+    for (let i = 0; i < tiers; i++) {
+      const tw = w * (1 - i * 0.16), th = 18;
+      out += `<polygon points="${x - tw / 2 - 10},${ty} ${x + tw / 2 + 10},${ty} ${x + tw / 2 - 2},${ty - 12} ${x - tw / 2 + 2},${ty - 12}" fill="${c}"/>`;
+      out += `<rect x="${x - tw / 2 + 6}" y="${ty}" width="${tw - 12}" height="${th}" fill="${c}"/>`;
+      out += `<rect x="${x - 3}" y="${ty + 5}" width="6" height="9" rx="3" fill="#ffd9a0" opacity=".85"/>`;
+      ty += th + 12;
+    }
+    return out + `<rect x="${x - 2}" y="${y - 30}" width="4" height="22" fill="${c}"/><circle cx="${x}" cy="${y - 32}" r="4" fill="${c}"/>`;
+  };
+  return `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px">
+    <g opacity=".5">${tower(150, 250, 90, 4, '#33425f')}${tower(520, 230, 70, 5, '#33425f')}</g>
+    <g opacity=".75">${tower(300, 300, 110, 4, '#232d44')}${tower(740, 270, 100, 5, '#232d44')}${tower(900, 330, 80, 3, '#232d44')}</g>
+    <path d="M0 540 L0 440 Q160 410 300 450 T620 440 T960 420 L960 540Z" fill="#161d30"/>
+  </svg>`;
+}
+
+export function fightBackground(m, { ambient = true, platforms = true, scenery = false } = {}) {
   const [s0, s1, s2] = m.sky;
   const sun = m.sun;
   const hills = m.hills.map((c, i) => {
@@ -107,9 +127,10 @@ export function fightBackground(m, { ambient = true } = {}) {
   ${hills}
   ${ambient ? ambientHTML(m.ambient.type, m.ambient.color, 16) : ''}
 </div>
-<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px;filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))">
+${scenery ? temples() : ''}
+${platforms ? `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px;filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))">
   ${m.platforms.map((p, i) => slab(p, m, i)).join('')}
-</svg>`;
+</svg>` : ''}`;
 }
 
 // תצוגה מקדימה קטנה של מפה (הרקע והפלטפורמות בקנה מידה)

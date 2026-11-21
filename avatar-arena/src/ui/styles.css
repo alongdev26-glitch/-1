@@ -78,3 +78,9 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 
 /* סימון הבחירה בשלט */
 .gp-focus { outline: 3px solid #fff !important; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255,209,102,.55), 0 0 24px 6px rgba(255,209,102,.5) !important; z-index: 5; }
+
+/* אייקונים (Material Symbols) */
+.material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1;
+  letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased; overflow: hidden; width: 1em; }
+@keyframes bob { 50% { transform: translateY(-4px); } }

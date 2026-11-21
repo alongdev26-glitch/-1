@@ -97,14 +97,14 @@ export const menuScreen = () => `
 
   <section class="relative z-10 w-full flex flex-col items-center justify-center -mt-4">
     <button data-act="start" class="w-[340px] py-4 px-6 bg-gradient-to-b from-[#f8cf4f] to-[#e4ac29] hover:from-[#fce075] hover:to-[#ebb735] active:translate-y-0.5 text-stone-900 font-extrabold text-[26px] rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.3)] border border-[#ffeaa5] transition-all duration-150 flex items-center justify-center tracking-wide" type="button"><span>התחל קרב</span></button>
-    <button data-act="soon" class="mt-4 w-[290px] py-2.5 px-5 bg-[#17202e]/90 hover:bg-[#1f2b3e]/90 active:translate-y-0.5 text-[#8f9eb3] font-bold text-lg rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-[#2b3a52] transition-all duration-150 flex items-center justify-center gap-2" type="button">
-      <svg class="w-4 h-4 text-[#8f9eb3]" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"></path></svg>
+    <button data-act="story" class="mt-4 w-[290px] py-2.5 px-5 bg-[#1b2538]/90 hover:bg-[#25324a]/90 active:translate-y-0.5 text-[#ffd9a8] font-bold text-lg rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-[#ffb779]/50 transition-all duration-150 flex items-center justify-center gap-2" type="button">
+      <svg class="w-4 h-4 text-[#ffb779]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.4 5.8 21.2l1.6-7L2 9.5l7.1-.6z"></path></svg>
       <span>מסלול סיפור</span>
     </button>
   </section>
 
   <nav class="relative z-10 w-full flex items-center justify-center gap-5 pb-12 px-4">
-    <button data-act="soon" class="min-w-[140px] py-3 px-4 bg-[#141b28]/95 hover:bg-[#1e283b] active:scale-95 text-stone-200 hover:text-white font-bold text-lg rounded-xl shadow-lg border border-[#28354b] transition-all duration-150 text-center" type="button">מסלול סיפור</button>
+    <button data-act="story" class="min-w-[140px] py-3 px-4 bg-[#141b28]/95 hover:bg-[#1e283b] active:scale-95 text-stone-200 hover:text-white font-bold text-lg rounded-xl shadow-lg border border-[#28354b] transition-all duration-150 text-center" type="button">מסלול סיפור</button>
     <button data-act="start" class="min-w-[140px] py-3 px-4 bg-[#141b28]/95 hover:bg-[#1e283b] active:scale-95 text-stone-200 hover:text-white font-bold text-lg rounded-xl shadow-lg border border-[#28354b] transition-all duration-150 text-center" type="button">דמויות</button>
     <button data-act="soon" class="min-w-[140px] py-3 px-4 bg-[#141b28]/95 hover:bg-[#1e283b] active:scale-95 text-stone-200 hover:text-white font-bold text-lg rounded-xl shadow-lg border border-[#28354b] transition-all duration-150 text-center" type="button">הגדרות</button>
   </nav>
@@ -422,5 +422,223 @@ export const resultsScreen = (r) => {
     <button data-act="again" class="flex-1 py-2.5 px-4 bg-gradient-to-b from-[#ffe58f] via-[#ffd24c] to-[#d99b1a] hover:from-[#fff0b3] hover:to-[#e5a824] active:scale-[0.98] text-[#342200] font-black text-lg rounded-xl border-2 border-[#fff7cc] box-golden-shadow transition duration-150 ease-in-out text-center cursor-pointer" type="button">שוב</button>
     <button data-act="menu" class="flex-1 py-2.5 px-4 bg-gradient-to-b from-[#ffe58f] via-[#ffd24c] to-[#d99b1a] hover:from-[#fff0b3] hover:to-[#e5a824] active:scale-[0.98] text-[#342200] font-black text-lg rounded-xl border-2 border-[#fff7cc] box-golden-shadow transition duration-150 ease-in-out text-center cursor-pointer" type="button">לתפריט</button>
   </footer>
+</div>`;
+};
+
+// ======================= מסלול סיפור =======================
+import { REALMS, realmById } from '../data/story.js';
+import { byId } from '../data/characters.js';
+
+const ico = (n, cls = '', fill = false) => `<span class="material-symbols-outlined ${cls}"${fill ? ` style="font-variation-settings:'FILL' 1"` : ''}>${n}</span>`;
+const ROLE = { air: 'כשף אוויר', water: 'כשפית מים', earth: 'כשפית אדמה', fire: 'כשף אש' };
+const starRow = (earned, size = 'text-[13px]') => [0, 1, 2].map((i) => ico('star', `${size} ${earned[i] ? 'text-primary' : 'text-outline-variant'}`, !!earned[i])).join('');
+
+// מצב כל שלב: done (הושלם) / open (פתוח) / locked (נעול)
+export function stageStates(realm, st) {
+  let cur = null;
+  const list = realm.stages.map((s, i) => {
+    const done = st.cleared.includes(s.id);
+    const open = done || i === 0 || st.cleared.includes(realm.stages[i - 1].id);
+    if (open && !done && !cur) cur = s.id;
+    return { s, i, done, open };
+  });
+  return { list, cur };
+}
+
+function curvePath(pts) {
+  // עקומה חלקה (Catmull-Rom) דרך נקודות התחנות, באחוזים
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C ${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+
+export const storyScreen = ({ realm, sel, st, chosen, bg }) => {
+  const { list, cur } = stageStates(realm, st);
+  const selected = list.find((x) => x.s.id === sel) || list.find((x) => x.s.id === cur) || list[0];
+  const S = selected.s;
+  const earnedOf = (id) => st.stars[id] || [false, false, false];
+  const totalStars = list.reduce((a, x) => a + earnedOf(x.s.id).filter(Boolean).length, 0);
+  const movesOpen = Math.min(4, 1 + st.cleared.length), ultOpen = st.cleared.length >= 4;
+
+  const opp = byId(S.opp === chosen ? S.alt : S.opp);
+  const doneIdx = list.filter((x) => x.done).length;
+
+  // --- צמתי המפה ---
+  const pts = list.map((x) => x.s.pos);
+  const trailDone = list.filter((x) => x.done).map((x) => x.s.pos);
+  const nodes = list.map(({ s, done, open }) => {
+    const isCur = s.id === cur, isSel = s.id === S.id, boss = !!s.boss;
+    const size = boss ? 72 : isCur ? 58 : 50;
+    const ring = isSel ? 'ring-2 ring-primary ring-offset-2 ring-offset-transparent' : '';
+    const inner = !open ? ico('lock', 'text-outline text-[20px]')
+      : boss ? `<img src="sprites/aang_face.png" alt="" class="w-full h-full object-cover object-top rounded-full" style="image-rendering:pixelated;${open ? '' : 'filter:grayscale(1)'}">`
+      : ico(done ? 'check_circle' : s.icon, `${done ? 'text-primary' : 'text-secondary'} text-[24px]`, done);
+    const badge = isCur ? `<div class="absolute -top-8 px-2.5 py-0.5 rounded-full bg-primary text-on-primary text-label-md shadow-lg flex items-center gap-1 whitespace-nowrap" style="animation:bob 1.2s ease-in-out infinite">${ico('swords', 'text-[13px]')}קרב פעיל!</div>`
+      : boss && open && !done ? `<div class="absolute -top-8 px-2.5 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-label-md shadow-lg whitespace-nowrap">שלב בוס</div>` : '';
+    return `
+    <button data-stage="${s.id}" class="absolute flex flex-col items-center group ${open ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}" style="left:${s.pos[0]}%;top:${s.pos[1]}%;transform:translate(-50%,-50%)" type="button">
+      ${badge}
+      <div class="relative rounded-full bg-surface-container-lowest/90 shadow-xl flex items-center justify-center p-1 transition-transform group-hover:scale-110 ${ring}"
+        style="width:${size}px;height:${size}px;${boss && open ? 'box-shadow:0 0 22px 6px rgba(255,183,121,.55)' : ''}${isCur ? ';box-shadow:0 0 18px 4px rgba(255,183,121,.55)' : ''}">
+        ${isCur ? '<span class="absolute inset-0 rounded-full bg-primary/30 animate-ping pointer-events-none"></span>' : ''}
+        <div class="relative w-full h-full rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">${inner}</div>
+        ${done ? `<div class="absolute -bottom-2.5 flex items-center px-1.5 py-0.5 rounded-full bg-surface-container-lowest shadow">${starRow(earnedOf(s.id), 'text-[11px]')}</div>` : ''}
+      </div>
+      <span class="mt-3 px-2 py-0.5 rounded-lg bg-surface-container-lowest/90 text-label-md ${open ? 'text-on-surface' : 'text-outline'} shadow whitespace-nowrap">${s.id.replace('air', '')}. ${s.short}</span>
+    </button>`;
+  }).join('');
+
+  // --- כרטיס השלב ---
+  const lockedMsg = !selected.open;
+  const objs = S.obj.map((o, i) => {
+    const got = earnedOf(S.id)[i];
+    return `<div class="flex items-center gap-2 px-2.5 py-1 rounded-lg ${got ? 'bg-primary/10' : 'bg-surface-container/70'}">
+      ${ico('star', `text-[16px] ${got ? 'text-primary' : 'text-outline-variant'}`, !!got)}
+      <span class="text-[12px] ${got ? 'text-on-surface' : 'text-on-surface-variant'} flex-1">${o.text}</span>
+      ${got ? ico('check', 'text-primary text-[16px]') : ''}</div>`;
+  }).join('');
+  const chips = ['zuko', 'katara', 'toph', 'aang'].map((id) => {
+    const c = byId(id), have = st.unlocked.includes(id), on = id === chosen && have;
+    return `<button data-pick="${id}" class="relative w-9 h-9 rounded-lg overflow-hidden ${on ? 'ring-2 ring-primary' : 'ring-1 ring-outline-variant'} ${have ? '' : 'opacity-50 cursor-not-allowed'}" title="${have ? c.name : 'נפתח בסיפור'}" type="button">
+      <img src="sprites/${id}_face.png" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated;${have ? '' : 'filter:grayscale(1)'}">
+      ${have ? '' : `<span class="absolute inset-0 flex items-center justify-center bg-black/50">${ico('lock', 'text-[16px] text-white')}</span>`}</button>`;
+  }).join('');
+  const perk = S.perk ? `<span class="flex items-center gap-1 text-secondary">${ico(S.perk.kind === 'char' ? 'person_add' : S.perk.kind === 'title' ? 'military_tech' : 'bolt', 'text-[15px]')}${S.perk.text}</span>` : '';
+
+  const tabs = REALMS.map((r) => {
+    const act = r.id === realm.id;
+    return `<button data-tab="${r.id}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-md transition ${act ? 'bg-gradient-to-r from-primary-container to-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:bg-surface-container-highest'} ${r.ready ? '' : 'opacity-70'}" type="button">
+      ${ico(r.ready ? r.icon : 'lock', 'text-[17px]')}<span>${r.name}</span>${act ? `<span class="px-1.5 rounded-full bg-on-primary/20">${doneIdx}/${list.length}</span>` : ''}</button>`;
+  }).join('');
+
+  return `
+<div dir="rtl" class="screen flex flex-col select-none overflow-hidden font-assistant text-on-surface">
+  <div class="absolute inset-0">${bg}</div>
+  <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(180deg,rgba(10,13,23,.75),rgba(10,13,23,.15) 35%,rgba(10,13,23,.55))"></div>
+
+  <header class="relative z-20 flex items-center justify-between px-6 py-2 bg-surface-container-lowest/80 backdrop-blur-md shadow-xl">
+    <div class="flex items-center gap-3">
+      <button data-act="back" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-high/90 hover:bg-surface-bright text-label-lg active:scale-95 transition" type="button">${ico('arrow_forward', 'text-primary text-[18px]')}חזור לראשי</button>
+      <div class="h-6 w-px bg-surface-variant"></div>
+      <div class="flex flex-col"><span class="text-headline-md text-primary leading-none">${realm.name}</span><span class="text-body-sm text-secondary-fixed-dim">${realm.sub}</span></div>
+    </div>
+    <nav class="flex items-center gap-1 p-1 rounded-full bg-surface-container-low/90">${tabs}</nav>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface-container-high/90">${ico('star', 'text-primary text-[18px]', true)}<span class="text-label-lg text-primary">${totalStars} / ${list.length * 3}</span></div>
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface-container-high/90">${ico('monetization_on', 'text-primary-container text-[18px]', true)}<span class="text-label-lg">${st.coins.toLocaleString('en')}</span></div>
+    </div>
+  </header>
+
+  <div class="relative z-10 flex-1 flex items-stretch gap-4 px-6 py-3 min-h-0">
+    <section class="relative flex-1 min-w-0">
+      <div class="absolute top-0 right-0 flex flex-col">
+        <div class="flex items-center gap-1.5 text-primary text-label-md tracking-wider">${ico('explore', 'text-[15px]')}<span>מפת המסע • ${realm.name}</span></div>
+      </div>
+      <svg class="absolute inset-0 w-full h-full pointer-events-none overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+        <path d="${curvePath(pts)}" stroke="rgba(10,13,23,.65)" stroke-width="9" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        <path d="${curvePath(pts)}" stroke="rgba(181,196,255,.45)" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        ${trailDone.length > 1 ? `<path d="${curvePath(trailDone)}" stroke="#ffb779" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 5px rgba(255,183,121,.9))"/>` : ''}
+      </svg>
+      ${nodes}
+    </section>
+
+    <aside class="w-[400px] flex flex-col rounded-xl bg-surface-container-lowest/92 backdrop-blur-xl p-3 shadow-2xl relative overflow-hidden gap-1.5">
+      <div class="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none"></div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="px-2 py-0.5 rounded bg-primary-container/25 text-primary-fixed text-label-md">${S.boss ? 'שלב סופי' : 'שלב'} ${selected.i + 1} מתוך ${list.length}</span>
+          <span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-label-md">קושי: ${S.diff}</span>
+        </div>
+        <span class="text-body-sm text-outline">מומלץ <strong class="text-primary">${S.cp.toLocaleString('en')} CP</strong></span>
+      </div>
+      <h2 class="text-[18px] font-bold text-on-surface leading-tight">${S.name}</h2>
+
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-surface-container-low/90">
+        <div class="relative w-[62px] h-[62px] rounded-lg overflow-hidden shrink-0 bg-surface-container-highest/60" style="${S.boss ? 'box-shadow:0 0 16px 3px rgba(255,183,121,.5)' : ''}">
+          <img src="sprites/${opp.id}_face.png" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated;${lockedMsg ? 'filter:grayscale(1) brightness(.6)' : ''}">
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1 text-primary text-label-md">${ico('sports_martial_arts', 'text-[14px]')}<span>${S.boss ? 'בוס • מצב אווטאר' : 'יריב'} • ${ROLE[opp.element]}</span></div>
+          <h3 class="text-title-md truncate">${opp.name} <span dir="ltr" class="text-body-sm text-outline">(${opp.en})</span></h3>
+          <p class="text-body-sm text-on-surface-variant line-clamp-2">${S.desc}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-label-md text-on-surface-variant flex items-center gap-1">${ico('stars', 'text-[15px] text-primary')}יעדים ל-3 כוכבים</span>
+        ${objs}
+      </div>
+
+      <div class="flex items-center justify-between px-2 py-1.5 rounded-lg bg-surface-container-high/50 text-[11.5px]">
+        <span class="text-outline">פרסי ניצחון</span>
+        <div class="flex items-center gap-2.5">
+          <span class="flex items-center gap-0.5 text-primary-container">${ico('monetization_on', 'text-[15px]', true)}+${S.reward.coins}</span>
+          <span class="flex items-center gap-0.5 text-primary">${ico('military_tech', 'text-[15px]')}+${S.reward.xp} XP</span>
+          ${perk}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-label-md text-on-surface-variant">שחק בתור:</span>
+        <div class="flex items-center gap-1.5">${chips}</div>
+      </div>
+
+      <button data-act="fight" ${lockedMsg ? 'disabled' : ''} class="mt-auto w-full py-2 rounded-xl font-extrabold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98] ${lockedMsg ? 'bg-surface-container-high text-outline cursor-not-allowed' : 'bg-gradient-to-r from-primary-container via-primary to-primary-container text-on-primary shadow-xl hover:brightness-110'}" type="button">
+        ${ico(lockedMsg ? 'lock' : S.boss ? 'cyclone' : 'swords', 'text-[22px]')}
+        <span>${lockedMsg ? 'נעול. נצח בשלב הקודם' : S.boss ? 'התמודד מול האווטאר!' : selected.done ? 'שחק שוב' : 'התחל שלב'}</span>
+      </button>
+    </aside>
+  </div>
+
+  <footer class="relative z-20 flex items-center justify-between px-6 py-1.5 bg-surface-container-lowest/85 backdrop-blur-md text-body-sm text-on-surface-variant">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span>קרב נוכחי</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-surface-variant"></span>הושלם</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-outline-variant"></span>נעול</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="flex items-center gap-1">${ico('bolt', 'text-[15px] text-primary')}מכות פתוחות: <strong class="text-primary">${movesOpen}/4</strong></span>
+      <span class="flex items-center gap-1">${ico(ultOpen ? 'lock_open' : 'lock', 'text-[15px] text-primary')}מכה סודית: <strong class="${ultOpen ? 'text-primary' : 'text-outline'}">${ultOpen ? 'פתוחה' : 'נעולה'}</strong></span>
+    </div>
+  </footer>
+</div>`;
+};
+
+// תוצאות קרב סיפור: כוכבים, יעדים, פרסים והדמות החדשה
+export const storyResultsScreen = ({ r, stage, got, rec }) => {
+  const stars = got.filter(Boolean).length;
+  const unlocked = rec.unlockedChar ? byId(rec.unlockedChar) : null;
+  const title = r.won ? (stage.boss ? 'ניצחת את האווטאר!' : 'ניצחת!') : 'הפסדת...';
+  const objs = stage.obj.map((o, i) => `<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${got[i] ? 'bg-primary/10' : 'bg-surface-container/70'}">
+      ${ico('star', `text-[16px] ${got[i] ? 'text-primary' : 'text-outline-variant'}`, !!got[i])}
+      <span class="text-[12px] flex-1 ${got[i] ? 'text-on-surface' : 'text-outline'}">${o.text}</span>
+      ${ico(got[i] ? 'check_circle' : 'cancel', `text-[16px] ${got[i] ? 'text-primary' : 'text-outline'}`, !!got[i])}</div>`).join('');
+  return `
+<div dir="rtl" class="screen flex flex-col items-center justify-center select-none overflow-hidden font-assistant text-on-surface bg-mountain-gradient">
+  <div class="absolute inset-0 pointer-events-none opacity-40" style="background:radial-gradient(circle at 50% 30%,rgba(255,183,121,.35),transparent 60%)"></div>
+  <main class="relative z-10 w-[460px] rounded-2xl bg-surface-container-lowest/92 border-2 border-secondary-container shadow-[0_15px_35px_rgba(0,0,0,.65)] px-6 py-4 flex flex-col items-center gap-2.5">
+    <h1 class="text-[30px] font-extrabold ${r.won ? 'text-primary' : 'text-error'}" style="text-shadow:0 2px 6px rgba(0,0,0,.7)">${title}</h1>
+    <div class="text-body-sm text-outline">${stage.name}</div>
+    <div class="flex items-center gap-1.5">${[0, 1, 2].map((i) => ico('star', `text-[44px] ${got[i] ? 'text-primary' : 'text-outline-variant'}`, !!got[i])).join('')}</div>
+    <div class="w-full flex flex-col gap-1">${objs}</div>
+    <div class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container-high/50 text-[13px]">
+      <span class="text-outline">תגמולים</span>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1 text-primary-container">${ico('monetization_on', 'text-[17px]', true)}+${rec.coins}</span>
+        ${rec.xp ? `<span class="flex items-center gap-1 text-primary">${ico('military_tech', 'text-[17px]')}+${rec.xp} XP</span>` : ''}
+        ${rec.perk && rec.perk.kind !== 'char' ? `<span class="text-secondary">${rec.perk.text}</span>` : ''}
+      </div>
+    </div>
+    ${unlocked ? `<div class="w-full flex items-center gap-3 px-3 py-2 rounded-xl unlock-banner border-y-2 border-[#bfa265]">
+      <img src="sprites/${unlocked.id}_face.png" alt="" class="w-14 h-14 rounded-lg object-cover object-top" style="image-rendering:pixelated">
+      <div><div class="text-[#3c2a12] font-black text-[16px]">דמות חדשה נפתחה!</div><div class="text-[#745e38] font-bold text-[13px]">${unlocked.name} (${unlocked.en}) זמין עכשיו כדמות שחקן</div></div></div>` : ''}
+    <div class="w-full flex gap-3 pt-1">
+      <button data-act="again" class="flex-1 py-2.5 rounded-xl bg-surface-container-high hover:bg-surface-bright font-bold text-[15px] active:scale-95 transition" type="button">שוב</button>
+      <button data-act="story-back" class="flex-1 py-2.5 rounded-xl bg-gradient-to-b from-[#ffe58f] via-[#ffd24c] to-[#d99b1a] text-[#342200] font-black text-[16px] active:scale-95 transition box-golden-shadow" type="button">${r.won ? 'המשך במסלול' : 'חזרה למפה'}</button>
+    </div>
+  </main>
 </div>`;
 };

@@ -2,17 +2,19 @@ import Phaser from 'phaser';
 import Fight from '../scenes/Fight.js';
 import { CHARACTERS, byId } from '../data/characters.js';
 import { touch } from './input.js';
-import { isUnlocked } from '../data/progress.js';
+import { isUnlocked, setMode, story as storyData, recordStory } from '../data/progress.js';
+import { realmById, REALMS, evalObjectives } from '../data/story.js';
 import { moveIcon } from './icons.js';
 import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
-  menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen,
+  menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen, storyScreen, storyResultsScreen, stageStates,
 } from './screens.js';
 import { fightBackground } from './maps.js';
 import { MAPS, mapById } from '../data/maps.js';
 
 const $ = (id) => document.getElementById(id);
-const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null, mode: 'menu', paused: false };
+const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null, mode: 'menu', paused: false,
+  story: { realm: 'air', sel: null, chosen: 'zuko' }, over: null };
 let vsTimer = null;
 
 // ---- במה: 960x540 שמוקטנת/מוגדלת למסך ----
@@ -39,15 +41,66 @@ function clearOverlay() { $('overlay').innerHTML = ''; }
 
 // ---- מסכים ----
 export function showMenu() {
-  state.mode = 'menu'; state.paused = false;
+  state.mode = 'menu'; state.paused = false; setMode('free');
   stopFight();
   $('fight-layer').hidden = true;
   setScreen(menuScreen());
   $('screen').onclick = (e) => {
     const a = e.target.closest('[data-act]')?.dataset.act;
     if (a === 'start') showSelect();
+    if (a === 'story') showStory();
     if (a === 'soon') toast('בקרוב');
   };
+}
+
+// ---- מסלול סיפור ----
+export function showStory() {
+  state.mode = 'menu'; setMode('free');
+  stopFight();
+  $('fight-layer').hidden = true;
+  const render = () => {
+    const realm = realmById(state.story.realm), st = storyData();
+    if (!st.unlocked.includes(state.story.chosen)) state.story.chosen = st.unlocked[0];
+    if (!state.story.sel) state.story.sel = stageStates(realm, st).cur || realm.stages[0].id;
+    setScreen(storyScreen({ realm, sel: state.story.sel, st, chosen: state.story.chosen, bg: storyBackground() }));
+    $('screen').onclick = (e) => {
+      const stage = e.target.closest('[data-stage]');
+      if (stage) {
+        const x = stageStates(realm, st).list.find((l) => l.s.id === stage.dataset.stage);
+        if (!x.open) return toast('השלב נעול. נצח בשלב הקודם');
+        state.story.sel = x.s.id; return render();
+      }
+      const pick = e.target.closest('[data-pick]');
+      if (pick) {
+        if (!st.unlocked.includes(pick.dataset.pick)) return toast('הדמות נפתחת בסיפור (נצח את הבוס)');
+        state.story.chosen = pick.dataset.pick; return render();
+      }
+      const tab = e.target.closest('[data-tab]');
+      if (tab) {
+        const r = realmById(tab.dataset.tab);
+        if (!r.ready) return toast('הממלכה הזו תיפתח בקרוב');
+        state.story.realm = r.id; state.story.sel = null; return render();
+      }
+      const a = e.target.closest('[data-act]')?.dataset.act;
+      if (a === 'back') showMenu();
+      if (a === 'fight') startStory();
+    };
+  };
+  render();
+}
+
+function storyBackground() {
+  return fightBackground(mapById('air'), { ambient: true, platforms: false, scenery: true });
+}
+
+function startStory() {
+  const realm = realmById(state.story.realm), st = storyData();
+  const { list } = stageStates(realm, st);
+  const x = list.find((l) => l.s.id === state.story.sel);
+  if (!x || !x.open) return;
+  const S = x.s, chosen = state.story.chosen;
+  const opp = S.opp === chosen ? S.alt : S.opp;
+  startVs({ p1: chosen, bots: [opp], map: mapById(S.map), story: { realm: realm.id, stage: S.id }, skill: S.skill, boss: !!S.boss });
 }
 
 export function showSelect() {
@@ -78,13 +131,21 @@ export function showMap() {
   render();
 }
 
-function startVs() {
+function startVs(over) {
   state.mode = 'vs';
-  const player = byId(state.sel);
-  const others = Phaser.Utils.Array.Shuffle(CHARACTERS.filter((c) => c.id !== player.id));
-  const bots = others.slice(0, state.bots);
-  const map = state.map === 'random' ? Phaser.Utils.Array.GetRandom(MAPS) : mapById(state.map);
-  state.cfg = { p1: player.id, bots: bots.map((b) => b.id), map };
+  state.over = over || null; // לשמירה, כדי ש"שוב" יחזור על אותו שלב סיפור
+  setMode(over ? 'story' : 'free');
+  let player, bots, map;
+  if (over) {
+    player = byId(over.p1); bots = over.bots.map(byId); map = over.map;
+    state.cfg = { p1: player.id, bots: over.bots, map, story: over.story, skill: over.skill, boss: over.boss };
+  } else {
+    player = byId(state.sel);
+    const others = Phaser.Utils.Array.Shuffle(CHARACTERS.filter((c) => c.id !== player.id));
+    bots = others.slice(0, state.bots);
+    map = state.map === 'random' ? Phaser.Utils.Array.GetRandom(MAPS) : mapById(state.map);
+    state.cfg = { p1: player.id, bots: bots.map((b) => b.id), map };
+  }
   setScreen(vsScreen(player, bots, map));
   $('screen').onclick = null;
   launchFight(); // טוענים את הקרב ברקע בזמן ש-VS מוצג
@@ -264,7 +325,7 @@ function pause() {
   $('overlay').onclick = (e) => {
     const a = e.target.closest('[data-act]')?.dataset.act;
     if (a === 'resume') resume();
-    if (a === 'restart') { resume(true); startVs(); }
+    if (a === 'restart') { resume(true); startVs(state.over); }
     if (a === 'menu') { resume(true); showMenu(); }
   };
 }
@@ -284,6 +345,19 @@ function showResults(r) {
   state.last = r;
   setTimeout(() => {
     $('fight-layer').hidden = true;
+    if (state.cfg.story) {
+      const realm = realmById(state.cfg.story.realm), stage = realm.stages.find((x) => x.id === state.cfg.story.stage);
+      const got = evalObjectives(stage, r);
+      const rec = recordStory(stage, got);
+      setScreen(storyResultsScreen({ r, stage, got, rec }));
+      if (r.won) state.story.sel = null; // ממשיכים לשלב הבא
+      $('screen').onclick = (e) => {
+        const a = e.target.closest('[data-act]')?.dataset.act;
+        if (a === 'again') startVs(state.over);
+        if (a === 'story-back') showStory();
+      };
+      return;
+    }
     setScreen(resultsScreen(r));
     $('screen').onclick = (e) => {
       const a = e.target.closest('[data-act]')?.dataset.act;
@@ -296,7 +370,7 @@ function showResults(r) {
 function stopFightKeepLayer() { Object.keys(touch).forEach((k) => (touch[k] = false)); }
 
 // ---- שלט: ניווט בתפריטים לפי כיוון, A = אישור, B = חזרה, Start = עצירה ----
-const SELECTABLE = '[data-act],[data-char],[data-bots],[data-map]';
+const SELECTABLE = '[data-act],[data-char],[data-bots],[data-map],[data-stage],[data-pick],[data-tab]';
 let focusEl = null;
 function setFocus(el) {
   document.querySelectorAll('.gp-focus').forEach((x) => x.classList.remove('gp-focus'));

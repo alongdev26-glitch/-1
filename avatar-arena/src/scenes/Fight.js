@@ -58,11 +58,14 @@ export default class Fight extends Phaser.Scene {
       this.physics.add.collider(f, this.platforms, null, (fi, p) =>
         p.solid || (fi.body.velocity.y >= 0 && fi.body.bottom <= p.body.top + 14 && this.time.now > fi.dropUntil));
     });
+    // קושי הסיפור: חדות הבוטים, ובוס מקבל מד סודי חצי מלא ונזק מוגבר
+    this.fighters.slice(1).forEach((b) => { if (this.cfg.skill) b.skill = this.cfg.skill; });
+    if (this.cfg.boss && this.fighters[1]) { this.fighters[1].boss = true; this.fighters[1].ult = 60; }
     this.physics.pause(); // מחכים ל-go() אחרי מסך ה-VS
     this.ready = true;
   }
 
-  go() { this.started = true; this.physics.resume(); }
+  go() { this.started = true; this.startT = this.time.now; this.physics.resume(); }
 
   addPlatform(x, y, w, h, solid) {
     const p = this.platforms.create(x, y, 'px').setAlpha(0);
@@ -92,7 +95,7 @@ export default class Fight extends Phaser.Scene {
       def, idx, human, uid: idx, percent: 0, stocks: STOCKS, facing: x < 480 ? 1 : -1,
       jumpsLeft: def.stats.doubleJumps, stun: 0, invuln: 1500, jumpHeld: false, dropUntil: 0,
       kos: 0, taken: 0, lastHitBy: null, pose: 'idle', poseT: 0, landT: -1e9, wasGrounded: false,
-      act: null, cd: [0, 0, 0, 0], ult: 0, glow: null, wall: null, nextSpark: 0,
+      act: null, cd: [0, 0, 0, 0], ult: 0, glow: null, wall: null, nextSpark: 0, movesSet: new Set(), ultUsed: false, boss: false,
       skill: human ? 1 : 0.7 + Math.random() * 0.5,
     });
     return f;
@@ -174,6 +177,7 @@ export default class Fight extends Phaser.Scene {
 
   hit(target, from, dmg, kb, dir, opts = {}) {
     if (target.invuln > 0) return false;
+    if (from && from.boss) dmg *= 1.15;
     target.percent += dmg; target.taken += dmg; target.lastHitBy = from;
     // מד המכה הסודית: מתמלא מנזק שגרמת ובקצת מנזק שנספג
     if (from && from.ult < 100) from.ult = Math.min(100, from.ult + dmg * 1.6);
@@ -253,14 +257,15 @@ export default class Fight extends Phaser.Scene {
   // ---- מכות ----
   canUse(f, i) {
     if (f.act || f.stun > 0 || f.stocks <= 0) return false;
-    if (i === ULT) return f.ult >= 100 && isUnlocked(f.def.ult);
-    return f.cd[i] <= 0 && isUnlocked(f.def.moves[i]);
+    if (i === ULT) return f.ult >= 100 && isUnlocked(f.def.ult, f.human);
+    return f.cd[i] <= 0 && isUnlocked(f.def.moves[i], f.human);
   }
 
   useMove(f, i) {
     if (!this.canUse(f, i)) return false;
     const mv = i === ULT ? f.def.ult : f.def.moves[i];
     f.act = { i, mv, start: this.time.now, released: false, evi: 0 };
+    if (i === ULT) f.ultUsed = true; else f.movesSet.add(i);
     if (i === ULT) {
       f.ult = 0;
       this.cfg.onBanner?.(f.def.name + ': ' + mv.name, ELEMENTS[f.def.element].color);
@@ -413,6 +418,8 @@ export default class Fight extends Phaser.Scene {
     this.cfg.onEnd?.({
       won, def: me.def, kos: me.kos, dmg: Math.round(me.taken),
       place: won ? 1 : this.alive().length + 1,
+      time: Math.round((this.time.now - (this.startT || 0)) / 1000), stocksLeft: Math.max(0, me.stocks),
+      movesUsed: me.movesSet.size, ultUsed: me.ultUsed,
     });
   }
 }
