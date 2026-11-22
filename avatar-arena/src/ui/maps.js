@@ -41,6 +41,7 @@ export function ambientHTML(type, color, n = 20) {
 
 // ---- פלטפורמה: לוח עם תחתית משוננת ----
 function slab(p, m, idx) {
+  if (m.slab.tech) return techSlab(p, m, idx);
   const rnd = rng(1000 + idx * 17 + (m.id.charCodeAt(0) || 0));
   const L = p.x - p.w / 2, R = p.x + p.w / 2, T = p.top;
   const depth = p.main ? 150 : 50 + p.w * 0.2;
@@ -78,6 +79,72 @@ const hillPath = (variant) => [
   'M0,300 L0,185 L90,120 L210,210 L310,150 L440,230 L550,180 L680,85 L810,210 L940,150 L1000,200 L1000,300 Z',
   'M0,300 L0,140 L120,70 L260,180 L350,125 L470,220 L580,240 L690,130 L850,220 L1000,110 L1000,300 Z',
 ][variant];
+
+// פלטפורמה טכנולוגית: לוח מתכת עם פס ניאון תכלת, פודים מאירים, ובראשית גם מנועים
+function techSlab(p, m, idx) {
+  const L = p.x - p.w / 2, R = p.x + p.w / 2, T = p.top, c = m.slab.neon || '#38efff';
+  const depth = p.main ? 44 : 26;
+  const glow = `filter:drop-shadow(0 0 6px ${c})`;
+  let pods = '';
+  for (let x = L + 26; x < R - 20; x += p.main ? 52 : 44) pods += `<circle cx="${x}" cy="${T + 14}" r="${p.main ? 4 : 3.2}" fill="#7cf6fc" style="${glow}"/>`;
+  let seams = '';
+  for (let x = L + 40; x < R - 20; x += 40) seams += `<line x1="${x}" y1="${T - 4}" x2="${x}" y2="${T + 12}" stroke="${m.slab.deep}" stroke-width="2"/>`;
+  const thrusters = p.main ? [L + p.w * 0.2, R - p.w * 0.2].map((x, i) => `
+    <g transform="rotate(${i ? -22 : 22} ${x} ${T + depth})">
+      <polygon points="${x - 14},${T + depth - 6} ${x + 14},${T + depth - 6} ${x + 8},${T + depth + 22} ${x - 8},${T + depth + 22}" fill="#232d35" stroke="${m.slab.deep}" stroke-width="2"/>
+      <ellipse class="thr" cx="${x}" cy="${T + depth + 28}" rx="7" ry="13" fill="#bff9ff" style="${glow};transform-origin:${x}px ${T + depth + 18}px"/>
+    </g>`).join('') + `<circle cx="${p.x}" cy="${T + depth + 4}" r="6" fill="#34d399" style="filter:drop-shadow(0 0 8px #10b981)"/>` : '';
+  return `<g>
+    <polygon points="${L + 10},${T + 8} ${R - 10},${T + 8} ${R - 30},${T + depth} ${L + 30},${T + depth}" fill="${m.slab.face}" stroke="${m.slab.deep}" stroke-width="2.5"/>
+    ${thrusters}
+    <rect x="${L}" y="${T - 5}" width="${p.w}" height="18" rx="4" fill="${m.slab.rim}" stroke="${m.slab.deep}" stroke-width="2"/>
+    <rect x="${L + 4}" y="${T - 4}" width="${p.w - 8}" height="9" rx="3" fill="${m.slab.top}"/>
+    ${seams}
+    <rect x="${L + 10}" y="${T - 5}" width="${p.w - 20}" height="3" rx="1.5" fill="${c}" style="${glow}"/>
+    ${pods}
+  </g>`;
+}
+
+// מערת לבה: קירות סלע, מפלי לבה זוהרים, עמודי סלע מפותלים, מבנה עתיק בעומק וים לבה
+function caveBackdrop() {
+  const pillar = (x, top, w, col) => {
+    let out = '';
+    for (let y = top, i = 0; y < 470; y += 26, i++) {
+      const ww = w * (0.72 + 0.28 * Math.abs(Math.sin(i * 1.4)));
+      out += `<ellipse cx="${x + Math.sin(i * 0.9) * 3}" cy="${y}" rx="${ww / 2}" ry="17" fill="${col}"/>`;
+    }
+    return out;
+  };
+  return `
+<div class="absolute inset-0 overflow-hidden" style="background:linear-gradient(180deg,#0d0404 0%,#2a0d07 45%,#7a2208 80%,#c8420c 100%)">
+  <div class="absolute rounded-full pointer-events-none" style="left:50%;top:55%;width:760px;height:520px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,120,30,.45),transparent 65%)"></div>
+  <svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px">
+    <!-- מבנה עתיק בעומק -->
+    <g opacity=".85"><rect x="372" y="40" width="190" height="250" fill="#1c100d"/>
+      <path d="M390 60 V270 M430 52 V280 M470 46 V285 M510 52 V280 M545 60 V270 M372 110 H562 M372 170 H562 M372 230 H562" stroke="#4a3027" stroke-width="3"/>
+      <rect x="440" y="20" width="50" height="30" fill="#241612"/><rect x="452" y="6" width="26" height="16" fill="#2c1b16"/></g>
+    <!-- קירות סלע -->
+    <path d="M0 0 H300 Q260 40 280 90 Q330 130 300 190 Q270 240 320 290 Q340 330 300 380 L260 540 H0Z" fill="#221310"/>
+    <path d="M0 0 H210 Q190 60 215 110 Q235 170 200 230 L170 540 H0Z" fill="#170c0a"/>
+    <path d="M960 0 H690 Q730 50 715 100 Q690 150 740 200 Q790 240 770 300 Q790 350 730 400 L700 540 H960Z" fill="#221310"/>
+    <path d="M960 0 H800 Q820 70 795 130 Q770 190 810 250 L840 540 H960Z" fill="#170c0a"/>
+    <!-- חלון לבה בקיר שמאל -->
+    <path d="M262 62 Q300 66 304 110 Q306 150 282 190 Q256 150 258 100Z" fill="#ff7a1c" opacity=".9"/>
+    <!-- עמודי סלע מפותלים -->
+    <g opacity=".95">${pillar(358, 285, 46, '#3a2218')}${pillar(480, 305, 58, '#412619')}${pillar(600, 270, 44, '#3a2218')}</g>
+  </svg>
+  <!-- מפלי לבה -->
+  <div class="lavafall absolute" style="left:612px;top:0;width:58px;height:470px"></div>
+  <div class="lavafall absolute" style="left:688px;top:0;width:36px;height:430px"></div>
+  <div class="lavafall absolute" style="left:826px;top:0;width:66px;height:420px"></div>
+  <div class="lavafall absolute" style="left:900px;top:0;width:34px;height:430px"></div>
+  <div class="lavafall absolute" style="left:270px;top:70px;width:26px;height:130px;border-radius:12px"></div>
+  <!-- ים לבה -->
+  <div class="absolute left-0 right-0 bottom-0" style="top:80%;background:linear-gradient(180deg,#ff5a14,#ffb030 45%,#ff4d00);box-shadow:0 -30px 60px rgba(255,100,20,.55)"></div>
+  <div class="absolute left-0 right-0 pointer-events-none lavawave" style="top:80%;bottom:0;background:radial-gradient(ellipse 120px 24px at 18% 30%,rgba(255,240,170,.85),transparent),radial-gradient(ellipse 160px 28px at 52% 62%,rgba(255,230,140,.8),transparent),radial-gradient(ellipse 130px 22px at 82% 38%,rgba(255,240,170,.85),transparent)"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at 50% 55%,transparent 55%,rgba(0,0,0,.5) 100%)"></div>
+</div>`;
+}
 
 // צללית מקדשי אוויר (פגודות מדורגות) למסך הסיפור
 function temples() {
@@ -189,6 +256,9 @@ export function fightBackground(m, { ambient = true, platforms = true, scenery =
   if (m.lava) {
     extras.push(`<div class="absolute bottom-0 left-0 right-0 pointer-events-none" style="height:30%;background:linear-gradient(0deg,#ff5a14 0%,rgba(255,120,30,.7) 35%,transparent 100%)"></div>`);
     extras.push(`<svg class="absolute bottom-0 w-full pointer-events-none" style="height:12%" preserveAspectRatio="none" viewBox="0 0 1000 60"><path d="M0,60 L0,30 Q80,8 160,28 T320,26 T480,30 T640,24 T800,30 T1000,26 L1000,60 Z" fill="#ff7a1c"/><path d="M0,60 L0,44 Q100,30 200,44 T400,42 T600,46 T800,42 T1000,46 L1000,60 Z" fill="#ffd36a" opacity=".8"/></svg>`);
+  }
+  if (m.cave && !scenery) {
+    return `${caveBackdrop()}${ambient ? ambientHTML(m.ambient.type, m.ambient.color, 22) : ''}${platforms ? `<svg class="absolute inset-0 pointer-events-none" viewBox="0 0 960 540" style="width:960px;height:540px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))">${m.platforms.map((p, i) => slab(p, m, i)).join('')}</svg>` : ''}`;
   }
   return `
 <div class="absolute inset-0 overflow-hidden" style="background:linear-gradient(180deg,${s0} 0%,${s1} 58%,${s2} 100%)">

@@ -185,7 +185,10 @@ function launchFight() {
 function beginFight(scene) {
   const fighters = scene.fighters;
   $('fight-bg').innerHTML = fightBackground(state.cfg.map);
-  $('hud').innerHTML = hudScreen(fighters);
+  const stageName = state.cfg.story
+    ? realmById(state.cfg.story.realm).stages.find((x) => x.id === state.cfg.story.stage)?.short
+    : state.cfg.map.name;
+  $('hud').innerHTML = hudScreen(fighters, { stageName, touch: isTouch() });
   $('fight-layer').hidden = false;
   $('screen').hidden = true; $('screen').innerHTML = '';
   clearOverlay();
@@ -297,13 +300,21 @@ function updateHud(fighters) {
     const key = `${Math.round(f.percent)}|${f.stocks}`;
     if (hudCache[f.uid] !== key) {
       hudCache[f.uid] = key;
-      card.querySelector('[data-pct]').textContent = Math.round(f.percent) + '%';
+      const pc = card.querySelector('[data-pct]');
+      pc.textContent = Math.round(f.percent) + '%';
+      pc.parentElement.className = 'hud-dmg' + (f.percent >= 120 ? ' dmg-max' : f.percent >= 70 ? ' dmg-hi' : '');
       [...card.querySelector('[data-stocks]').children].forEach((d, i) => d.classList.toggle('opacity-25', i >= f.stocks));
     }
     const bar = card.querySelector('[data-ultbar]');
     if (bar) bar.style.width = Math.round(f.ult) + '%';
     if (f.human) updateButtons(f);
   });
+  const sc = state.game?.scene.getScene('Fight'), tm = document.getElementById('hud-timer');
+  if (sc && tm && sc.startT != null) {
+    const t = Math.max(0, Math.floor((sc.time.now - sc.startT) / 1000));
+    const txt = String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+    if (tm.textContent !== txt) tm.textContent = txt;
+  }
 }
 
 function stopFight() {

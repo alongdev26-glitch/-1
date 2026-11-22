@@ -295,34 +295,45 @@ export const vsScreen = (player, bots, map) => {
 };
 
 // ---------- קרב: HUD ובקרות מגע (הרקע והפלטפורמות ב-src/ui/maps.js) ----------
-export const hudCard = (c, human, uid) => {
-  const e = EL[c.element];
+// HUD בסגנון Smash: כרטיסי נזק מוטים בתחתית, טיימר במרכז, שם השלב והשהיה בראש
+const ECOL = { air: '#bfe6ff', water: '#3a8dde', earth: '#c2a169', fire: '#ff6a2a' };
+export const hudCard = (c, human, uid, w = 200) => {
+  const col = ECOL[c.element], compact = w < 140;
   return `
-  <article data-hud="${uid}" class="flex flex-col items-center">
-    <div class="flex items-center ${e.hudCard} border rounded-md px-1.5 py-1 gap-1.5 shadow-md">
-      <div class="w-8 h-8 rounded ${e.hudFace} border overflow-hidden flex items-center justify-center relative flex-shrink-0">
-        <img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
+  <article data-hud="${uid}" class="hud-card" style="width:${w}px;--ec:${col}">
+    <div class="hud-in ${compact ? 'hud-compact' : ''}">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="hud-tag">${human ? 'P1' : 'CPU'}</span>
+          <img src="${face(c)}" alt="" class="hud-face" style="image-rendering:pixelated">
+          <span class="hud-name">${c.en.toUpperCase()}</span>
+        </div>
+        <div data-stocks class="flex gap-1">${[0, 1, 2].map(() => '<span class="hud-dot"></span>').join('')}</div>
       </div>
-      <div class="flex flex-col text-left leading-tight pr-0.5">
-        <span class="text-[9px] ${e.hudName} font-semibold tracking-wide">${c.en}${human ? ' ★' : ''}</span>
-        <span data-pct class="text-sm font-black text-white">0%</span>
+      <div class="flex items-baseline justify-between">
+        ${compact ? '' : '<span class="hud-lbl">DAMAGE</span>'}
+        <div class="hud-dmg"><span data-pct>0%</span></div>
       </div>
-    </div>
-    <div class="w-full h-1.5 mt-0.5 rounded-full bg-black/50 overflow-hidden border border-white/10"><div data-ultbar class="h-full bg-gradient-to-r from-yellow-300 to-orange-400" style="width:0%"></div></div>
-    <div data-stocks class="flex gap-1 mt-0.5 items-center">
-      ${[0, 1, 2].map(() => `<span class="w-1.5 h-1.5 rounded-full ${e.hudDot} border"></span>`).join('')}
+      <div class="hud-bar"><div data-ultbar></div></div>
     </div>
   </article>`;
 };
 
-export const hudScreen = (fighters) => `
+export const hudScreen = (fighters, ctx = {}) => {
+  const n = fighters.length;
+  const w = ctx.touch ? Math.max(92, Math.min(190, Math.floor(390 / n) - 6)) : Math.max(120, Math.min(220, Math.floor(820 / n) - 14));
+  return `
 <div class="screen pointer-events-none font-sans">
   <header class="absolute top-3 left-4 right-4 flex items-start justify-between z-20">
-    <div class="flex items-center gap-3">${fighters.map((f) => hudCard(f.def, f.human, f.uid)).join('')}</div>
-    <button data-act="pause" aria-label="Pause" class="pointer-events-auto w-9 h-9 rounded-full bg-black/40 border border-white/40 flex items-center justify-center text-white/80 active:scale-95 transition-transform backdrop-blur-sm" type="button">
+    <div class="flex items-center gap-2">
+      <div class="hud-chip"><span class="text-[9px] tracking-[.18em] text-orange-300 block leading-none">STAGE</span><span class="text-[13px] font-extrabold text-white">${ctx.stageName || ''}</span></div>
+    </div>
+    <div class="hud-timer"><span class="hud-timer-in">⏱ <span id="hud-timer">00:00</span></span></div>
+    <button data-act="pause" aria-label="Pause" class="pointer-events-auto w-9 h-9 rounded-full bg-black/45 border border-white/40 flex items-center justify-center text-white/85 active:scale-95 transition-transform backdrop-blur-sm" type="button">
       <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect height="14" rx="1.5" width="3.5" x="6" y="5"></rect><rect height="14" rx="1.5" width="3.5" x="14.5" y="5"></rect></svg>
     </button>
   </header>
+  <div class="absolute left-1/2 bottom-2 z-20 flex items-end gap-3" style="transform:translateX(-50%)">${fighters.map((f) => hudCard(f.def, f.human, f.uid, w)).join('')}</div>
   <div id="touch-ui" class="absolute inset-0 z-30" hidden>
     <div id="joy-zone" class="absolute left-0 top-0 w-1/2 h-full pointer-events-auto" style="touch-action:none"></div>
     <div id="joy-base" class="absolute rounded-full pointer-events-none" hidden style="width:120px;height:120px;border:2px solid rgba(255,255,255,.35);background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,.05))">
@@ -357,6 +368,7 @@ export const hudScreen = (fighters) => `
     </nav>
   </div>
 </div>`;
+};
 
 // ---------- עצירה ----------
 export const pauseScreen = () => `

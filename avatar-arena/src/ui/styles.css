@@ -222,3 +222,34 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .realm-earth .rp { border-radius: 6px; border: 3px solid rgb(var(--c-primary) / .55); box-shadow: inset 0 0 0 2px rgb(0 0 0 / .45), inset 0 0 36px rgb(0 0 0 / .4), 0 12px 30px rgb(0 0 0 / .5); }
 .realm-fire .rp { border: 2px solid rgb(var(--c-primary) / .85); box-shadow: 0 0 22px rgb(var(--c-primary) / .35), inset 0 0 26px rgb(var(--c-primary) / .14);
   clip-path: polygon(0 14px, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px)); }
+
+/* מערת הלבה */
+.lavafall { background: linear-gradient(180deg,#fffbce 0%,#ff8914 25%,#ff4d00 50%,#ffd054 75%,#ff3300 100%); background-size: 100% 400px; animation: lavaflow 2.5s linear infinite;
+  box-shadow: 0 0 34px rgba(255,100,0,.85), inset 0 0 14px rgba(255,255,200,.4); }
+@keyframes lavaflow { from { background-position: 0 0; } to { background-position: 0 400px; } }
+.lavawave { animation: lavawave 3.2s ease-in-out infinite alternate; }
+@keyframes lavawave { from { transform: translateX(-14px) scaleY(1); } to { transform: translateX(14px) scaleY(1.2); } }
+.thr { animation: thr .16s ease-in-out infinite alternate; }
+@keyframes thr { from { opacity: .8; transform: scaleY(1); } to { opacity: 1; transform: scaleY(1.25); } }
+
+/* HUD בסגנון Smash */
+.hud-card { transform: skewX(-12deg); background: linear-gradient(90deg, color-mix(in srgb, var(--ec) 28%, #000) 0%, rgba(0,0,0,.82) 55%, rgba(0,0,0,.7) 100%);
+  border: 1px solid color-mix(in srgb, var(--ec) 45%, #000); border-left: 4px solid var(--ec); box-shadow: 0 4px 18px color-mix(in srgb, var(--ec) 45%, transparent); padding: 6px 10px; border-radius: 3px; }
+.hud-in { transform: skewX(12deg); }
+.hud-tag { background: var(--ec); color: #000; font-weight: 900; font-size: 9px; padding: 1px 5px; border-radius: 2px; letter-spacing: -.02em; }
+.hud-face { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; object-position: top; border: 1px solid var(--ec); background: rgba(0,0,0,.4); }
+.hud-name { font-family: Impact, 'Arial Black', sans-serif; font-size: 13px; letter-spacing: .04em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-lbl { font-size: 9px; font-weight: 700; letter-spacing: .12em; color: #a3a3a3; }
+.hud-dmg { font-family: Impact, 'Arial Black', sans-serif; font-size: 32px; line-height: 1; color: #fff; -webkit-text-stroke: 1.5px #000; text-shadow: 2px 2px 0 #000, 0 0 14px color-mix(in srgb, var(--ec) 70%, transparent); }
+.hud-dmg.dmg-hi { color: #ffb24a; }
+.hud-dmg.dmg-max { color: #ff3b2a; text-shadow: 2px 2px 0 #000, 0 0 16px rgba(255,40,20,.9); }
+.hud-compact .hud-dmg { font-size: 24px; }
+.hud-compact .hud-name { font-size: 11px; max-width: 46px; }
+.hud-compact .hud-face { display: none; }
+.hud-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ec); border: 1px solid #fff; box-shadow: 0 0 6px var(--ec); }
+.hud-dot.opacity-25 { background: #3a3a3a; border-color: #666; box-shadow: none; }
+.hud-bar { height: 6px; margin-top: 3px; border-radius: 99px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); overflow: hidden; }
+.hud-bar > div { height: 100%; background: linear-gradient(90deg, #ffd24c, #ff7a1c); box-shadow: 0 0 8px #ff7a1c; }
+.hud-chip { background: rgba(0,0,0,.7); border: 1px solid rgba(255,140,40,.5); border-radius: 3px; padding: 4px 10px; box-shadow: 0 0 14px rgba(255,90,0,.25); }
+.hud-timer { transform: skewX(-14deg); background: linear-gradient(180deg, #1c1c1c, #000); border: 2px solid #ff8a3d; box-shadow: 0 0 18px rgba(255,110,0,.45); padding: 2px 16px; }
+.hud-timer-in { display: inline-block; transform: skewX(14deg); font-family: Impact, 'Arial Black', sans-serif; font-size: 22px; color: #ffd24c; -webkit-text-stroke: 1px #000; letter-spacing: .06em; }

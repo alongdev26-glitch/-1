@@ -38,12 +38,16 @@ export const MAPS = [
     platforms: mk(560, [{ x: 245, top: 258, w: 130 }, { x: 715, top: 258, w: 130 }, { x: 480, top: 176, w: 150 }]),
   },
   {
-    id: 'fire', name: 'הר הגעש', element: 'fire',
+    id: 'fire', name: 'מערת הלבה', element: 'fire', cave: true,
     sky: ['#1d0605', '#7a1a0c', '#e8541c'], sun: { color: '#ffb066', x: 50, y: 70, r: 70 }, lava: true,
     hills: ['#4a1410', '#2f0c0a', '#1a0605'],
-    slab: { top: '#6f5b58', rim: '#3d2f2c', face: '#2a1f1d', deep: '#150f0e', facet: '#3b2a27', crack: '#ff7a1c' },
+    slab: { tech: true, top: '#2a343c', rim: '#27323b', face: '#1b232a', deep: '#0e1418', facet: '#222c34', neon: '#38efff', crack: '#ff7a1c' },
     ambient: { type: 'ember', color: '#ffb34a' },
-    platforms: mk(540, [{ x: 265, top: 264, w: 140 }, { x: 695, top: 264, w: 140 }, { x: 480, top: 186, w: 130 }]),
+    platforms: [
+      { x: 480, top: FLOOR, w: 520, main: true },
+      { x: 250, top: 282, w: 190 }, { x: 710, top: 282, w: 190 },
+      { x: 120, top: 210, w: 170 }, { x: 840, top: 210, w: 170 },
+    ],
   },
 ];
 
