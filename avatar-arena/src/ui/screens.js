@@ -96,10 +96,10 @@ export const menuScreen = () => `
   </header>
 
   <section class="relative z-10 w-full flex flex-col items-center justify-center -mt-4">
-    <button data-act="start" class="w-[340px] py-4 px-6 bg-gradient-to-b from-[#f8cf4f] to-[#e4ac29] hover:from-[#fce075] hover:to-[#ebb735] active:translate-y-0.5 text-stone-900 font-extrabold text-[26px] rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.3)] border border-[#ffeaa5] transition-all duration-150 flex items-center justify-center tracking-wide" type="button"><span>התחל קרב</span></button>
-    <button data-act="story" class="mt-4 w-[290px] py-2.5 px-5 bg-[#1b2538]/90 hover:bg-[#25324a]/90 active:translate-y-0.5 text-[#ffd9a8] font-bold text-lg rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-[#ffb779]/50 transition-all duration-150 flex items-center justify-center gap-2" type="button">
-      <svg class="w-4 h-4 text-[#ffb779]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.4 5.8 21.2l1.6-7L2 9.5l7.1-.6z"></path></svg>
-      <span>מסלול סיפור</span>
+    <button data-act="story" class="w-[340px] py-4 px-6 bg-gradient-to-b from-[#f8cf4f] to-[#e4ac29] hover:from-[#fce075] hover:to-[#ebb735] active:translate-y-0.5 text-stone-900 font-extrabold text-[26px] rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.3)] border border-[#ffeaa5] transition-all duration-150 flex items-center justify-center tracking-wide" type="button"><span>התחל קרב</span></button>
+    <button data-act="start" class="mt-4 w-[290px] py-2.5 px-5 bg-[#1b2538]/90 hover:bg-[#25324a]/90 active:translate-y-0.5 text-[#ffd9a8] font-bold text-lg rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-[#ffb779]/50 transition-all duration-150 flex items-center justify-center gap-2" type="button">
+      <svg class="w-4 h-4 text-[#ffb779]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.9 2 2 6.9l4.2 4.2-2.1 2.1 1.4 1.4L7.6 12.5 11.5 16.4 9.4 18.5l1.4 1.4 4.2-4.2L19.9 20.6 22 18.5 5.3 1.9z"></path></svg>
+      <span>קרב חופשי</span>
     </button>
   </section>
 

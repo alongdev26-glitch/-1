@@ -430,7 +430,7 @@ function gpTick() {
         if (el) el.click(); else moveFocus('down');
       }
       if (ev.back) goBack();
-      if (ev.start) { const go = $('screen').querySelector('[data-act="go"],[data-act="start"],[data-act="again"]'); go?.click(); }
+      if (ev.start) { const go = $('screen').querySelector('[data-act="go"],[data-act="story"],[data-act="again"]'); go?.click(); }
     }
   }
   requestAnimationFrame(gpTick);
