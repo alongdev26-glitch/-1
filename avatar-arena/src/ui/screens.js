@@ -112,121 +112,107 @@ export const menuScreen = () => `
 </main>`;
 
 // ---------- בחירת דמות ----------
-const selectCard = (c, selected) => {
-  const e = EL[c.element], s = statsOf(c);
-  const frame = selected
-    ? 'border-2 border-[#f7d358] bg-[#142338]/90 selected-card-glow'
-    : e.card;
-  const bar = selected ? 'bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500' : e.bar;
-  const row = (icon, color, w, fill) => `
-    <div class="flex items-center gap-1.5 text-[9px] text-slate-300">
-      <span class="w-2 ${color} font-mono">${icon}</span>
-      <div class="flex-1 bg-slate-800 h-1.5 rounded-full overflow-hidden"><div class="${fill} h-full rounded-full" style="width:${w}%"></div></div>
-    </div>`;
+// ---------- בחירת דמות (סגנון Smash: רשימת דמויות, ובתחתית פאנל שחקן ופאנל CPU) ----------
+const TILE_BG = {
+  air: 'linear-gradient(160deg,#cfe9ff,#5fa8e0)', water: 'linear-gradient(160deg,#4aa3ff,#0b3f80)',
+  earth: 'linear-gradient(160deg,#a8c97a,#4a3a1c)', fire: 'linear-gradient(160deg,#ff9a4a,#7a1a0c)',
+};
+const lockedTile = (w = 96) => `<div class="relative overflow-hidden rounded-sm border-2 border-black/50 opacity-60" style="width:${w}px;height:${w}px;background:repeating-linear-gradient(45deg,#1b2233,#1b2233 6px,#161c2b 6px,#161c2b 12px)">
+  <span class="absolute inset-0 flex items-center justify-center text-slate-500 text-2xl font-black">?</span></div>`;
+
+export const selectScreen = (selId, bots, cpuLv = 5) => {
+  const sel = byId(selId === 'random' ? 'zuko' : selId), e = EL[sel.element], t = TILE_BG[sel.element];
+  const charTile = (c) => {
+    const on = c.id === selId;
+    return `<button data-char="${c.id}" class="relative overflow-hidden rounded-sm transition active:scale-95 ${on ? 'border-[3px] border-white shadow-[0_0_16px_3px_rgba(255,255,255,.55)] z-10 scale-105' : 'border-2 border-black/60 hover:border-white/70'}" style="width:96px;height:96px;background:${TILE_BG[c.element]}" type="button">
+      <img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
+      <div class="absolute bottom-0 inset-x-0 bg-black/80 text-white text-[10px] font-extrabold text-center py-0.5 tracking-wide">${c.en.toUpperCase()}</div>
+      ${on ? '<div class="absolute top-0.5 left-0.5 px-1.5 rounded bg-red-600 text-white text-[10px] font-black">P1</div>' : ''}
+    </button>`;
+  };
   return `
-  <article data-char="${c.id}" class="relative flex flex-col rounded-xl ${frame} overflow-hidden cursor-pointer transform hover:-translate-y-1 transition duration-200">
-    <div class="h-1.5 w-full ${bar}"></div>
-    <div class="relative flex-1 flex items-center justify-center p-2 bg-gradient-to-b ${e.portrait} overflow-hidden">
-      <img src="${face(c)}" alt="" class="h-full w-full object-contain object-center drop-shadow-lg" style="image-rendering:pixelated" draggable="false">
-      <div class="absolute bottom-1 right-2 ${e.tag} rounded-full w-5 h-5 flex items-center justify-center shadow"><span class="text-[10px] text-white font-bold">${e.emoji}</span></div>
+<main dir="rtl" class="screen select-none overflow-hidden font-rubik" style="background:linear-gradient(180deg,#0b0d14 0%,#0b0d14 52%,#1a1d2e 100%)">
+  <header class="absolute top-0 inset-x-0 h-12 flex items-center px-4 z-20" style="background:linear-gradient(90deg,#b81c1c 0 14%,transparent 14%)">
+    <button data-act="back" class="w-10 h-9 flex items-center justify-center rounded bg-black/30 hover:bg-black/50 active:scale-95 text-white text-xl" type="button" aria-label="חזור">↩</button>
+    <div class="absolute left-1/2 -translate-x-1/2 top-1.5 px-10 py-1 text-[20px] font-black tracking-wide text-[#1b1400]" style="background:linear-gradient(180deg,#ffe36a,#f4b400);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%);font-family:Impact,'Arial Black',sans-serif">בחר דמות</div>
+  </header>
+
+  <section class="absolute left-1/2 -translate-x-1/2 top-[58px] grid gap-[6px]" style="grid-template-columns:repeat(9,96px)">
+    <button data-char="random" class="relative overflow-hidden rounded-sm border-2 ${selId === 'random' ? 'border-white' : 'border-black/60'} bg-[#e8c200]" style="width:96px;height:96px" type="button"><span class="absolute inset-0 flex items-center justify-center text-[#1b1400] text-5xl font-black">?</span><div class="absolute bottom-0 inset-x-0 bg-black/80 text-white text-[10px] font-extrabold text-center py-0.5">RANDOM</div></button>
+    ${CHARACTERS.map(charTile).join('')}
+    ${Array.from({ length: 13 }, () => lockedTile()).join('')}
+  </section>
+
+  <!-- פאנל שחקן (אדום) -->
+  <section class="absolute left-0 bottom-0 z-10" style="width:52%;height:196px;background:linear-gradient(110deg,#7d0f12 0%,#d41f24 62%,#ff4a3a 100%);clip-path:polygon(0 0,100% 9%,93% 100%,0 100%)">
+    <div class="absolute inset-0 opacity-25" style="background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.35) 22px 24px)"></div>
+    <div class="absolute left-5 top-6 w-[132px] h-[132px] rounded-md overflow-hidden border-[3px] border-white shadow-xl" style="background:${selId === 'random' ? '#d9d9d9' : t}">
+      ${selId === 'random' ? '<span class="absolute inset-0 flex items-center justify-center text-6xl font-black text-[#555]">?</span>' : `<img src="${face(sel)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated">`}
     </div>
-    <div class="bg-[#0b1420]/95 px-2 py-2 flex flex-col items-center border-t border-slate-700/60">
-      <div class="flex items-center gap-0.5 text-[9px] mb-0.5">${stars(starCount(c), e.stars, 'text-slate-600')}</div>
-      <h3 class="text-sm font-bold text-white tracking-wide">${c.name} <span dir="ltr" class="inline-block">(${c.en})</span></h3>
-      <div class="flex items-center justify-center gap-1.5 mt-1.5" title="${c.moves.map((m) => m.name).join(' · ')}">
-        ${c.moves.map((m) => moveIcon(m, c.element, 18)).join('')}
-        <span class="w-px h-3 bg-slate-600"></span>${moveIcon(c.ult, c.element, 18)}
-      </div>
-      <div class="w-full mt-1.5 space-y-1">
-        ${row('⚡', 'text-yellow-400', s.atk, 'bg-amber-400')}
-        ${row('🛡️', 'text-sky-400', s.def, 'bg-sky-400')}
-        ${row('🌪️', 'text-emerald-400', s.spd, 'bg-emerald-400')}
-      </div>
+    <div class="absolute left-[170px] top-5 flex flex-col gap-1.5 text-white" style="width:230px">
+      <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded bg-white/90 text-red-700 text-[11px] font-black">P1</span><span class="text-[11px] font-bold opacity-90">שחקן 1</span></div>
+      <div class="text-[26px] font-black leading-none drop-shadow" style="font-family:Impact,'Arial Black',sans-serif">${selId === 'random' ? 'RANDOM' : sel.en.toUpperCase()}</div>
+      ${selId === 'random' ? '<div class="text-[12px] opacity-90">דמות אקראית</div>' : `
+      <div class="flex items-center gap-1 text-[12px] font-bold"><span>${e.emoji}</span><span>${e.label}</span><span class="opacity-70">• רמה ${sel.tier}</span></div>
+      <div class="flex items-center gap-1.5 mt-1 bg-black/25 rounded px-2 py-1 w-fit">${sel.moves.map((m) => moveIcon(m, sel.element, 22)).join('')}<span class="w-px h-4 bg-white/40"></span>${moveIcon(sel.ult, sel.element, 22)}</div>`}
     </div>
-  </article>`;
+  </section>
+
+  <!-- פאנל CPU (אפור) -->
+  <section class="absolute right-0 bottom-0 z-10" style="width:52%;height:196px;background:linear-gradient(250deg,#3b3f47 0%,#8a8f98 60%,#c9ccd2 100%);clip-path:polygon(0 9%,100% 0,100% 100%,7% 100%)">
+    <div class="absolute inset-0 opacity-20" style="background:repeating-linear-gradient(65deg,transparent 0 22px,rgba(255,255,255,.5) 22px 24px)"></div>
+    <div class="absolute right-8 top-3 text-[120px] leading-none font-black text-white drop-shadow-lg" style="font-family:Impact,'Arial Black',sans-serif;text-shadow:4px 4px 0 #2b2e35">?</div>
+    <div class="absolute left-[96px] top-5 flex flex-col gap-2 text-white items-end">
+      <div class="text-[28px] font-black leading-none drop-shadow" style="font-family:Impact,'Arial Black',sans-serif">RANDOM</div>
+      <div class="flex items-center gap-1.5">
+        <span class="px-2 py-0.5 rounded bg-black/55 text-[11px] font-black tracking-wide">CPU LV.</span>
+        <button data-cpulv="-1" class="w-7 h-7 rounded bg-black/55 hover:bg-black/75 text-lg font-black active:scale-90" type="button">−</button>
+        <span class="w-8 text-center text-[24px] font-black text-[#ff3b2a]" style="font-family:Impact,sans-serif;text-shadow:2px 2px 0 #000">${cpuLv}</span>
+        <button data-cpulv="1" class="w-7 h-7 rounded bg-black/55 hover:bg-black/75 text-lg font-black active:scale-90" type="button">+</button>
+      </div>
+      <div class="flex items-center gap-1.5"><span class="text-[11px] font-bold">בוטים:</span>
+        ${[1, 2, 3].map((n) => `<button data-bots="${n}" class="w-8 h-8 rounded font-black text-[15px] ${n === bots ? 'bg-[#ffd24c] text-[#1b1400]' : 'bg-black/55 text-white hover:bg-black/75'} active:scale-90 transition" type="button">${n}</button>`).join('')}</div>
+    </div>
+  </section>
+
+  <button data-act="go" class="absolute left-1/2 -translate-x-1/2 bottom-5 z-20 px-9 py-2.5 rounded-xl font-black text-[16px] text-[#1b1400] bg-gradient-to-b from-[#ffea79] via-[#f7cb45] to-[#d89e1b] shadow-[0_6px_18px_rgba(0,0,0,.55)] border-t border-yellow-200 active:scale-95 hover:brightness-110 transition flex items-center gap-2" type="button"><span>בחר מפה</span><span class="text-lg">◀</span></button>
+</main>`;
 };
 
-const lockedCard = () => `
-  <article class="relative flex flex-col rounded-xl border border-slate-700/50 bg-[#0e141c]/90 opacity-70 overflow-hidden cursor-not-allowed select-none">
-    <div class="h-1.5 w-full bg-slate-700"></div>
-    <div class="relative flex-1 flex flex-col items-center justify-center p-2 bg-[#0a0f16]/90 overflow-hidden">
-      <div class="opacity-15 filter grayscale">
-        <svg class="w-20 h-24 text-slate-400" fill="currentColor" viewBox="0 0 100 120"><path d="M22 105 C35 88, 65 88, 78 105 L88 120 L12 120 Z"></path><circle cx="50" cy="48" r="26"></circle></svg>
-      </div>
-      <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 z-10">
-        <div class="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-600 flex items-center justify-center shadow-lg">
-          <svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path clip-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" fill-rule="evenodd"></path></svg>
-        </div>
-        <span class="text-xs text-slate-400 font-medium px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800">נפתח בשלב 4</span>
-      </div>
-    </div>
-    <div class="bg-[#080d14] px-2 py-3 flex flex-col items-center border-t border-slate-800">
-      <span class="text-xs font-bold text-slate-500 tracking-wider">נעול</span>
-      <div class="w-full mt-2 space-y-1.5 opacity-30"><div class="bg-slate-700 h-1.5 rounded-full w-full"></div><div class="bg-slate-700 h-1.5 rounded-full w-full"></div></div>
-    </div>
-  </article>`;
-
-export const selectScreen = (selId, bots) => `
-<main dir="rtl" class="screen flex flex-col justify-between select-none overflow-hidden bg-twilight-mountains font-rubik">
-  <div aria-hidden="true" class="absolute inset-0 pointer-events-none bg-mountains-shade">
-    <svg class="absolute bottom-0 w-full h-2/5 opacity-35 text-[#080d16]" fill="currentColor" preserveAspectRatio="none" viewBox="0 0 1200 400"><path d="M0,400 L0,220 L160,110 L340,280 L520,70 L710,240 L890,90 L1080,260 L1200,160 L1200,400 Z"></path></svg>
-    <svg class="absolute bottom-0 w-full h-1/3 opacity-55 text-[#05080e]" fill="currentColor" preserveAspectRatio="none" viewBox="0 0 1200 300"><path d="M0,300 L0,180 L230,80 L440,220 L680,60 L920,210 L1110,120 L1200,180 L1200,300 Z"></path></svg>
-  </div>
-  <header class="relative z-10 pt-4 pb-1 text-center">
-    <h1 class="text-lg tracking-widest text-slate-300 font-bold uppercase drop-shadow-md">בחר דמות / CHARACTER SELECT</h1>
-  </header>
-  <section class="relative z-10 flex-1 flex items-center justify-center px-8 py-2">
-    <div class="grid grid-cols-5 gap-5 w-full max-w-5xl h-[72%] max-h-[380px] items-stretch">
-      ${CHARACTERS.map((c) => selectCard(c, c.id === selId)).join('')}
-      ${lockedCard()}
-    </div>
-  </section>
-  <footer class="relative z-10 w-full px-12 py-4 flex items-center justify-between border-t border-slate-800/80 bg-gradient-to-t from-[#060a11] via-[#09101c]/95 to-transparent">
-    <div class="flex items-center gap-3">
-      <span class="text-sm font-bold text-slate-300 drop-shadow">כמה בוטים?</span>
-      <div class="inline-flex rounded-lg p-0.5 bg-[#0e1726] border border-slate-700 shadow-inner" role="group">
-        ${[1, 2, 3].map((n) => `<button data-bots="${n}" class="w-8 h-8 flex items-center justify-center rounded text-sm ${n === bots ? 'font-bold bg-sky-600 text-white shadow' : 'font-semibold text-slate-400 hover:text-white hover:bg-slate-800'} focus:outline-none transition" type="button">${n}</button>`).join('')}
-      </div>
-    </div>
-    <button data-act="go" class="relative group px-12 py-2.5 rounded-xl font-black text-base tracking-wider text-amber-950 bg-gradient-to-b from-[#ffea79] via-[#f7cb45] to-[#d89e1b] hover:brightness-110 active:scale-95 shadow-[0_4px_16px_rgba(247,203,69,0.35)] border-t border-yellow-200 transition-all duration-150 ease-out cursor-pointer flex items-center gap-2" type="button">
-      <span>קדימה</span>
-      <svg class="w-4 h-4 text-amber-950 transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-    </button>
-  </footer>
-</main>`;
-
-// ---------- בחירת מפה ----------
+// ---------- בחירת מפה (סגנון Smash: תצוגה גדולה בצד וטבלת מפות) ----------
 export const mapScreen = (selId) => {
-  const card = (m) => {
-    const sel = m.id === selId;
-    return `
-    <article data-map="${m.id}" class="relative flex flex-col rounded-xl overflow-hidden cursor-pointer transform hover:-translate-y-1 transition duration-200 ${sel ? 'border-2 border-[#f7d358] selected-card-glow' : 'border border-slate-700 hover:border-slate-400'} bg-[#0e1726]">
-      ${mapPreview(m, 244)}
-      <div class="flex items-center justify-between px-3 py-1.5 bg-[#0b1420]/95">
-        <span class="text-sm font-bold text-white">${m.name}</span><span class="text-base">${EL[m.element].emoji}</span>
-      </div>
-    </article>`;
+  const m = MAPS.find((x) => x.id === selId);
+  const tile = (mp) => {
+    const on = mp.id === selId;
+    return `<button data-map="${mp.id}" class="relative overflow-hidden rounded-sm transition active:scale-95 ${on ? 'border-[3px] border-white shadow-[0_0_16px_3px_rgba(255,255,255,.55)] z-10 scale-105' : 'border-2 border-black/60 hover:border-white/70'}" style="width:94px;height:54px" type="button">${mapPreview(mp, 94)}</button>`;
   };
-  const rnd = `
-    <article data-map="random" class="relative flex flex-col rounded-xl overflow-hidden cursor-pointer transform hover:-translate-y-1 transition duration-200 ${selId === 'random' ? 'border-2 border-[#f7d358] selected-card-glow' : 'border border-slate-700 hover:border-slate-400'} bg-[#0e1726]">
-      <div class="flex items-center justify-center" style="width:244px;height:137px;background:radial-gradient(circle at 50% 40%,#2a3c53,#0b121c)"><span class="text-6xl">🎲</span></div>
-      <div class="flex items-center justify-between px-3 py-1.5 bg-[#0b1420]/95"><span class="text-sm font-bold text-white">אקראי</span><span class="text-base">✦</span></div>
-    </article>`;
+  const randomTile = `<button data-map="random" class="relative overflow-hidden rounded-sm ${selId === 'random' ? 'border-[3px] border-white shadow-[0_0_16px_3px_rgba(255,255,255,.55)] z-10 scale-105' : 'border-2 border-black/60'} bg-[#e8c200]" style="width:94px;height:54px" type="button"><span class="absolute inset-0 flex items-center justify-center text-[#1b1400] text-3xl font-black">?</span></button>`;
+  const locked = (n) => Array.from({ length: n }, () => `<div class="rounded-sm border-2 border-black/50 opacity-55 flex items-center justify-center text-slate-500 font-black" style="width:94px;height:54px;background:repeating-linear-gradient(45deg,#1b2233,#1b2233 6px,#161c2b 6px,#161c2b 12px)">?</div>`).join('');
   return `
-<main dir="rtl" class="screen flex flex-col justify-between select-none overflow-hidden bg-twilight-mountains font-rubik">
-  <header class="relative z-10 pt-4 pb-1 text-center">
-    <h1 class="text-lg tracking-widest text-slate-300 font-bold uppercase drop-shadow-md">בחר מפה / CHOOSE ARENA</h1>
+<main dir="rtl" class="screen select-none overflow-hidden font-rubik" style="background:linear-gradient(135deg,#10131d 0%,#1a1d2e 60%,#2a2037 100%)">
+  <header class="absolute top-0 inset-x-0 h-12 flex items-center px-4 z-20" style="background:linear-gradient(90deg,#b81c1c 0 14%,transparent 14%)">
+    <button data-act="back" class="w-10 h-9 flex items-center justify-center rounded bg-black/30 hover:bg-black/50 active:scale-95 text-white text-xl" type="button" aria-label="חזור">↩</button>
+    <div class="absolute left-1/2 -translate-x-1/2 top-1.5 px-10 py-1 text-[20px] font-black tracking-wide text-[#1b1400]" style="background:linear-gradient(180deg,#ffe36a,#f4b400);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%);font-family:Impact,'Arial Black',sans-serif">בחר מפה</div>
+    <div class="mr-auto flex items-center gap-2 text-white text-[12px] font-bold"><span class="px-2.5 py-1 rounded bg-black/45">חיים: 3</span><span class="px-2.5 py-1 rounded bg-black/45">סגנון: רגיל</span></div>
   </header>
-  <section class="relative z-10 flex-1 flex items-center justify-center px-8 py-2">
-    <div class="grid grid-cols-3 gap-x-5 gap-y-4">${MAPS.map(card).join('')}${rnd}</div>
+
+  <!-- תצוגה גדולה של המפה הנבחרת -->
+  <section class="absolute left-6 top-16 flex flex-col items-center gap-2" style="width:330px">
+    <div class="relative overflow-hidden rounded-md border-[3px] border-white shadow-2xl" style="width:330px;height:186px;background:#e8c200">
+      ${m ? mapPreview(m, 330) : '<span class="absolute inset-0 flex items-center justify-center text-[#1b1400] text-8xl font-black">?</span>'}
+    </div>
+    <div class="w-full px-4 py-2.5 rounded-md text-white" style="background:linear-gradient(90deg,#0b0e16,#1e2433);border-left:5px solid ${m ? '#ffd24c' : '#aaa'}">
+      <div class="flex items-center justify-between"><span class="text-[24px] font-black" style="font-family:Impact,'Arial Black',sans-serif">${m ? m.name : 'אקראי'}</span><span class="text-xl">${m ? EL[m.element].emoji : '🎲'}</span></div>
+      <div class="text-[11px] text-slate-300 mt-0.5">${m ? `${m.platforms.length} פלטפורמות • אי ראשי ברוחב ${m.platforms[0].w}` : 'מפה שנבחרת באקראי לפני הקרב'}</div>
+    </div>
   </section>
-  <footer class="relative z-10 w-full px-12 py-4 flex items-center justify-between border-t border-slate-800/80 bg-gradient-to-t from-[#060a11] via-[#09101c]/95 to-transparent">
-    <button data-act="back" class="px-8 py-2.5 rounded-xl font-bold text-base text-slate-200 bg-[#141b28] border border-[#28354b] hover:bg-[#1e283b] active:scale-95 transition" type="button">חזור</button>
-    <button data-act="go" class="relative px-12 py-2.5 rounded-xl font-black text-base tracking-wider text-amber-950 bg-gradient-to-b from-[#ffea79] via-[#f7cb45] to-[#d89e1b] hover:brightness-110 active:scale-95 shadow-[0_4px_16px_rgba(247,203,69,0.35)] border-t border-yellow-200 transition-all duration-150 ease-out cursor-pointer flex items-center gap-2" type="button">
-      <span>קדימה</span>
-      <svg class="w-4 h-4 text-amber-950 transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-    </button>
-  </footer>
+
+  <!-- טבלת המפות -->
+  <section class="absolute right-6 top-16 grid gap-[6px] p-2 rounded-md" style="grid-template-columns:repeat(4,94px);background:rgba(0,0,0,.45)">
+    ${randomTile}${MAPS.map(tile).join('')}${locked(10)}
+  </section>
+
+  <button data-act="go" class="absolute left-1/2 -translate-x-1/2 bottom-5 z-20 px-10 py-2.5 rounded-xl font-black text-[16px] text-[#1b1400] bg-gradient-to-b from-[#ffea79] via-[#f7cb45] to-[#d89e1b] shadow-[0_6px_18px_rgba(0,0,0,.55)] border-t border-yellow-200 active:scale-95 hover:brightness-110 transition flex items-center gap-2" type="button"><span>קדימה!</span><span class="text-lg">◀</span></button>
 </main>`;
 };
 
@@ -336,10 +322,14 @@ export const hudScreen = (fighters, ctx = {}) => {
   <div class="absolute left-1/2 bottom-2 z-20 flex items-end gap-3" style="transform:translateX(-50%)">${fighters.map((f) => hudCard(f.def, f.human, f.uid, w)).join('')}</div>
   <div id="touch-ui" class="absolute inset-0 z-30" hidden>
     <div id="joy-zone" class="absolute left-0 top-0 w-1/2 h-full pointer-events-auto" style="touch-action:none"></div>
-    <div id="joy-base" class="absolute rounded-full pointer-events-none" hidden style="width:120px;height:120px;border:2px solid rgba(255,255,255,.35);background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,.05))">
-      <div id="joy-knob" class="absolute rounded-full" style="width:52px;height:52px;left:34px;top:34px;background:rgba(255,255,255,.4);border:2px solid rgba(255,255,255,.6)"></div>
+    <div id="joy-ghost" class="absolute pointer-events-none" style="left:30px;bottom:30px;width:140px;height:140px;border-radius:50%;border:3px solid rgba(255,209,102,.8);background:radial-gradient(circle,rgba(255,209,102,.24),rgba(255,255,255,.06));box-shadow:0 0 24px rgba(255,209,102,.5),inset 0 0 20px rgba(255,209,102,.22)">
+      <svg class="absolute inset-0 w-full h-full" viewBox="0 0 140 140"><g fill="rgba(255,236,170,.95)"><polygon points="70,10 80,26 60,26"/><polygon points="70,130 80,114 60,114"/><polygon points="10,70 26,60 26,80"/><polygon points="130,70 114,60 114,80"/></g></svg>
+      <div class="absolute rounded-full" style="width:60px;height:60px;left:40px;top:40px;background:rgba(255,236,170,.38);border:3px solid rgba(255,236,170,.9);box-shadow:0 0 14px rgba(255,209,102,.7)"></div>
     </div>
-    <div id="joy-hint" class="absolute left-12 bottom-14 text-white/40 text-xs pointer-events-none">גע כאן כדי לזוז</div>
+    <div id="joy-base" class="absolute rounded-full pointer-events-none" hidden style="width:140px;height:140px;border:3px solid rgba(255,209,102,.9);background:radial-gradient(circle,rgba(255,209,102,.28),rgba(255,255,255,.08));box-shadow:0 0 28px rgba(255,209,102,.6),inset 0 0 22px rgba(255,209,102,.25)">
+      <div id="joy-knob" class="absolute rounded-full" style="width:64px;height:64px;left:38px;top:38px;background:rgba(255,236,170,.55);border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 16px rgba(255,209,102,.8)"></div>
+    </div>
+    <div id="joy-hint" class="absolute text-[12px] font-bold pointer-events-none" style="left:30px;bottom:176px;width:140px;text-align:center;color:rgba(255,236,170,.9);text-shadow:0 1px 3px #000">גע וגרור כדי לזוז</div>
     <nav class="absolute right-4 bottom-4 pointer-events-none" style="width:300px;height:262px">
       <button data-hold="m1" aria-label="1" class="virtual-btn pointer-events-auto absolute rounded-full flex items-center justify-center text-white/90 font-bold " style="left:218px;top:150px;width:72px;height:72px;font-size:28px" type="button">
         <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 40 40"><circle data-ring="m1" cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="113" stroke-dashoffset="0" transform="rotate(-90 20 20)"></circle></svg>

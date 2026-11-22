@@ -13,7 +13,7 @@ import { fightBackground } from './maps.js';
 import { MAPS, mapById } from '../data/maps.js';
 
 const $ = (id) => document.getElementById(id);
-const state = { sel: 'aang', bots: 1, map: 'sunset', cfg: null, game: null, last: null, mode: 'menu', paused: false,
+const state = { sel: 'zuko', bots: 1, map: 'random', cpuLv: 5, cfg: null, game: null, last: null, mode: 'menu', paused: false,
   story: { realm: 'air', sel: null, chosen: 'zuko' }, over: null };
 let vsTimer = null;
 
@@ -103,15 +103,27 @@ function startStory() {
   startVs({ p1: chosen, bots: [opp], map: mapById(S.map), story: { realm: realm.id, stage: S.id }, skill: S.skill, boss: !!S.boss });
 }
 
+// אחרי רינדור מחדש בשלט: מחזירים את הפוקוס לאריח שנבחר
+function refocus(selector) {
+  if (!pad.active) return;
+  const el = $('screen').querySelector(selector);
+  if (el) setFocus(el);
+}
+
 export function showSelect() {
   const render = () => {
-    setScreen(selectScreen(state.sel, state.bots));
+    setScreen(selectScreen(state.sel, state.bots, state.cpuLv));
+    refocus(`[data-char="${state.sel}"]`);
     $('screen').onclick = (e) => {
       const card = e.target.closest('[data-char]');
       if (card) { state.sel = card.dataset.char; return render(); }
       const bots = e.target.closest('[data-bots]');
       if (bots) { state.bots = +bots.dataset.bots; return render(); }
-      if (e.target.closest('[data-act="go"]')) showMap();
+      const lv = e.target.closest('[data-cpulv]');
+      if (lv) { state.cpuLv = Math.max(1, Math.min(9, state.cpuLv + +lv.dataset.cpulv)); return render(); }
+      const a = e.target.closest('[data-act]')?.dataset.act;
+      if (a === 'back') showMenu();
+      if (a === 'go') showMap();
     };
   };
   render();
@@ -120,6 +132,7 @@ export function showSelect() {
 export function showMap() {
   const render = () => {
     setScreen(mapScreen(state.map));
+    refocus(`[data-map="${state.map}"]`);
     $('screen').onclick = (e) => {
       const card = e.target.closest('[data-map]');
       if (card) { state.map = card.dataset.map; return render(); }
@@ -140,11 +153,12 @@ function startVs(over) {
     player = byId(over.p1); bots = over.bots.map(byId); map = over.map;
     state.cfg = { p1: player.id, bots: over.bots, map, story: over.story, skill: over.skill, boss: over.boss };
   } else {
-    player = byId(state.sel);
+    const pool = CHARACTERS.filter((c) => true);
+    player = state.sel === 'random' ? Phaser.Utils.Array.GetRandom(pool) : byId(state.sel);
     const others = Phaser.Utils.Array.Shuffle(CHARACTERS.filter((c) => c.id !== player.id));
     bots = others.slice(0, state.bots);
     map = state.map === 'random' ? Phaser.Utils.Array.GetRandom(MAPS) : mapById(state.map);
-    state.cfg = { p1: player.id, bots: bots.map((b) => b.id), map };
+    state.cfg = { p1: player.id, bots: bots.map((b) => b.id), map, skill: 0.45 + state.cpuLv * 0.1 };
   }
   setScreen(vsScreen(player, bots, map));
   $('screen').onclick = null;
@@ -207,9 +221,9 @@ function stagePoint(e) {
 
 // ג'ויסטיק צף: מופיע מתחת לאצבע בחצי השמאלי של המסך ועוקב אחריה
 function bindJoystick() {
-  const zone = $('joy-zone'), base = $('joy-base'), knob = $('joy-knob'), hint = $('joy-hint');
+  const zone = $('joy-zone'), base = $('joy-base'), knob = $('joy-knob'), hint = $('joy-hint'), ghost = $('joy-ghost');
   if (!zone) return;
-  const R = 60;                       // רדיוס הג'ויסטיק
+  const R = 70;                       // רדיוס הג'ויסטיק
   let id = null, cx = 0, cy = 0;
   const flags = (dx, dy) => {
     // תנועה פרופורציונית: ככל שהאצבע רחוקה יותר מהמרכז הדמות מהירה יותר (אזור מת קטן וקימור עדין)
@@ -218,14 +232,14 @@ function bindJoystick() {
     touch.left = touch.axis < -0.05; touch.right = touch.axis > 0.05;
     touch.up = dy < -34; touch.down = dy > 34;
   };
-  const reset = () => { id = null; base.hidden = true; hint.hidden = false; flags(0, 0); };
+  const reset = () => { id = null; base.hidden = true; hint.hidden = false; ghost.hidden = false; flags(0, 0); };
   zone.addEventListener('pointerdown', (e) => {
     if (id !== null) return;
     e.preventDefault(); zone.setPointerCapture(e.pointerId); id = e.pointerId;
     const p = stagePoint(e); cx = p.x; cy = p.y;
     base.style.left = cx - R + 'px'; base.style.top = cy - R + 'px';
-    knob.style.left = '34px'; knob.style.top = '34px';
-    base.hidden = false; hint.hidden = true;
+    knob.style.left = '38px'; knob.style.top = '38px';
+    base.hidden = false; hint.hidden = true; ghost.hidden = true;
   });
   zone.addEventListener('pointermove', (e) => {
     if (e.pointerId !== id) return;
@@ -238,7 +252,7 @@ function bindJoystick() {
       dx = p.x - cx; dy = p.y - cy;
       base.style.left = cx - R + 'px'; base.style.top = cy - R + 'px';
     }
-    knob.style.left = 34 + dx + 'px'; knob.style.top = 34 + dy + 'px';
+    knob.style.left = 38 + dx + 'px'; knob.style.top = 38 + dy + 'px';
     flags(dx, dy);
   });
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => zone.addEventListener(ev, (e) => { if (e.pointerId === id || ev === 'lostpointercapture') reset(); }));
@@ -396,7 +410,7 @@ function moveFocus(dir) {
   const list = focusables();
   if (!list.length) return;
   if (!focusEl || !list.includes(focusEl)) {
-    setFocus(list.find((e) => e.classList.contains('selected-card-glow') || e.classList.contains('bg-sky-600')) || list[0]);
+    setFocus(list.find((e) => e.classList.contains('selected-card-glow') || e.classList.contains('bg-sky-600') || e.classList.contains('scale-105')) || list[0]);
     return;
   }
   const c = (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
@@ -412,7 +426,7 @@ function moveFocus(dir) {
     const score = along + across * 2.2;
     if (score < bestScore) { bestScore = score; best = e; }
   });
-  if (best) setFocus(best);
+  if (best) { setFocus(best); if (best.dataset.char || best.dataset.map) best.click(); }
 }
 function goBack() {
   if (state.paused) return resume();
