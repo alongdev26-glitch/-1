@@ -1,0 +1,126 @@
+<title>בוחן כימיה מסכם</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--fg:#1d2a26;--mut:#5d6b66;--line:#cfd8d3;--acc:#0f7b6c;--acc-fg:#fff;--soft:#e3f1ed;--ok:#1b7a3a;--okbg:#e0f3e6;--bad:#b3261e;--badbg:#fbe6e4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121917;--card:#1b2522;--fg:#e8f0ec;--mut:#9fb0a9;--line:#33423d;--acc:#3fc2ae;--acc-fg:#08211c;--soft:#1f3a34;--ok:#6fd48d;--okbg:#1c3a27;--bad:#f2928b;--badbg:#472320;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121917;--card:#1b2522;--fg:#e8f0ec;--mut:#9fb0a9;--line:#33423d;--acc:#3fc2ae;--acc-fg:#08211c;--soft:#1f3a34;--ok:#6fd48d;--okbg:#1c3a27;--bad:#f2928b;--badbg:#472320;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:Arial,"Segoe UI",sans-serif;font-size:18px;line-height:1.55;direction:rtl;padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:28px;line-height:1.25;margin:0}
+h2{font-size:22px;margin:0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2 small{font-size:16px;color:var(--mut);font-weight:400}
+p{margin:0}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.prog{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.q{border:1.5px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.q.ok{border-color:var(--ok);background:var(--okbg)}.q.bad{border-color:var(--bad);background:var(--badbg)}
+.qt{font-weight:700}
+.f{direction:ltr;display:inline-block;font-weight:700}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+button,input{font:inherit}
+button{cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:10px 16px;font-weight:700}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.sel{background:var(--acc);color:var(--acc-fg);border-color:var(--acc)}
+button.main{background:var(--acc);color:var(--acc-fg);border-color:var(--acc);padding:12px 20px}
+input{width:110px;border:1.5px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--fg);text-align:center;direction:ltr}
+.nrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fb{font-size:16px}
+.pics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pics figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700}
+.pics svg{width:100%;height:auto;background:var(--card);border:1.5px solid var(--fg);border-radius:6px}
+.a1{fill:var(--fg)}.a2{fill:var(--card);stroke:var(--fg);stroke-width:1.5}
+#final{font-size:20px;font-weight:700;display:flex;flex-direction:column;gap:6px}
+.bar{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+<main>
+<h1>בוחן כימיה מסכם</h1>
+<p>חומרים, איורי חלקיקים, נוסחאות, תגובות וקשרים. לכל שאלה תקבלו תשובה והסבר מיד.</p>
+<div class="prog" aria-hidden="true"><i id="pb"></i></div>
+<p id="pt" style="color:var(--mut);font-size:16px"></p>
+<div id="root" style="display:flex;flex-direction:column;gap:18px"></div>
+<section id="fin"><h2>הציון שלך</h2><div id="final">ענו על השאלות כדי לראות ציון.</div>
+<div class="bar"><button class="main" id="again">מתחילים מחדש</button></div></section>
+</main>
+<script>
+function atom(x,y,c){return '<circle class="'+c+'" cx="'+x+'" cy="'+y+'" r="'+(c==="a1"?9:7)+'"/>'}
+var PICS='<div class="pics">'
++'<figure><svg viewBox="0 0 100 100" role="img" aria-label="איור א: אטומים נפרדים משני סוגים">'+atom(20,22,"a1")+atom(62,18,"a2")+atom(80,50,"a1")+atom(30,55,"a2")+atom(55,72,"a1")+atom(20,85,"a2")+atom(82,85,"a2")+atom(48,40,"a2")+'</svg>א</figure>'
++'<figure><svg viewBox="0 0 100 100" role="img" aria-label="איור ב: זוגות של אותו אטום">'+atom(15,20,"a1")+atom(31,20,"a1")+atom(60,30,"a1")+atom(76,30,"a1")+atom(22,65,"a1")+atom(38,65,"a1")+atom(62,80,"a1")+atom(78,80,"a1")+'</svg>ב</figure>'
++'<figure><svg viewBox="0 0 100 100" role="img" aria-label="איור ג: מולקולות משני סוגי אטומים">'
++[[28,28],[72,36],[40,74]].map(function(p){return atom(p[0],p[1],"a1")+atom(p[0]-13,p[1]+10,"a2")+atom(p[0]+13,p[1]+10,"a2")}).join("")+'</svg>ג</figure></div>';
+var ABG=["א","ב","ג"];
+var T=[
+{n:"חומרים ואיורים",q:[
+ {t:'לפניכם שלושה איורים. העיגולים השונים הם אטומים של יסודות שונים.'+PICS+'<span class="qt">איזה איור מתאר <b>יסוד</b>?</span>',o:ABG,a:"ב",w:"יסוד בנוי מסוג אחד של אטומים. באיור ב יש רק סוג אחד."},
+ {t:'<span class="qt">איזה איור (א, ב או ג) מתאר <b>תרכובת</b>?</span>'+PICS,o:ABG,a:"ג",w:"תרכובת: אטומים משני סוגים או יותר מחוברים ביחד באותה מולקולה."},
+ {t:'<span class="qt">איזה איור (א, ב או ג) מתאר <b>תערובת</b>?</span>'+PICS,o:ABG,a:"א",w:"תערובת: חומרים נפרדים שלא מחוברים זה לזה."},
+ {t:'<span class="qt">זהב (<span class="f">Au</span>) הוא:</span>',o:["יסוד","תרכובת","תערובת"],a:"יסוד",w:"הוא בנוי מסוג אחד של אטומים."},
+ {t:'<span class="qt">מלח שולחן (<span class="f">NaCl</span>) הוא:</span>',o:["יסוד","תרכובת","תערובת"],a:"תרכובת",w:"יש בו שני יסודות, Na ו-Cl, מחוברים בקשר כימי."},
+ {t:'<span class="qt">אוויר (חמצן, חנקן ועוד) הוא:</span>',o:["יסוד","תרכובת","תערובת"],a:"תערובת",w:"כמה חומרים מעורבבים, וכל אחד שומר על תכונותיו."}]},
+{n:"נוסחאות ומולקולות",q:[
+ {t:'<span class="qt">כמה אטומים יש במולקולה אחת של <span class="f">H₂SO₄</span>?</span>',n:7,w:"2 מימן + 1 גופרית + 4 חמצן = 7."},
+ {t:'<span class="qt">כמה מולקולות יש ב-<span class="f">C₆H₁₂O₆</span>?</span>',n:1,w:"אין מספר לפני הנוסחה, אז זו מולקולה אחת. 6, 12 ו-6 הם אטומים."},
+ {t:'<span class="qt">כמה אטומים יש בסך הכול ב-<span class="f">C₆H₁₂O₆</span>?</span>',n:24,w:"6 + 12 + 6 = 24."},
+ {t:'<span class="qt">כמה אטומי מימן יש ב-<span class="f">3H₂O</span>?</span>',n:6,w:"3 מולקולות × 2 אטומי מימן = 6."},
+ {t:'<span class="qt">כמה אטומים יש בסך הכול ב-<span class="f">3H₂O</span>?</span>',n:9,w:"3 מולקולות × 3 אטומים (2 מימן + 1 חמצן) = 9."},
+ {t:'<span class="qt">כמה אטומי גופרית יש ב-<span class="f">5S₈</span>?</span>',n:40,w:"5 מולקולות × 8 אטומים = 40."},
+ {t:'<span class="qt">כמה אטומי חמצן יש ב-<span class="f">2CO₂</span>?</span>',n:4,w:"2 מולקולות × 2 אטומי חמצן = 4."}]},
+{n:"תגובות כימיות",q:[
+ {t:'<span class="qt">בתגובה <span class="f">4Fe + 3O₂ → 2Fe₂O₃</span> כמה חומרים הם מגיבים?</span>',n:2,w:"המגיבים הם משמאל לחץ: Fe ו-O₂."},
+ {t:'<span class="qt">באותה תגובה, כמה חומרים הם תוצרים?</span>',n:1,w:"רק Fe₂O₃. זה חומר אחד, לא מפצלים אותו."},
+ {t:'<span class="qt">כמה אטומי Fe יש בצד התוצרים, ב-<span class="f">2Fe₂O₃</span>?</span>',n:4,w:"2 מולקולות × 2 אטומי Fe = 4, כמו בצד המגיבים. לכן התגובה מאוזנת."},
+ {t:'<span class="qt">מה אומר חוק שימור המסה?</span>',o:["מספר האטומים לא משתנה בתהליך","נוצרים אטומים חדשים","האטומים נעלמים"],a:"מספר האטומים לא משתנה בתהליך",w:"האטומים רק מסתדרים מחדש."},
+ {t:'<span class="qt">איזה מספר חסר כדי לאזן? <span class="f">2H₂ + O₂ → ? H₂O</span></span>',n:2,w:"בצד שמאל 4 אטומי מימן ו-2 חמצן. 2H₂O נותן 4 מימן ו-2 חמצן."},
+ {t:'<span class="qt">איזה מספר חסר כדי לאזן? <span class="f">N₂ + ? H₂ → 2NH₃</span></span>',n:3,w:"בצד ימין 6 אטומי מימן (2×3), אז צריך 3H₂."}]},
+{n:"קשרים כימיים",q:[
+ {t:'<span class="qt"><span class="f">NaCl</span></span>',o:["יוני","שיתופי"],a:"יוני",w:"Na מתכת ו-Cl אל מתכת."},
+ {t:'<span class="qt"><span class="f">CO₂</span></span>',o:["יוני","שיתופי"],a:"שיתופי",w:"שני אל מתכות."},
+ {t:'<span class="qt"><span class="f">K₂O</span></span>',o:["יוני","שיתופי"],a:"יוני",w:"K היא מתכת."},
+ {t:'<span class="qt"><span class="f">NH₃</span></span>',o:["יוני","שיתופי"],a:"שיתופי",w:"N ו-H הם אל מתכות."},
+ {t:'<span class="qt"><span class="f">HCl</span></span>',o:["יוני","שיתופי"],a:"שיתופי",w:"H ו-Cl הם אל מתכות."},
+ {t:'<span class="qt"><span class="f">MgCl₂</span></span>',o:["יוני","שיתופי"],a:"יוני",w:"Mg היא מתכת."}]}
+];
+var root=document.getElementById("root"),R={};
+var total=T.reduce(function(s,t){return s+t.q.length},0);
+function upd(){
+  var d=0,ok=0;Object.keys(R).forEach(function(k){d++;if(R[k])ok++});
+  document.getElementById("pb").style.width=(d/total*100)+"%";
+  document.getElementById("pt").textContent="ענית על "+d+" מתוך "+total;
+  var f=document.getElementById("final");
+  if(!d){f.textContent="ענו על השאלות כדי לראות ציון.";return}
+  var h='<div>סך הכול: '+ok+' מתוך '+total+' ('+Math.round(ok/total*100)+'%)'+(d<total?' (עוד לא סיימת)':'')+'</div>';
+  T.forEach(function(t,ti){var a=0,g=0;t.q.forEach(function(_,qi){var k=ti+"-"+qi;if(k in R){a++;if(R[k])g++}});h+='<div style="font-size:16px;font-weight:400">'+t.n+': '+g+' מתוך '+t.q.length+'</div>'});
+  f.innerHTML=h;
+}
+function finish(card,k,good,q){
+  R[k]=good;card.className="q "+(good?"ok":"bad");
+  var fb=card.querySelector(".fb");
+  fb.textContent=(good?"✅ נכון. ":"❌ לא נכון. התשובה: "+(q.o?q.a:q.n)+". ")+q.w;
+  card.querySelectorAll("button,input").forEach(function(e){e.disabled=true});
+  upd();
+}
+function build(){
+  root.innerHTML="";R={};
+  T.forEach(function(t,ti){
+    var s=document.createElement("section");
+    s.innerHTML='<h2>'+t.n+' <small>'+t.q.length+' שאלות</small></h2>';
+    t.q.forEach(function(q,qi){
+      var k=ti+"-"+qi,c=document.createElement("div");c.className="q";
+      var h='<div>'+q.t+'</div>';
+      if(q.o){h+='<div class="opts">'+q.o.map(function(o){return '<button data-o="'+o+'">'+o+'</button>'}).join("")+'</div>'}
+      else{h+='<div class="nrow"><input type="number" inputmode="numeric" aria-label="תשובה"><button class="main">בדיקה</button></div>'}
+      c.innerHTML=h+'<div class="fb" role="status"></div>';
+      if(q.o){c.querySelectorAll("button").forEach(function(b){b.onclick=function(){b.classList.add("sel");finish(c,k,b.dataset.o===q.a,q)}})}
+      else{var i=c.querySelector("input"),b=c.querySelector("button");
+        var go=function(){if(i.value==="")return;finish(c,k,Number(i.value)===q.n,q)};
+        b.onclick=go;i.onkeydown=function(e){if(e.key==="Enter")go()}}
+      s.appendChild(c);
+    });
+    root.appendChild(s);
+  });
+  upd();
+}
+document.getElementById("again").onclick=function(){build();window.scrollTo(0,0)};
+build();
+</script>
