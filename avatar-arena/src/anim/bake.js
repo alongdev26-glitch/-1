@@ -68,7 +68,7 @@ const hit = [
   F({ torsoF: -0.2, headF: -0.2, arm: [{ s: 0.35, e: 0.2 }, { s: -0.35, e: 0.2 }], kneeBoth: 0.12, bob: 1 }),
 ];
 
-export const ANIMS = { walk, idle, jump, hit, m1, m2, m3, m4, ult, stomp };
+const ANIMS = { walk, idle, jump, hit, m1, m2, m3, m4, ult, stomp };
 export const FRAMES = Object.fromEntries(Object.entries(ANIMS).map(([k, v]) => [k, v.length]));
 export const bakedKey = (id, anim, i) => `bk_${id}_${anim}_${i}`;
 
