@@ -253,3 +253,5 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .hud-chip { background: rgba(0,0,0,.7); border: 1px solid rgba(255,140,40,.5); border-radius: 3px; padding: 4px 10px; box-shadow: 0 0 14px rgba(255,90,0,.25); }
 .hud-timer { transform: skewX(-14deg); background: linear-gradient(180deg, #1c1c1c, #000); border: 2px solid #ff8a3d; box-shadow: 0 0 18px rgba(255,110,0,.45); padding: 2px 16px; }
 .hud-timer-in { display: inline-block; transform: skewX(14deg); font-family: Impact, 'Arial Black', sans-serif; font-size: 22px; color: #ffd24c; -webkit-text-stroke: 1px #000; letter-spacing: .06em; }
+
+#three-layer canvas { display: block; pointer-events: none; }

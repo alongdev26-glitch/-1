@@ -146,10 +146,10 @@ export const selectScreen = (selId, bots, cpuLv = 5) => {
   <!-- פאנל שחקן (אדום) -->
   <section class="absolute left-0 bottom-0 z-10" style="width:52%;height:196px;background:linear-gradient(110deg,#7d0f12 0%,#d41f24 62%,#ff4a3a 100%);clip-path:polygon(0 0,100% 9%,93% 100%,0 100%)">
     <div class="absolute inset-0 opacity-25" style="background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.35) 22px 24px)"></div>
-    <div class="absolute left-5 top-6 w-[132px] h-[132px] rounded-md overflow-hidden border-[3px] border-white shadow-xl" style="background:${selId === 'random' ? '#d9d9d9' : t}">
+    <div ${selId === 'random' ? '' : `data-v3d="${sel.id}"`} class="absolute left-3 top-2 w-[150px] h-[176px] rounded-md overflow-hidden border-[3px] border-white shadow-xl" style="background:${selId === 'random' ? '#d9d9d9' : t}">
       ${selId === 'random' ? '<span class="absolute inset-0 flex items-center justify-center text-6xl font-black text-[#555]">?</span>' : `<img src="${face(sel)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated">`}
     </div>
-    <div class="absolute left-[170px] top-5 flex flex-col gap-1.5 text-white" style="width:230px">
+    <div class="absolute left-[184px] top-5 flex flex-col gap-1.5 text-white" style="width:230px">
       <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded bg-white/90 text-red-700 text-[11px] font-black">P1</span><span class="text-[11px] font-bold opacity-90">שחקן 1</span></div>
       <div class="text-[26px] font-black leading-none drop-shadow" style="font-family:Impact,'Arial Black',sans-serif">${selId === 'random' ? 'RANDOM' : sel.en.toUpperCase()}</div>
       ${selId === 'random' ? '<div class="text-[12px] opacity-90">דמות אקראית</div>' : `
@@ -232,8 +232,8 @@ const vsCard = (c, w) => {
   return `
   <div class="flex flex-col items-center" style="width:${w}px">
     <div class="relative rounded-xl overflow-hidden" style="width:${w}px;height:${Math.round(w * 1.25)}px;border:3px solid ${t.glow};box-shadow:0 0 32px ${t.glow}aa,0 10px 24px rgba(0,0,0,.6);background:${t.bg}">
-      <img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false">
-      <div class="absolute bottom-1.5 left-1.5 right-1.5 bg-black/55 py-0.5 rounded flex items-center justify-center gap-0.5 border border-yellow-500/30">
+      <div data-v3d="${c.id}" class="absolute inset-0"><img src="${face(c)}" alt="" class="w-full h-full object-cover object-top" style="image-rendering:pixelated" draggable="false"></div>
+      <div class="absolute bottom-1.5 left-1.5 right-1.5 z-10 bg-black/55 py-0.5 rounded flex items-center justify-center gap-0.5 border border-yellow-500/30">
         ${stars(starCount(c), 'text-yellow-400 text-xs', 'text-slate-500 text-xs')}
       </div>
     </div>
@@ -361,12 +361,13 @@ export const hudScreen = (fighters, ctx = {}) => {
 };
 
 // ---------- עצירה ----------
-export const pauseScreen = () => `
+export const pauseScreen = (on3d = true) => `
 <div dir="rtl" class="screen flex items-center justify-center select-none font-sans">
   <div class="absolute inset-0 bg-[#09111c]/65"></div>
   <section aria-label="תפריט עצירה" class="relative z-20 w-[250px] bg-[rgba(16,26,43,0.94)] game-modal rounded-[9px] p-5 flex flex-col gap-3 items-center border border-[#2e496a] shadow-2xl">
     <button data-act="resume" class="w-full py-2 px-3 rounded-md bg-[#ffcf53] hover:bg-[#f8be35] text-[#1b263b] font-bold text-base tracking-wide gold-button-glow transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow" type="button">המשך</button>
     <button data-act="restart" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">התחל מחדש</button>
+    <button data-act="toggle3d" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">גרפיקה תלת-מימד: ${on3d ? 'פעילה' : 'כבויה'}</button>
     <button data-act="menu" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">לתפריט</button>
   </section>
 </div>`;

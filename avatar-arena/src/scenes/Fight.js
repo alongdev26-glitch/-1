@@ -346,6 +346,7 @@ export default class Fight extends Phaser.Scene {
     this.alive().forEach((f) => this.updateFighter(f, dt));
     this.projectiles.getChildren().slice().forEach((p) => this.updateProjectile(p, dt));
     this.cfg.onHud?.(this.fighters);
+    this.cfg.onFrame?.(this.fighters);
   }
 
   updateProjectile(p, dt) {

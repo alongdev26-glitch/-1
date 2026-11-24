@@ -5,6 +5,9 @@ import { touch } from './input.js';
 import { isUnlocked, setMode, story as storyData, recordStory } from '../data/progress.js';
 import { realmById, REALMS, evalObjectives, realmOpen } from '../data/story.js';
 import { moveIcon } from './icons.js';
+import { Stage3D } from '../three/stage3d.js';
+import { createViewer, destroyViewers } from '../three/viewer.js';
+import { is3D, set3D } from '../three/settings.js';
 import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
   menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen, storyScreen, storyResultsScreen, stageStates,
@@ -16,6 +19,27 @@ const $ = (id) => document.getElementById(id);
 const state = { sel: 'zuko', bots: 1, map: 'random', cpuLv: 5, cfg: null, game: null, last: null, mode: 'menu', paused: false,
   story: { realm: 'air', sel: null, chosen: 'zuko' }, over: null };
 let vsTimer = null;
+
+// ---- תלת-מימד ----
+function start3D(fighters) {
+  stop3D();
+  if (!is3D()) return;
+  try {
+    state.stage3d = new Stage3D($('three-layer'));
+    state.stage3d.attach(fighters);
+    if (state.cfg) state.cfg.onFrame = (f) => state.stage3d && state.stage3d.sync(f);
+  } catch (e) { // אין WebGL: ממשיכים ב-2D
+    console.warn('3D disabled', e);
+    state.stage3d?.dispose?.(); state.stage3d = null;
+  }
+}
+function stop3D() {
+  if (state.stage3d) { try { state.stage3d.dispose(); } catch { /* ignore */ } state.stage3d = null; }
+  if (state.cfg) state.cfg.onFrame = null;
+}
+function mountViewers() {
+  $('screen').querySelectorAll('[data-v3d]').forEach((el) => createViewer(el, el.dataset.v3d));
+}
 
 // ---- במה: 960x540 שמוקטנת/מוגדלת למסך ----
 function fit() {
@@ -33,8 +57,10 @@ function toast(msg) {
 const isTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0 || /[?&]touch=1/.test(location.search);
 
 function setScreen(html) {
+  destroyViewers();
   $('screen').innerHTML = html;
   $('screen').hidden = false;
+  mountViewers();
 }
 
 function clearOverlay() { $('overlay').innerHTML = ''; }
@@ -207,8 +233,10 @@ function beginFight(scene) {
   $('screen').hidden = true; $('screen').innerHTML = '';
   clearOverlay();
   $('touch-ui').hidden = !isTouch();
+  destroyViewers();
   bindHud();
   applyIcons(fighters[0].def);
+  start3D(fighters);
   state.mode = 'fight';
   blockInput(400);
   scene.go();
@@ -333,6 +361,7 @@ function updateHud(fighters) {
 
 function stopFight() {
   clearInterval(vsTimer);
+  stop3D();
   Object.keys(touch).forEach((k) => (touch[k] = false));
   if (state.game) { state.game.scene.stop('Fight'); }
   $('canvas-wrap').hidden = true;
@@ -345,11 +374,16 @@ function pause() {
   state.game.scene.pause('Fight');
   state.paused = true;
   Object.keys(touch).forEach((k) => (touch[k] = false));
-  $('overlay').innerHTML = pauseScreen();
+  $('overlay').innerHTML = pauseScreen(is3D());
   $('overlay').style.pointerEvents = 'auto';
   $('overlay').onclick = (e) => {
     const a = e.target.closest('[data-act]')?.dataset.act;
     if (a === 'resume') resume();
+    if (a === 'toggle3d') {
+      set3D(!is3D());
+      if (is3D()) { start3D(scene.fighters); state.stage3d?.sync(scene.fighters); } else stop3D();
+      $('overlay').innerHTML = pauseScreen(is3D());
+    }
     if (a === 'restart') { resume(true); startVs(state.over); }
     if (a === 'menu') { resume(true); showMenu(); }
   };
