@@ -7,6 +7,9 @@ import { shadowTexture, DIST } from './helpers.js';
 import { ARENAS } from './arenas/index.js';
 import { FollowCam } from './camera.js';
 import { ELEMENTS } from '../data/characters.js';
+import { RIGS } from '../data/rigs.js';
+import { buildHumanoid } from './models/humanoid.js';
+import { applyPose, frameFor } from './models/pose.js';
 
 const W = 960, H = 540;
 
@@ -31,6 +34,8 @@ export class World3D {
     this.t0 = performance.now();
     this.light = { glow: [0, 0, 0], amb: [1, 1, 1] };
     this.shadowTex = shadowTexture();
+    const key = new THREE.DirectionalLight(0xfff0e0, 1.6); key.position.set(-300, 500, 700); this.scene.add(key);
+    this.scene.add(new THREE.HemisphereLight(0xffe6cc, 0x553322, 0.7));
     if (this.full) {
       this.arena = arenaFn(map);
       this.scene.add(this.arena.group);
@@ -50,12 +55,15 @@ export class World3D {
       const front = new THREE.Mesh(sharedGeometry(), makeMaterial(1, rim));
       const back = new THREE.Mesh(sharedGeometry(), makeMaterial(-1, rim));
       g.add(front, back);
+      const model = buildHumanoid(f.def.id);
+      g.add(model);
+      front.visible = back.visible = false;
       g.position.z = f.uid * 4;
       this.scene.add(g);
       const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.shadowTex, transparent: true, depthWrite: false, fog: false }));
       shadow.position.z = -3;
       this.scene.add(shadow);
-      this.items.set(f.uid, { g, front, back, shadow, sx: f.vis.flipX ? -1 : 1, tilt: 0 });
+      this.items.set(f.uid, { g, front, back, model, yaw: f.facing > 0 ? -0.45 : Math.PI + 0.45, shadow, sx: f.vis.flipX ? -1 : 1, tilt: 0 });
       f.vis.renderWebGL = () => {};   // לא מצייר ב-Phaser
       f.vis.renderCanvas = () => {};
       this.hidden.push(f.vis);
@@ -76,30 +84,27 @@ export class World3D {
       it.g.visible = v.visible && v.alpha > 0.01;
       it.shadow.visible = it.g.visible && (f.body.blocked.down || f.body.touching.down);
       if (!it.g.visible) continue;
-      const src = v.texture.getSourceImage && v.texture.getSourceImage();
-      if (!src || !src.width) { it.g.visible = false; continue; }
-      const entry = buildTex(v.texture.key, src);
-      const dw = Math.abs(v.displayWidth), dh = Math.abs(v.displayHeight), thick = dh * 0.2;
-      [it.front, it.back].forEach((m) => {
-        setEntry(m.material, entry, dw, dh, thick);
-        m.scale.set(dw, dh, 1);
-        const u = m.material.uniforms;
-        u.uAlpha.value = v.alpha;
-        u.uGlow.value.set(...this.light.glow); u.uAmb.value.set(...this.light.amb);
-        if (v.isTinted && v.tintFill) {
-          const c = v.tintTopLeft;
-          u.uTint.value.set(((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255, 1);
-        } else u.uTint.value.set(0, 0, 0, 0);
-      });
+      const dh = Math.abs(v.displayHeight), dw = Math.abs(v.displayWidth);
+      const m = /^bk_[a-z]+_([a-z0-9]+)_(\d+)$/.exec(v.texture.key);
+      const fr = frameFor(m ? m[1] : 'idle', m ? +m[2] : 0);
+      applyPose(it.model, fr, (RIGS[f.def.id] || {}).strike || 0);
+      const H3 = dh * 0.92 * it.model.userData.build;
+      it.model.scale.setScalar(H3);
+      it.model.position.y = -dh / 2 + (dh - H3) * 0 - 4;
+      it.model.traverse((o) => { if (o.material && o.material.emissive) o.material.emissive.setRGB(0, 0, 0); });
+      if (v.isTinted && v.tintFill) {
+        const c = v.tintTopLeft;
+        it.model.traverse((o) => { if (o.material && o.material.emissive) o.material.emissive.setRGB(((c >> 16) & 255) / 255 * 0.8, ((c >> 8) & 255) / 255 * 0.8, (c & 255) / 255 * 0.8); });
+      }
       it.g.position.x = v.x - W / 2;
       it.g.position.y = H / 2 - v.y;
       it.shadow.position.set(v.x - W / 2, H / 2 - f.body.bottom + 2, -3);
-      it.shadow.scale.set(dw * 0.75, 18, 1);
-      // היפוך כיוון = פנייה (הסקאלה עוברת דרך אפס), והטיית מבט 3/4 לכיוון המצלמה
-      it.sx += ((v.flipX ? -1 : 1) - it.sx) * 0.4;
-      it.tilt += (-f.facing * 0.4 - it.tilt) * 0.25;
-      it.g.scale.x = it.sx;
-      it.g.rotation.set(0, it.tilt, (-v.angle * Math.PI) / 180);
+      it.shadow.scale.set(dw * 0.6, 18, 1);
+      const target = f.facing > 0 ? -0.45 : Math.PI + 0.45;
+      let d = target - it.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+      it.yaw += d * 0.3;
+      it.model.rotation.y = it.yaw;
+      it.g.rotation.set(0, 0, (-v.angle * Math.PI) / 180);
     }
     this.r.render(this.scene, this.cam);
   }
