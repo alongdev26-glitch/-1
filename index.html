@@ -1,34 +1,893 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <title>דיל סיטי</title>
-    <meta name="title" content="דיל סיטי" />
-    <meta name="description" content="משחק המסחר בנכסים בעברית – קונים רחובות, בונים מלונות ומנצחים! בחינם, בלי הורדה." />
-    <!-- the preview card when the link is shared (WhatsApp, Telegram, Facebook…) -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="דיל סיטי" />
-    <meta property="og:title" content="דיל סיטי 🏙️🎲" />
-    <meta property="og:description" content="משחק המסחר בנכסים בעברית – קונים רחובות, בונים מלונות ומנצחים! בחינם, בלי הורדה." />
-    <meta property="og:url" content="https://alongdev26-glitch.github.io/-1/" />
-    <meta property="og:image" content="https://alongdev26-glitch.github.io/-1/og-image-v3.jpg" />
-    <meta property="og:image:secure_url" content="https://alongdev26-glitch.github.io/-1/og-image-v3.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="דיל סיטי – משחק המסחר בנכסים" />
-    <meta property="og:locale" content="he_IL" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#E3001B" />
-    <link rel="manifest" href="/-1/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon-v5.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="דיל סיטי" />
-    <link rel="icon" type="image/png" href="./favicon-v5.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>תרגול מתמטיקה – כיתה ח׳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0a1c; --card:#1a1535; --card2:#251e49; --line:#3a3170;
+  --text:#f4f1ff; --muted:#aaa3d4;
+  --purple:#a78bfa; --teal:#2dd4bf; --orange:#fb923c; --pink:#f472b6; --sky:#38bdf8;
+  --good:#34d399; --bad:#fb7185; --warn:#facc15;
+  --c:var(--purple);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  background:radial-gradient(1200px 600px at 100% -10%,#2b1d63 0%,transparent 60%),
+             radial-gradient(900px 500px at -10% 110%,#0f3b44 0%,transparent 55%),var(--bg);
+  background-attachment:fixed;
+  color:var(--text);font-family:'Heebo','Rubik',Arial,sans-serif;font-size:18px;line-height:1.55;
+  min-height:100vh;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;border:0}
+bdi{unicode-bidi:isolate}
+.app{max-width:760px;margin:0 auto;padding:0 16px 40px}
+
+/* top bar */
+#top{position:sticky;top:0;z-index:20;background:rgba(13,10,28,.88);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 16px 0}
+.topin{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;min-height:46px}
+.topin .ttl{flex:1;font-weight:800;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;font-size:16px;white-space:nowrap}
+.iconbtn{background:var(--card2);border:1px solid var(--line);border-radius:14px;width:46px;height:46px;font-size:22px}
+#barWrap{max-width:760px;margin:8px auto 0;height:10px;background:var(--card2);border-radius:10px;overflow:hidden;display:none}
+#bar{height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--teal),var(--orange));border-radius:10px;transition:width .5s cubic-bezier(.2,.9,.3,1)}
+#barTxt{max-width:760px;margin:2px auto 6px;font-size:13px;color:var(--muted);display:none}
+
+/* home */
+h1{font-size:30px;margin:22px 0 4px;font-weight:800;line-height:1.2}
+h1 span{background:linear-gradient(90deg,var(--purple),var(--teal),var(--orange));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin:0 0 16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px;text-align:center}
+.stat b{display:block;font-size:26px;font-weight:800}
+.stat small{color:var(--muted);font-size:13px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.chips .lbl{color:var(--muted);font-size:15px}
+.chip{background:var(--card2);border:2px solid var(--line);border-radius:999px;padding:8px 18px;font-weight:700;min-height:44px}
+.chip.on{border-color:var(--teal);background:#0f3b44;color:#fff}
+.reco{background:linear-gradient(135deg,#3a2470,#16404a);border:1px solid var(--line);border-radius:22px;padding:16px;margin:14px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.reco .t{flex:1;min-width:200px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px;margin:16px 0}
+@media(min-width:620px){.grid{grid-template-columns:1fr 1fr}}
+.tcard{--c:var(--purple);text-align:right;background:var(--card);border:2px solid color-mix(in srgb,var(--c) 55%,transparent);
+  border-radius:26px;padding:18px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;min-height:150px;display:block;width:100%}
+.tcard::before{content:"";position:absolute;inset:0;background:radial-gradient(300px 140px at 90% 0,color-mix(in srgb,var(--c) 28%,transparent),transparent 70%)}
+.tcard:hover,.tcard:active{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 30px -10px var(--c)}
+.tcard>*{position:relative}
+.tcard .ic{font-size:36px}
+.tcard h3{margin:2px 0 2px;font-size:22px;color:var(--c);font-weight:800}
+.tcard p{margin:0 0 10px;color:var(--muted);font-size:15px;line-height:1.4}
+.mini{height:8px;background:#ffffff1a;border-radius:8px;overflow:hidden}
+.mini i{display:block;height:100%;background:var(--c);border-radius:8px}
+.tcard small{color:var(--muted);font-size:13px}
+.mixed{width:100%;background:linear-gradient(90deg,var(--purple),var(--pink),var(--orange));color:#1a0f33;font-weight:800;font-size:22px;border-radius:24px;padding:20px;min-height:68px;box-shadow:0 10px 30px -10px var(--pink);transition:transform .2s}
+.mixed:active{transform:scale(.98)}
+.row2{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
+.btn2{flex:1;min-width:140px;background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:14px;font-weight:700;min-height:54px}
+
+/* question */
+.qcard{background:var(--card);border:2px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:28px;padding:18px;margin-top:14px;animation:slideIn .45s cubic-bezier(.2,.9,.3,1)}
+.qcard.leave{animation:slideOut .2s ease-in forwards}
+@keyframes slideIn{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+@keyframes slideOut{to{opacity:0;transform:translateX(40px)}}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.tag{background:color-mix(in srgb,var(--c) 25%,transparent);color:var(--c);border-radius:999px;padding:4px 14px;font-weight:800;font-size:15px}
+.qnum{color:var(--muted);font-size:15px}
+.qtext{font-size:21px;font-weight:500;line-height:1.6;margin:6px 0 12px}
+.qtext b{color:var(--c)}
+.svgbox{background:var(--card2);border-radius:20px;padding:8px;margin:8px 0 14px;display:flex;justify-content:center}
+.svgbox svg{width:100%;max-width:440px;height:auto;display:block}
+.ansrow{display:flex;gap:10px}
+.ansrow input{flex:1;min-width:0;font-family:inherit;font-size:24px;font-weight:700;text-align:center;height:60px;border-radius:18px;border:2px solid var(--line);background:#120e29;color:#fff;padding:0 12px;outline:none;direction:ltr}
+.ansrow input::placeholder{color:#6d66a0;font-weight:400;font-size:17px;direction:rtl}
+.ansrow input:focus{border-color:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 25%,transparent)}
+.ansrow input:disabled{opacity:.85}
+.ansrow input.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.go{background:var(--c);color:#14102b;font-weight:800;border-radius:18px;padding:0 24px;min-height:60px;font-size:20px;transition:transform .15s}
+.go:active{transform:scale(.95)}
+.go:disabled{opacity:.4}
+.ynrow{display:flex;gap:10px;margin-top:10px}
+.ynrow .chip{flex:1;font-size:20px}
+.hintrow{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+.hbtn{background:#3b3115;color:var(--warn);border:2px solid #6b5a1c;border-radius:16px;padding:10px 18px;font-weight:700;min-height:48px}
+.hbtn:disabled{opacity:.4}
+.hint{background:#2b2410;border:1px dashed #8a7425;color:#fde68a;border-radius:16px;padding:10px 14px;margin-top:10px;animation:pop .35s}
+@keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.fb{margin-top:14px;border-radius:20px;padding:14px 16px;animation:pop .4s}
+.fb.ok{background:#0e3a2e;border:2px solid var(--good)}
+.fb.no{background:#3d1424;border:2px solid var(--bad)}
+.fb h4{margin:0 0 6px;font-size:22px}
+.fb.ok h4{color:var(--good)} .fb.no h4{color:var(--bad)}
+.fb ol{margin:8px 0 0;padding-inline-start:24px}
+.fb li{margin:6px 0}
+.mistake{background:#00000030;border-radius:12px;padding:8px 12px;margin:8px 0}
+.link{background:none;color:var(--teal);text-decoration:underline;padding:6px 0;font-weight:700}
+.nav{display:flex;gap:10px;margin-top:16px}
+.nav button{flex:1;min-height:58px;border-radius:18px;font-weight:800;font-size:19px;background:var(--card2);border:2px solid var(--line)}
+.nav button.primary{background:var(--c);color:#14102b;border-color:var(--c)}
+.nav button:disabled{opacity:.35}
+.pulse{animation:pulse .6s}
+@keyframes pulse{40%{transform:scale(1.025);box-shadow:0 0 40px -5px var(--good)}}
+
+/* history */
+.hitem{background:var(--card);border:1px solid var(--line);border-radius:18px;margin:10px 0;overflow:hidden}
+.hitem summary{padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;list-style:none}
+.hitem summary::-webkit-details-marker{display:none}
+.hitem .mk{font-size:22px}
+.hitem .sn{flex:1;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hitem .bd{padding:0 14px 14px;font-size:16px}
+.hitem .bd ol{padding-inline-start:22px;margin:6px 0}
+.tg{font-size:13px;font-weight:800;border-radius:999px;padding:2px 10px;background:color-mix(in srgb,var(--c) 25%,transparent);color:var(--c);white-space:nowrap}
+
+/* modal + fx */
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#modal.on{display:flex}
+.mbox{background:var(--card);border:2px solid var(--teal);border-radius:28px;padding:24px;max-width:420px;width:100%;text-align:center;animation:pop .4s}
+.mbox h2{margin:0 0 6px;font-size:28px}
+.mbox .big{font-size:56px;font-weight:800;color:var(--teal)}
+.mbox .row2{margin-bottom:0}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.conf{position:absolute;left:50%;top:55%;font-size:26px;animation:fly 1.1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:420px){body{font-size:17px}.qtext{font-size:19px}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div id="top">
+  <div class="topin">
+    <button class="iconbtn" id="homeBtn" aria-label="בית" onclick="goHome()">🏠</button>
+    <div class="ttl" id="topTitle">תרגול מתמטיקה</div>
+    <div class="pill" id="streakChip">🔥 0</div>
+  </div>
+  <div id="barWrap"><div id="bar"></div></div>
+  <div id="barTxt"></div>
+</div>
+<div class="app"><main id="view"></main></div>
+<div id="modal"></div>
+<div id="fx"></div>
+
+<script>
+/* ============ כלי עזר ============ */
+const $=s=>document.querySelector(s);
+const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[ri(0,a.length-1)];
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const rnd=x=>Math.round(x*1e6)/1e6;
+const nf=x=>rnd(x).toLocaleString('en-US');
+const near=(a,b)=>Math.abs(a-b)<0.011;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const MTOK='(?:<b>)?(?:√?[\\d.,]+²?|x²?)(?:</b>)?';
+const MRE=new RegExp(MTOK+'(?:\\s*[+−×÷=·]\\s*'+MTOK+')+','g');
+const mathify=h=>String(h).replace(MRE,m=>`<bdi dir="ltr">${m}</bdi>`);
+const L=s=>`<bdi dir="ltr">${s}</bdi>`;
+const R=arr=>L(arr.join(':'));
+const sq=x=>rnd(x*x);
+
+const TOPICS=['ratio','prop','scale','pyth','speed'];
+const NAME={ratio:'יחס',prop:'פרופורציה',scale:'קנה מידה',pyth:'משפט פיתגורס',speed:'זמן, מרחק ומהירות'};
+const ICON={ratio:'🧩',prop:'⚖️',scale:'🗺️',pyth:'📐',speed:'🚗'};
+const COL={ratio:'#a78bfa',prop:'#2dd4bf',scale:'#fb923c',pyth:'#f472b6',speed:'#38bdf8'};
+const DESC={ratio:'צמצום יחס וחלוקה לפי יחס',prop:'כפל בהצלבה ושאלות מילוליות',scale:'מפה, מציאות, יחידות ושטח',pyth:'יתר, ניצב ובדיקת משולש',speed:'זמן = מרחק ÷ מהירות'};
+const LVN=['קל','בינוני','קשה'];
+const PC=['#a78bfa','#2dd4bf','#fb923c'];
+
+/* ============ SVG ============ */
+const svgWrap=(h,inner)=>`<svg viewBox="0 0 340 ${h}" xmlns="http://www.w3.org/2000/svg" role="img">${inner}</svg>`;
+const FL={start:'end',end:'start',middle:'middle'};
+const T=(x,y,s,o={})=>`<text x="${x}" y="${y}" text-anchor="${FL[o.a||'middle']}" font-size="${o.s||14}" fill="${o.f||'#e9e5ff'}" font-weight="${o.w||600}" font-family="Heebo,Arial,sans-serif">${s}</text>`;
+const lab=(x,y,txt,col,a)=>String(txt).trim()==='?'?T(x,y+4,'?',{a,s:26,f:'#facc15',w:800}):T(x,y,txt,{a,s:15,f:col,w:700});
+
+function squaresSvg(parts,names){
+  const mx=Math.max(...parts), gap=3, sz=Math.max(8,Math.min(24,Math.floor(222/mx)-gap)), rowH=sz+14;
+  let s='';
+  parts.forEach((n,j)=>{
+    const y=12+j*rowH;
+    s+=T(332,y+sz/2+5,names[j],{a:'end',s:13,f:PC[j]});
+    for(let i=0;i<n;i++)s+=`<rect x="${230-i*(sz+gap)-sz+gap*0}" y="${y}" width="${sz}" height="${sz}" rx="5" fill="${PC[j]}"/>`;
+  });
+  return svgWrap(parts.length*rowH+20,s);
+}
+function barsSvg(vals){
+  const mx=Math.max(...vals);let s='';
+  vals.forEach((v,j)=>{const w=Math.max(20,Math.round(230*v/mx)),y=14+j*38;
+    s+=`<rect x="${320-w}" y="${y}" width="${w}" height="26" rx="8" fill="${PC[j]}"/>`+T(320-w-8,y+19,v,{a:'end',s:16,f:PC[j],w:800});});
+  return svgWrap(vals.length*38+20,s);
+}
+function propSvg(v,h){
+  const t=i=>i===h?`<tspan fill="#facc15" font-size="30" font-weight="800">x</tspan>`:v[i];
+  const fx=(cx,top,bot)=>T(cx,64,t(top),{s:26,w:800})+`<line x1="${cx-34}" y1="76" x2="${cx+34}" y2="76" stroke="#e9e5ff" stroke-width="3" stroke-linecap="round"/>`+T(cx,108,t(bot),{s:26,w:800});
+  return svgWrap(170,
+    `<line x1="118" y1="56" x2="222" y2="100" stroke="${PC[1]}" stroke-width="3" stroke-dasharray="6 5"/>`+
+    `<line x1="118" y1="100" x2="222" y2="56" stroke="${PC[2]}" stroke-width="3" stroke-dasharray="6 5"/>`+
+    fx(95,0,1)+T(170,86,'=',{s:30,w:800,f:'#aaa3d4'})+fx(245,2,3)+
+    T(170,150,'כפל בהצלבה: האלכסונים שווים',{s:13,f:'#aaa3d4'}));
+}
+function tableSvg(h1,h2,rows){
+  let s='';const rh=42,top=10;
+  s+=`<rect x="20" y="${top}" width="300" height="${rh}" rx="10" fill="#3b2f78"/>`+T(245,top+27,h1,{s:15,f:'#2dd4bf'})+T(95,top+27,h2,{s:15,f:'#fb923c'});
+  rows.forEach((r,i)=>{const y=top+rh+6+i*(rh+6);
+    s+=`<rect x="20" y="${y}" width="300" height="${rh}" rx="10" fill="#120e29" stroke="#3a3170"/>`+lab(245,y+27,r[0],'#fff','middle')+lab(95,y+27,r[1],'#fff','middle');});
+  return svgWrap(top+(rows.length+1)*(rh+6)+10,s);
+}
+function ladderSvg(fi,ti){
+  const names=['ק״מ','מטר','ס״מ'],xs=[255,170,85];let s='';
+  names.forEach((n,i)=>{const hl=i===fi?'#fb923c':i===ti?'#2dd4bf':'#3a3170';
+    s+=`<rect x="${xs[i]-36}" y="40" width="72" height="46" rx="14" fill="#120e29" stroke="${hl}" stroke-width="3"/>`+T(xs[i],70,n,{s:17,f:i===fi?'#fb923c':i===ti?'#2dd4bf':'#e9e5ff',w:800});});
+  s+=T(212,30,'×1000 ←',{s:13,f:'#aaa3d4'})+T(127,30,'×100 ←',{s:13,f:'#aaa3d4'})+T(212,112,'→ ÷1000',{s:13,f:'#aaa3d4'})+T(127,112,'→ ÷100',{s:13,f:'#aaa3d4'});
+  s+=T(170,140,'לכיוון יחידה קטנה – מכפילים, לכיוון יחידה גדולה – מחלקים',{s:12,f:'#aaa3d4'});
+  return svgWrap(150,s);
+}
+function scaleLineSvg(mapL,realL,N){
+  return svgWrap(170,
+    T(332,22,'🗺️ במפה',{a:'end',s:14,f:'#a78bfa'})+
+    `<line x1="250" y1="42" x2="170" y2="42" stroke="#a78bfa" stroke-width="7" stroke-linecap="round"/>`+
+    `<line x1="250" y1="32" x2="250" y2="52" stroke="#a78bfa" stroke-width="3"/><line x1="170" y1="32" x2="170" y2="52" stroke="#a78bfa" stroke-width="3"/>`+
+    lab(210,28,mapL,'#c4b5fd','middle')+
+    `<line x1="250" y1="56" x2="320" y2="112" stroke="#aaa3d4" stroke-dasharray="4 4"/><line x1="170" y1="56" x2="20" y2="112" stroke="#aaa3d4" stroke-dasharray="4 4"/>`+
+    T(170,84,`קנה מידה 1:${N}`,{s:13,f:'#facc15'})+
+    T(332,104,'🌍 במציאות',{a:'end',s:14,f:'#fb923c'})+
+    `<line x1="320" y1="124" x2="20" y2="124" stroke="#fb923c" stroke-width="7" stroke-linecap="round"/>`+
+    `<line x1="320" y1="114" x2="320" y2="134" stroke="#fb923c" stroke-width="3"/><line x1="20" y1="114" x2="20" y2="134" stroke="#fb923c" stroke-width="3"/>`+
+    lab(170,154,realL,'#fdba74','middle'));
+}
+function scaleAreaSvg(a,b,la,lb,N){
+  const r=Math.min(1.7,Math.max(.6,a/b));
+  let bw,bh;if(r>=1){bw=170;bh=bw/r}else{bh=110;bw=bh*r}
+  const sw=bw*.38,sh=bh*.38;
+  return svgWrap(165,
+    T(290,18,'במפה',{s:14,f:'#a78bfa'})+
+    `<rect x="${340-30-sw-0}" y="40" width="${sw}" height="${sh}" rx="4" fill="#a78bfa44" stroke="#a78bfa" stroke-width="3"/>`.replace(`x="${340-30-sw}"`,`x="${260-sw/2}"`)+
+    T(260,40+sh+18,`${la} × ${lb} ס״מ`,{s:12,f:'#c4b5fd'})+
+    T(115,18,'במציאות',{s:14,f:'#fb923c'})+
+    `<rect x="${115-bw/2*0.8}" y="28" width="${bw*0.8}" height="${bh*0.8}" rx="6" fill="#fb923c33" stroke="#fb923c" stroke-width="3"/>`+
+    T(115,28+bh*0.4+8,'שטח = ?',{s:20,f:'#facc15',w:800})+
+    T(115,28+bh*0.8+20,`קנה מידה 1:${N}`,{s:12,f:'#aaa3d4'})+
+    T(190,100,'←',{s:26,f:'#aaa3d4'}));
+}
+function triSvg(o){
+  const mode=o.mode||'tri',G='#2dd4bf',P='#a78bfa',O='#fb923c';
+  if(mode==='plain'){
+    return svgWrap(200,
+      `<polygon points="50,165 290,165 120,45" fill="#f472b61f" stroke="#f472b6" stroke-width="4" stroke-linejoin="round"/>`+
+      lab(170,188,o.la,P,'middle')+lab(78,100,o.lb,G,'end')+lab(216,92,o.lc,O,'start'));
+  }
+  const a=+o.a,b=+o.b,asp=Math.min(1.8,Math.max(.6,a/b));
+  let w,h;if(asp>=1){w=210;h=w/asp}else{h=125;w=h*asp}
+  const x0=(340-w)/2,y0=172;
+  if(mode==='rect'){
+    const yt=y0-h-8;
+    return svgWrap(200,
+      `<rect x="${x0}" y="${yt}" width="${w}" height="${h}" rx="6" fill="#f472b61f" stroke="#f472b6" stroke-width="4"/>`+
+      `<line x1="${x0}" y1="${yt}" x2="${x0+w}" y2="${yt+h}" stroke="${O}" stroke-width="4" stroke-dasharray="8 6"/>`+
+      lab(x0+w/2,yt-8,o.la,P,'middle')+lab(x0+w+8,yt+h/2+5,o.lb,G,'start')+
+      `<rect x="${x0+w/2-40}" y="${yt+h/2-4}" width="80" height="30" rx="8" fill="#251e49"/>`+lab(x0+w/2,yt+h/2+17,o.lc,O,'middle'));
+  }
+  if(mode==='walk'){
+    const yT=y0-h,xE=x0+w,len=Math.hypot(w,h),mx=x0+w/2,my=(y0+yT)/2;
+    return svgWrap(200,
+      `<polygon points="${x0},${y0} ${x0},${yT} ${xE},${yT}" fill="#f472b61a"/>`+
+      `<line x1="${x0}" y1="${y0}" x2="${x0}" y2="${yT}" stroke="${G}" stroke-width="5" stroke-linecap="round"/>`+
+      `<line x1="${x0}" y1="${yT}" x2="${xE}" y2="${yT}" stroke="${P}" stroke-width="5" stroke-linecap="round"/>`+
+      `<line x1="${x0}" y1="${y0}" x2="${xE}" y2="${yT}" stroke="${O}" stroke-width="4" stroke-dasharray="8 6"/>`+
+      `<path d="M${x0} ${yT+11} h11 v-11" fill="none" stroke="#e9e5ff" stroke-width="2" transform="translate(0 0)"/>`.replace(`M${x0} ${yT+11} h11 v-11`,`M${x0+11} ${yT} v11 h-11`)+
+      `<circle cx="${x0}" cy="${y0}" r="7" fill="#fff"/><text x="${x0}" y="${y0+22}" text-anchor="middle" font-size="13" fill="#aaa3d4" font-family="Heebo">התחלה</text>`+
+      `<text x="${xE}" y="${yT-12}" text-anchor="middle" font-size="20">📍</text>`+
+      T(318,26,'⬆ צפון',{a:'end',s:13,f:'#aaa3d4'})+
+      lab(x0-10,(y0+yT)/2+5,o.la,G,'end')+lab(x0+w/2,yT-10,o.lb,P,'middle')+
+      lab(mx+(h/len)*20,my+(w/len)*20+4,o.lc,O,'middle'));
+  }
+  // tri & ladder
+  const yT=y0-h,xE=x0+w,len=Math.hypot(w,h),nx=h/len,ny=-w/len,mx=x0+w/2,my=y0-h/2;
+  let pre='',ladder='';
+  if(mode==='ladder'){
+    pre=`<rect x="${x0-16}" y="${yT-14}" width="16" height="${h+14+3}" fill="#4b3f8a"/>`+
+        `<line x1="${x0-26}" y1="${y0}" x2="${xE+26}" y2="${y0}" stroke="#7a70c0" stroke-width="4"/>`;
+    for(let i=1;i<=5;i++){const f=i/6;const px=x0+w*f,py=yT+h*f;ladder+=`<line x1="${px-6*nx*0-5}" y1="${py-5*(w/len)*0}" x2="${px+5}" y2="${py}" stroke="#fdba74" stroke-width="3" opacity=".0"/>`;}
+    ladder=`<line x1="${x0}" y1="${yT}" x2="${xE}" y2="${y0}" stroke="#d6a45a" stroke-width="7" stroke-linecap="round"/><line x1="${x0}" y1="${yT}" x2="${xE}" y2="${y0}" stroke="#7c4a14" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>`;
+  }
+  const tri=mode==='ladder'
+    ? `<polygon points="${x0},${y0} ${x0},${yT} ${xE},${y0}" fill="#f472b61a"/>`
+    : `<polygon points="${x0},${y0} ${x0},${yT} ${xE},${y0}" fill="#f472b626" stroke="#f472b6" stroke-width="2" stroke-linejoin="round"/>`;
+  const legs=mode==='ladder'?'':
+    `<line x1="${x0}" y1="${y0}" x2="${xE}" y2="${y0}" stroke="${P}" stroke-width="5" stroke-linecap="round"/>`+
+    `<line x1="${x0}" y1="${y0}" x2="${x0}" y2="${yT}" stroke="${G}" stroke-width="5" stroke-linecap="round"/>`+
+    `<line x1="${x0}" y1="${yT}" x2="${xE}" y2="${y0}" stroke="${O}" stroke-width="5" stroke-linecap="round"/>`;
+  const ra=`<path d="M${x0+12} ${y0} v-12 h-12" fill="none" stroke="#e9e5ff" stroke-width="2.5"/>`;
+  const leftX=mode==='ladder'?x0+10:x0-10, leftA=mode==='ladder'?'start':'end';
+  return svgWrap(200,pre+tri+legs+ladder+ra+
+    lab(x0+w/2,y0+24,o.la,P,'middle')+lab(leftX,(y0+yT)/2+5,o.lb,G,leftA)+
+    lab(mx+nx*26,my+ny*26+5,o.lc,O,'middle'));
+}
+function routeSvg(distL,scaleL,speedL){
+  let g='';for(let i=1;i<9;i++)g+=`<line x1="${i*40}" y1="0" x2="${i*40}" y2="170" stroke="#ffffff10"/>`;
+  for(let i=1;i<5;i++)g+=`<line x1="0" y1="${i*36}" x2="340" y2="${i*36}" stroke="#ffffff10"/>`;
+  return svgWrap(170,g+
+    `<path d="M40 130 C95 40 150 170 205 95 S290 60 305 38" fill="none" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 11"/>`+
+    `<circle cx="40" cy="130" r="9" fill="#34d399"/><circle cx="305" cy="38" r="9" fill="#fb7185"/>`+
+    T(40,154,'A',{s:14,f:'#34d399',w:800})+T(305,26,'B',{s:14,f:'#fb7185',w:800})+
+    `<text x="62" y="118" font-size="22">🚗</text>`+
+    `<rect x="120" y="108" width="${distL.length*9+24}" height="28" rx="14" fill="#0d0a1c" stroke="#38bdf8"/>`+
+    T(120+(distL.length*9+24)/2,127,distL,{s:14,f:'#7dd3fc',w:800})+
+    (speedL?`<rect x="14" y="10" width="${speedL.length*8+22}" height="26" rx="13" fill="#0d0a1c" stroke="#facc15"/>`+T(14+(speedL.length*8+22)/2,28,speedL,{s:13,f:'#facc15'}):'')+
+    (scaleL?T(326,162,scaleL,{a:'end',s:12,f:'#aaa3d4'}):''));
+}
+
+/* ============ בניית שאלה ============ */
+function mk(topic,lv,o){
+  const q=Object.assign({topic,level:lv,type:'num',unit:'',hints:[],steps:[]},o);
+  if(!q.ansText){
+    q.ansText=q.type==='ratio'?R(q.ans):q.type==='yn'?(q.ans?'כן':'לא'):`<bdi dir="ltr">${rnd(q.ans)}</bdi>${q.unit?' '+q.unit:''}`;
+  }
+  return q;
+}
+function wrongs(list){return u=>{if(typeof u!=='number')return null;for(const [v,m] of list){if(near(u,v))return m}return null}}
+
+/* ----- יחס ----- */
+const CTX=[
+ {where:'בכיתה',noun:'תלמידים',N:[['בנים','הבנים'],['בנות','הבנות']]},
+ {where:'בשקית',noun:'גולות',N:[['גולות אדומות','הגולות האדומות'],['גולות כחולות','הגולות הכחולות'],['גולות ירוקות','הגולות הירוקות']]},
+ {where:'בסל',noun:'פירות',N:[['תפוחים','התפוחים'],['אגסים','האגסים'],['בננות','הבננות']]},
+ {where:'בחניון',noun:'מכוניות',N:[['מכוניות לבנות','המכוניות הלבנות'],['מכוניות שחורות','המכוניות השחורות'],['מכוניות אדומות','המכוניות האדומות']]},
+ {where:'בקופסה',noun:'עפרונות',N:[['עפרונות כחולים','העפרונות הכחולים'],['עפרונות אדומים','העפרונות האדומים']]},
+];
+function genRatio(lv){
+  const kind=lv===0?pick(['reduce','total','part']):pick(['reduce','total','part','diff']);
+  if(kind==='reduce'){
+    const m=lv===0?5:lv===1?9:13,n=(lv===2&&Math.random()<.5)?3:2;
+    let base;do{base=Array.from({length:n},()=>ri(1,m))}while(base.reduce(gcd)!==1||new Set(base).size<2);
+    const g=lv===0?ri(2,5):lv===1?ri(2,8):ri(3,12),nums=base.map(x=>x*g);
+    return mk('ratio',lv,{
+      text:`צמצמו את היחס ${R(nums)} עד כמה שאפשר.<br><small>כתבו למשל ${n===2?'3:5':'2:3:4'}</small>`,
+      svg:barsSvg(nums),type:'ratio',ans:base,
+      hints:['חפשו מספר שאפשר לחלק בו את כל איברי היחס בלי שארית.',`המספר הגדול ביותר שמחלק את ${nums.join(' ואת ')} הוא ${g}.`,'חלקו כל איבר ביחס באותו מספר. בסוף בדקו שאי אפשר לצמצם עוד.'],
+      steps:[`המחלק המשותף הגדול ביותר של ${nums.join(', ')} הוא <b>${g}</b>.`,nums.map((x,i)=>`${x} ÷ ${g} = ${base[i]}`).join(' ,  '),`היחס המצומצם: <b>${R(base)}</b>`],
+      diag:u=>{if(!Array.isArray(u))return null;
+        if(u.length!==base.length)return `כתבתם ${u.length} מספרים, אבל ביחס יש ${base.length} איברים.`;
+        if(u.join()===nums.join())return 'זה היחס המקורי – עוד לא צמצמתם.';
+        if(u.join()===base.slice().reverse().join())return 'הפכתם את הסדר. בסדר ביחס חשוב!';
+        if(u.every((x,i)=>x*base[0]===base[i]*u[0]))return 'צמצמתם נכון, אבל לא עד הסוף. אפשר להמשיך לחלק.';
+        return 'כנראה חילקתם כל איבר במספר אחר. צריך לחלק את כולם באותו מספר.'}
+    });
+  }
+  const ctx=pick(lv===2?CTX.filter(c=>c.N.length===3):CTX.filter(c=>c.N.length===2||lv===1&&Math.random()<.2)),n=ctx.N.length===3&&lv===2?3:2;
+  const N=ctx.N.slice(0,n),nm=N.map(x=>x[0]),w=ctx.where;
+  const list=n===2?`${nm[0]} ו${nm[1]}`:`${nm[0]}, ${nm[1]} ו${nm[2]}`;
+  let parts;
+  if(kind==='diag'||kind==='diff'){let a=ri(1,lv===1?6:8),b;do{b=ri(1,lv===1?7:9)}while(b<=a);parts=[a,b]}
+  else{do{parts=Array.from({length:n},()=>ri(1,lv===0?4:lv===1?7:6))}while(new Set(parts).size<2)}
+  const sum=parts.reduce((a,b)=>a+b),svg=squaresSvg(parts,nm),rr=R(parts);
+  const k=ri(2,lv===0?5:lv===1?9:12),T0=sum*k;
+  if(kind==='total'){
+    const i=ri(0,n-1),ans=parts[i]*k;
+    const others=parts.map((p,j)=>[p*k,`זו הכמות של ${N[j][1]}, אבל שאלו על ${N[i][1]}.`]).filter((_,j)=>j!==i);
+    return mk('ratio',lv,{
+      text:`${w} יש ${T0} ${ctx.noun}: ${list} ביחס של ${rr}.<br>כמה <b>${nm[i]}</b> יש ${w}?`,svg,ans,
+      hints:['כמה חלקים יש בסך הכול? חברו את איברי היחס.',`חלקו את ${T0} במספר החלקים כדי לגלות כמה שווה חלק אחד.`,`${N[i][1]} הם ${parts[i]} חלקים – כפלו את ערך החלק האחד ב-${parts[i]}.`],
+      steps:[`מספר החלקים: ${parts.join(' + ')} = <b>${sum}</b>.`,`ערך חלק אחד: ${T0} ÷ ${sum} = <b>${k}</b>.`,`${N[i][1]} הם ${parts[i]} חלקים: ${parts[i]} × ${k} = <b>${ans}</b>.`],
+      diag:wrongs([[k,'זה רק ערך של חלק אחד. עוד צריך להכפיל במספר החלקים של '+N[i][1]+'.'],[T0/2,'לא תמיד מחלקים לשתיים! היחס אומר לכמה חלקים מחלקים.'],...others])
+    });
+  }
+  if(kind==='part'){
+    const g=ri(0,n-1);let i;do{i=ri(0,n-1)}while(i===g);
+    const x=parts[g]*k,askTotal=lv===2&&Math.random()<.5,ans=askTotal?T0:parts[i]*k;
+    return mk('ratio',lv,{
+      text:`${w} יש ${list} ביחס של ${rr}. יש ${x} ${nm[g]}.<br>${askTotal?`כמה ${ctx.noun} יש ${w} <b>בסך הכול</b>?`:`כמה <b>${nm[i]}</b> יש ${w}?`}`,svg,ans,
+      hints:[`כמה חלקים הם ${N[g][1]} ביחס?`,`${x} ${nm[g]} הם ${parts[g]} חלקים. חלקו כדי למצוא חלק אחד.`,askTotal?'כפלו את ערך החלק האחד במספר החלקים הכולל.':`כפלו את ערך החלק האחד במספר החלקים של ${N[i][1]}.`],
+      steps:[`${N[g][1]} הם ${parts[g]} חלקים: ערך חלק אחד = ${x} ÷ ${parts[g]} = <b>${k}</b>.`,askTotal?`סך החלקים: ${parts.join(' + ')} = ${sum}.`:`${N[i][1]} הם ${parts[i]} חלקים.`,askTotal?`${sum} × ${k} = <b>${ans}</b>.`:`${parts[i]} × ${k} = <b>${ans}</b>.`],
+      diag:wrongs([[k,'זה ערך של חלק אחד בלבד. עוד לא כפלתם.'],[x,'זו הכמות שנתנו בשאלה, לא מה ששאלו.'],[x+parts[i]*1,'לא מוסיפים את מספר החלקים – צריך לכפול בערך חלק אחד.']])
+    });
+  }
+  const [a,b]=parts,d=(b-a)*k,i=ri(0,1),ans=parts[i]*k;
+  return mk('ratio',lv,{
+    text:`${w} יש ${nm[0]} ו${nm[1]} ביחס של ${rr}. מספר ${N[1][1]} גדול ב-${d} ממספר ${N[0][1]}.<br>כמה <b>${nm[i]}</b> יש ${w}?`,svg,ans,
+    hints:[`ההפרש בין החלקים ביחס הוא ${b} − ${a}. כמה חלקים זה?`,`ההפרש ${d} שווה ל-${b-a} חלקים. חלקו כדי למצוא חלק אחד.`,`${N[i][1]} הם ${parts[i]} חלקים – כפלו בערך החלק האחד.`],
+    steps:[`ההפרש בחלקים: ${b} − ${a} = <b>${b-a}</b>.`,`ההפרש בפועל הוא ${d}, לכן חלק אחד = ${d} ÷ ${b-a} = <b>${k}</b>.`,`${N[i][1]} הם ${parts[i]} חלקים: ${parts[i]} × ${k} = <b>${ans}</b>.`],
+    diag:wrongs([[d,'זה ההפרש, לא הכמות של '+N[i][1]+'.'],[k,'זה ערך של חלק אחד. עוד צריך להכפיל.'],[parts[1-i]*k,'זו הכמות של '+N[1-i][1]+', אבל שאלו על '+N[i][1]+'.']])
+  });
+}
+
+/* ----- פרופורציה ----- */
+function genProp(lv){
+  if(lv===0||Math.random()<.45){
+    let p,q,m1,m2;
+    do{p=ri(1,lv===0?6:9);q=ri(1,lv===0?6:9);m1=lv===2?ri(2,16)/2:ri(1,lv===0?6:9);m2=lv===2?ri(2,16)/2:ri(1,lv===0?6:9)}while(p===q||m1===m2||gcd(p,q)!==1);
+    const v=[rnd(p*m1),rnd(q*m1),rnd(p*m2),rnd(q*m2)],h=ri(0,3);
+    const partner=[v[3],v[2],v[1],v[0]][h],P=h===0||h===3?rnd(v[1]*v[2]):rnd(v[0]*v[3]),ans=rnd(P/partner);
+    const other=h===0||h===3?`${v[1]} · ${v[2]}`:`${v[0]} · ${v[3]}`;
+    const s=v.map((x,i)=>i===h?'x':x);
+    return mk('prop',lv,{
+      text:`מצאו את <b>x</b> בפרופורציה:<br><span style="font-size:26px">${L(`${s[0]}/${s[1]} = ${s[2]}/${s[3]}`)}</span>`,
+      svg:propSvg(v,h),ans,
+      hints:['בפרופורציה כופלים בהצלבה: מכפלת האלכסון האחד שווה למכפלת האלכסון השני.',`האלכסון עם x הוא x · ${partner}. האלכסון השני הוא ${other}.`,`כתבו x · ${partner} = ${P} וחלקו את שני הצדדים ב-${partner}.`],
+      steps:['כופלים בהצלבה (אלכסון = אלכסון).',`x · ${partner} = ${other} = ${P}`,`x = ${P} ÷ ${partner} = <b>${ans}</b>`],
+      diag:wrongs([[P,`זו מכפלת האלכסון. עוד צריך לחלק ב-${partner} כדי לבודד את x.`],[rnd(v[(h+1)%4]),'זה אחד המספרים שבתרגיל. צריך לחשב את x בכפל בהצלבה.']])
+    });
+  }
+  const kind=pick(['price','recipe','printer','fuel']);
+  let item,hdr,sent,askV,askQ,rate,qs,vFmt,unitV,unitQ;
+  const rr=lv===0?ri(2,9):lv===1?ri(3,15):ri(3,29)/2;
+  if(kind==='price'){
+    const it=pick([['מחברות','עולות'],['עטים','עולים'],['בקבוקי מים','עולים'],['גלידות','עולות'],['ממחקים','עולים'],['כרטיסים לקולנוע','עולים']]);
+    rate=rr;hdr=['כמות','מחיר (₪)'];
+    sent=(q,v)=>`${q} ${it[0]} ${it[1]} ${v} ₪.`;askV=q=>`כמה יעלו ${q} ${it[0]}?`;askQ=v=>`כמה ${it[0]} אפשר לקנות ב-${v} ₪?`;unitV='₪';unitQ=it[0];
+  }else if(kind==='recipe'){
+    const ing=pick([['גרם קמח','קמח (גרם)',[25,50,75,100]],['מ״ל חלב','חלב (מ״ל)',[20,50,75,125]],['גרם סוכר','סוכר (גרם)',[10,25,30,40]]]);
+    rate=lv===0?pick([ing[2][0],ing[2][1],ing[2][2]]):pick(ing[2]);hdr=['מנות',ing[1]];
+    sent=(q,v)=>`במתכון ל-${q} מנות צריך ${v} ${ing[0]}.`;askV=q=>`כמה ${ing[0]} צריך ל-${q} מנות?`;askQ=v=>`עם ${v} ${ing[0]} אפשר להכין כמה מנות?`;unitV=ing[0];unitQ='מנות';
+  }else if(kind==='printer'){
+    rate=pick([10,12,15,20,25]);hdr=['דקות','דפים'];
+    sent=(q,v)=>`מדפסת מדפיסה ${v} דפים ב-${q} דקות.`;askV=q=>`כמה דפים תדפיס ב-${q} דקות?`;askQ=v=>`תוך כמה דקות תדפיס ${v} דפים?`;unitV='דפים';unitQ='דקות';
+  }else{
+    const lp=pick([5,6,7,8,9,10]);rate=lp/100;hdr=['מרחק (ק״מ)','דלק (ליטר)'];
+    sent=(q,v)=>`מכונית צורכת ${v} ליטר דלק בנסיעה של ${q} ק״מ.`;askV=q=>`כמה ליטר דלק תצרוך בנסיעה של ${q} ק״מ?`;askQ=v=>`כמה ק״מ תוכל לנסוע עם ${v} ליטר דלק?`;unitV='ליטר';unitQ='ק״מ';
+  }
+  let q1,q2;
+  if(kind==='fuel'){q1=pick([50,100,150,200]);do{q2=pick([50,100,150,200,250,300,400])}while(q2===q1)}
+  else{const mx=lv===0?6:lv===1?10:14;q1=ri(2,mx);do{q2=ri(2,mx+4)}while(q2===q1);if(lv===2&&kind==='price'&&q1%2&&rate%1)q1++}
+  const v1=rnd(q1*rate),v2=rnd(q2*rate),askQty=lv>0&&Math.random()<.45;
+  const rows=[[q1,v1],[askQty?'?':q2,askQty?v2:'?']];
+  const ans=askQty?q2:v2,unit=askQty?unitQ:unitV;
+  const known=askQty?v2:q2;
+  const rateTxt=askQty?`${v1} ÷ ${q1} = ${rnd(rate)}`:`${v1} ÷ ${q1} = ${rnd(rate)}`;
+  return mk('prop',lv,{
+    text:`${sent(q1,v1)}<br><b>${askQty?askQ(v2):askV(q2)}</b>`,svg:tableSvg(hdr[0],hdr[1],rows),ans,unit:'',
+    hints:['בשאלות כאלה היחס בין שני הגדלים קבוע. כתבו אותו כפרופורציה.',`כתבו: ${L(`${q1}/${v1} = ${askQty?'x':q2}/${askQty?v2:'x'}`)}`,`כפלו בהצלבה ואז חלקו כדי לבודד את x.`],
+    steps:[`כותבים פרופורציה: ${L(`${q1}/${v1} = ${askQty?'x':q2}/${askQty?v2:'x'}`)}`,askQty?`כופלים בהצלבה: ${v1} · x = ${q1} · ${v2} = ${rnd(q1*v2)}`:`כופלים בהצלבה: ${q1} · x = ${v1} · ${q2} = ${rnd(v1*q2)}`,`x = ${askQty?rnd(q1*v2)+' ÷ '+v1:rnd(v1*q2)+' ÷ '+q1} = <b>${ans}</b>`,`<small>דרך נוספת: ערך ליחידה אחת = ${rateTxt}, ואז ${askQty?v2+' ÷ '+rnd(rate):q2+' × '+rnd(rate)} = ${ans}.</small>`],
+    diag:wrongs([[known,'זה המספר שכבר נתון בשאלה. צריך לחשב את המספר החסר.'],[rnd(q1+q2-v1+0),'לא מחברים ומחסרים – הקשר ביניהם הוא כפל/חילוק (פרופורציה).']])
+  });
+}
+
+/* ----- קנה מידה ----- */
+function scaleBase(lv){
+  const ok2=n=>Math.abs(n*100-Math.round(n*100))<1e-9;
+  for(let g=0;g<800;g++){
+    const N=pick(lv===0?[100,200,500,1000]:lv===1?[1000,2000,5000,10000,20000,25000,50000]:[5000,10000,20000,25000,50000,100000]);
+    const Lm=lv===0?ri(2,12):lv===1?ri(2,20):ri(4,40)/2;
+    const cm=Lm*N,m=cm/100,km=cm/100000,opts=[];
+    if(m>=1&&m<=5000&&ok2(m)&&(lv>0||Number.isInteger(m)))opts.push('m');
+    if(lv>0&&km>=.5&&km<=60&&ok2(km))opts.push('km');
+    if(!opts.length)continue;
+    const u=lv===0?'m':(lv===2&&opts.includes('km'))?'km':pick(opts);
+    return {N,L:Lm,cm,m:rnd(m),km:rnd(km),u};
+  }
+  return {N:1000,L:5,cm:5000,m:50,km:.05,u:'m'};
+}
+const UN={m:'מטרים',km:'ק״מ'},UL={m:'מטר',km:'ק״מ'};
+function genScale(lv){
+  const kind=lv===0?pick(['m2r','r2m','conv','area']):pick(['m2r','r2m','conv','area']);
+  if(kind==='m2r'||kind==='r2m'){
+    const s=scaleBase(lv),rv=s.u==='m'?s.m:s.km,fac=s.u==='m'?'100':'100,000';
+    if(kind==='m2r'){
+      const w=[[s.cm,`זה המרחק בס״מ. צריך עוד להמיר ל${UN[s.u]}.`]];
+      if(s.u==='km'){w.push([s.m,'המרתם למטרים, אבל שאלו בק״מ. חלקו עוד ב-1000.']);w.push([rnd(s.cm/1000),'חילקתם ב-1000, אבל בין ס״מ לק״מ יש 100,000.'])}
+      else w.push([rnd(s.cm/1000),'חילקתם ב-1000, אבל בין ס״מ למטר יש 100.']);
+      return mk('scale',lv,{
+        text:`במפה בקנה מידה ${R([1,nf(s.N).replace(/,/g,'')])} המרחק בין שתי נקודות הוא <b>${s.L} ס״מ</b>.<br>מה המרחק האמיתי ב<b>${UN[s.u]}</b>?`,
+        svg:scaleLineSvg(`${s.L} ס״מ`,'?',s.N),ans:rv,unit:UL[s.u],
+        hints:[`קנה מידה 1:${s.N} אומר: כל 1 ס״מ במפה הוא ${nf(s.N)} ס״מ במציאות.`,`כפלו: ${s.L} × ${nf(s.N)} – כך מקבלים את המרחק האמיתי בס״מ.`,`עכשיו המירו מס״מ ל${UN[s.u]}: חלקו ב-${fac}.`],
+        steps:[`במציאות: ${s.L} × ${nf(s.N)} = <b>${nf(s.cm)}</b> ס״מ.`,`המרה ל${UN[s.u]}: ${nf(s.cm)} ÷ ${fac} = <b>${rv}</b>.`],
+        diag:wrongs(w)
+      });
+    }
+    const real=s.u==='m'?s.m:s.km;
+    return mk('scale',lv,{
+      text:`המרחק האמיתי בין שתי נקודות הוא <b>${real} ${UL[s.u]}</b>.<br>כמה ס״מ יהיה המרחק ביניהן במפה בקנה מידה ${R([1,s.N])}?`,
+      svg:scaleLineSvg('?',`${real} ${UL[s.u]}`,s.N),ans:s.L,unit:'ס״מ',
+      hints:[`קודם המירו את המרחק האמיתי לס״מ (1 ${UL[s.u]==='מטר'?'מטר = 100':'ק״מ = 100,000'} ס״מ).`,`במפה הכול קטן פי ${nf(s.N)}. לכן מחלקים ב-${nf(s.N)}.`,`חשבו: ${nf(s.cm)} ÷ ${nf(s.N)}.`],
+      steps:[`ממירים לס״מ: ${real} × ${fac} = <b>${nf(s.cm)}</b> ס״מ.`,`במפה: ${nf(s.cm)} ÷ ${nf(s.N)} = <b>${s.L}</b> ס״מ.`],
+      diag:wrongs([[s.cm,'זה המרחק האמיתי בס״מ. עוד צריך לחלק בקנה המידה כדי לעבור למפה.'],[rnd(real/s.N),'לא המרתם קודם לס״מ.'],[rnd(real*s.N),'במפה הכול קטן יותר – צריך לחלק ולא לכפול.']])
+    });
+  }
+  if(kind==='conv'){
+    const U=[['ס״מ',1],['מטר',100],['ק״מ',100000]];
+    let fi,ti;
+    do{fi=ri(0,2);ti=ri(0,2)}while(fi===ti||(lv===0&&Math.abs(fi-ti)>1));
+    const ratio=U[Math.max(fi,ti)][1]/U[Math.min(fi,ti)][1]*(1),fA=U[fi][1],fB=U[ti][1];
+    let v,ans;
+    if(fB<fA){ // to smaller: multiply
+      v=lv===0?ri(2,9):lv===1?pick([ri(2,40),ri(2,40)+.5]):pick([.25,.4,.75,1.2,2.5,3.4,0.35,4.5,0.06]);
+      if(fi===2&&ti===0)v=pick([.5,1.5,2,3,.25,.4]);
+      ans=rnd(v*fA/fB);
+    }else{
+      ans=lv===0?ri(2,9):lv===1?pick([ri(2,12),ri(2,12)+.5]):pick([.25,.35,.75,1.2,2.5,3.4,4.5,.06]);
+      v=rnd(ans*fB/fA);if(fi===0&&ti===2&&v>1e7)return genScale(lv);
+    }
+    const mult=fB<fA,f=rnd(fA/fB>=1?fA/fB:fB/fA);
+    return mk('scale',lv,{
+      text:`המירו: <b>${nf(v)} ${U[fi][0]}</b> = כמה ${U[ti][0]}?`,svg:ladderSvg(fi,ti),ans,unit:U[ti][0],
+      hints:['1 ק״מ = 1000 מטר, 1 מטר = 100 ס״מ, 1 ק״מ = 100,000 ס״מ.',mult?`עוברים ליחידה קטנה יותר – לכן <b>מכפילים</b>.`:`עוברים ליחידה גדולה יותר – לכן <b>מחלקים</b>.`,`${mult?'כפלו':'חלקו'} את ${nf(v)} ב-${nf(f)}.`],
+      steps:[`בין ${U[fi][0]} ל${U[ti][0]} יש גורם של ${nf(f)}.`,mult?`ליחידה קטנה יותר מכפילים: ${nf(v)} × ${nf(f)} = <b>${nf(ans)}</b>`:`ליחידה גדולה יותר מחלקים: ${nf(v)} ÷ ${nf(f)} = <b>${nf(ans)}</b>`],
+      diag:wrongs([[rnd(mult?v/f:v*f),'הלכתם בכיוון ההפוך: ליחידה קטנה מכפילים, ליחידה גדולה מחלקים.'],[rnd(ans*10),'שגיאה של פי 10 – ספרו שוב את האפסים.'],[rnd(ans/10),'שגיאה של פי 10 – ספרו שוב את האפסים.']])
+    });
+  }
+  // area
+  let a,b,N,ans,unit,sideM=[],tries=0;
+  for(;;){
+    tries++;
+    if(lv===0){N=pick([100,200,500]);a=ri(2,8);b=a}
+    else if(lv===1){N=pick([100,200,500,1000]);a=ri(2,9);b=ri(2,9);if(a===b)continue}
+    else{N=pick([5000,10000,20000,25000,50000]);a=ri(2,12);b=ri(2,12);if(a===b)continue;}
+    const toU=lv<2?100:100000,s1=a*N/toU,s2=b*N/toU,ar=rnd(s1*s2);
+    if(Math.abs(ar*100-Math.round(ar*100))>1e-9||ar>5e4||(Math.abs(s1*100-Math.round(s1*100))>1e-9)||(Math.abs(s2*100-Math.round(s2*100))>1e-9))continue;
+    ans=ar;unit=lv<2?'מ״ר':'קמ״ר';sideM=[rnd(s1),rnd(s2)];break;
+  }
+  const sU=lv<2?'מטר':'ק״מ',fac=lv<2?'100':'100,000',shape=lv===0?'ריבוע':'מלבן';
+  const dims=lv===0?`צלע של ${a} ס״מ`:`אורך ${a} ס״מ ורוחב ${b} ס״מ`;
+  return mk('scale',lv,{
+    text:`בתוכנית מופיע ${shape} (${dims}). קנה המידה הוא ${R([1,N])}.<br>מהו <b>השטח האמיתי</b> ב${unit==='מ״ר'?'מטרים רבועים (מ״ר)':'קמ״ר (ק״מ רבועים)'}?<br><small>רמז לדרך: קודם מוצאים את הצלעות במציאות, ורק אחר כך שטח.</small>`,
+    svg:scaleAreaSvg(a,b,a,b,N),ans,unit,
+    hints:['אסור להכפיל את השטח בקנה המידה! קודם מחשבים צלעות במציאות.',`צלע במציאות = ${a} × ${nf(N)} ס״מ. המירו ל${sU==='מטר'?'מטרים':'ק״מ'} (חלקו ב-${fac}).`,lv===0?'שטח ריבוע = צלע × צלע.':'שטח מלבן = אורך × רוחב (באותה יחידה).'],
+    steps:[`צלע ראשונה: ${a} × ${nf(N)} = ${nf(a*N)} ס״מ = <b>${sideM[0]}</b> ${sU}.`,lv===0?'זה ריבוע, לכן הצלע השנייה שווה לה.':`צלע שנייה: ${b} × ${nf(N)} = ${nf(b*N)} ס״מ = <b>${sideM[1]}</b> ${sU}.`,`שטח: ${sideM[0]} × ${sideM[1]} = <b>${ans}</b> ${unit}.`],
+    diag:lv<2?wrongs([[rnd(a*b*N/10000),'כפלתם את שטח המפה רק ב-N. בשטח הקנה מידה פועל פעמיים (N²), לכן עדיף קודם למצוא צלעות.'],[sideM[0],'זו רק צלע אחת. עוד צריך להכפיל בצלע השנייה.']]):wrongs([[sideM[0],'זו רק צלע אחת.'],[rnd(sideM[0]+sideM[1]),'זה חיבור צלעות. שטח הוא מכפלה.']])
+  });
+}
+
+/* ----- פיתגורס ----- */
+const TR=[[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17],[12,16,20],[7,24,25],[15,20,25],[20,21,29],[10,24,26],[9,40,41],[12,35,37]];
+function triple(lv){
+  let t=pick(lv===0?TR.slice(0,3):lv===1?TR.slice(0,10):TR.slice(0,9));
+  if(lv===2&&Math.random()<.5){const m=pick([.1,.5,1.5,2.5]);t=t.slice(0,3).map(x=>rnd(x*m))}
+  t=t.slice();if(Math.random()<.5){[t[0],t[1]]=[t[1],t[0]]}return t;
+}
+function pythMath(a,b,c,wantHyp,wantLeg){
+  const a2=sq(a),b2=sq(b),c2=sq(c);
+  if(wantHyp)return {steps:[`נשתמש במשפט פיתגורס: ניצב² + ניצב² = יתר².`,`${a}² + ${b}² = ${a2} + ${b2} = <b>${rnd(a2+b2)}</b>`,`היתר הוא השורש: √${rnd(a2+b2)} = <b>${c}</b>`],
+    hints:['משפט פיתגורס: ניצב² + ניצב² = יתר². היתר הוא הצלע שמול הזווית הישרה.',`חשבו ${a}² + ${b}² = ${rnd(a2+b2)}.`,`היתר הוא מספר שכפול עצמו נותן ${rnd(a2+b2)}. (חשבו שורש.)`],
+    diag:wrongs([[rnd(a+b),'חיברתם את האורכים. במשפט פיתגורס מחברים את ה<b>ריבועים</b> ואז מוציאים שורש.'],[rnd(a2+b2),`זה c² (היתר בריבוע). עוד צריך להוציא שורש.`]])};
+  return {steps:[`נשתמש במשפט פיתגורס: ניצב² + ניצב² = יתר². כשמחפשים ניצב – <b>מחסרים</b>.`,`${c}² − ${a}² = ${c2} − ${a2} = <b>${rnd(c2-a2)}</b>`,`הניצב: √${rnd(c2-a2)} = <b>${b}</b>`],
+    hints:['היתר הוא הצלע הארוכה. כשמחפשים ניצב משתמשים בחיסור: יתר² − ניצב².',`חשבו ${c}² − ${a}² = ${rnd(c2-a2)}.`,`הניצב הוא מספר שכפול עצמו נותן ${rnd(c2-a2)}. (חשבו שורש.)`],
+    diag:wrongs([[rnd(c-a),'חיסרתם אורכים. צריך לחסר <b>ריבועים</b> ואז להוציא שורש.'],[rnd(c2-a2),'זה b² (הניצב בריבוע). עוד צריך להוציא שורש.'],[rnd(Math.sqrt(c2+a2)),'חיברתם ריבועים, אבל כשמחפשים ניצב מחסרים: יתר² − ניצב².']])};
+}
+function genPyth(lv){
+  const kinds=lv===0?['hyp','leg','check']:lv===1?['hyp','leg','check','word','word']:['hyp','leg','check','word','word','word'];
+  const kind=pick(kinds);
+  if(kind==='check'){
+    let t=triple(lv).slice().sort((x,y)=>x-y),sides=t.slice(),right=Math.random()<.5;
+    if(!right){
+      for(let g=0;g<50;g++){
+        const s=t.slice(),i=ri(0,2),d=pick(lv<2?[-2,-1,1,2,3]:[-1,1,-.5,.5,2]);
+        s[i]=rnd(s[i]+d);const so=s.slice().sort((x,y)=>x-y);
+        if(so[0]<=0||so[2]>=so[0]+so[1])continue;
+        if(Math.abs(sq(so[0])+sq(so[1])-sq(so[2]))<1e-9)continue;
+        sides=s;break;
+      }
+      if(sides.join()===t.join())right=true;
+    }
+    const so=sides.slice().sort((x,y)=>x-y),[x,y,z]=so,S=rnd(sq(x)+sq(y)),T2=sq(z),isR=Math.abs(S-T2)<1e-9;
+    const show=lv===0?so:shuffle(sides);
+    return mk('pyth',lv,{
+      text:`משולש שאורכי צלעותיו ${show.join(' ס״מ, ')} ס״מ.<br><b>האם הוא משולש ישר זווית?</b> (כתבו כן או לא)`,
+      svg:triSvg({mode:'plain',la:show[0],lb:show[1],lc:show[2]}),type:'yn',ans:isR,
+      hints:['הצלע הארוכה ביותר היא המועמדת להיות היתר.','חשבו את ריבועי שתי הצלעות הקצרות וחברו אותן.','השוו את הסכום לריבוע הצלע הארוכה. אם יצא שווה – המשולש ישר זווית.'],
+      steps:[`הצלע הארוכה ביותר היא ${z}, היא המועמדת להיות היתר.`,`${x}² + ${y}² = ${sq(x)} + ${sq(y)} = <b>${S}</b>`,`${z}² = <b>${T2}</b>`,isR?`הסכום שווה לריבוע הצלע הגדולה, לכן <b>כן</b>, זה משולש ישר זווית.`:`הסכום לא שווה לריבוע הצלע הגדולה, לכן <b>לא</b>, זה לא משולש ישר זווית.`],
+      diag:u=>typeof u==='boolean'?(isR?`בדקו: ${x}² + ${y}² = ${T2} = ${z}². כשהשוויון מתקיים – המשולש כן ישר זווית.`:`${x}² + ${y}² = ${S}, אבל ${z}² = ${T2}. הם לא שווים, לכן אין זווית ישרה.`):null
+    });
+  }
+  const [a,b,c]=triple(lv);
+  if(kind==='hyp'||kind==='leg'){
+    const hyp=kind==='hyp',M=pythMath(a,b,c,hyp);
+    return mk('pyth',lv,{
+      text:hyp?`במשולש ישר זווית אורכי הניצבים הם ${a} ס״מ ו-${b} ס״מ.<br><b>מהו אורך היתר?</b>`:`במשולש ישר זווית היתר באורך ${c} ס״מ ואחד הניצבים ${a} ס״מ.<br><b>מהו אורך הניצב השני?</b>`,
+      svg:triSvg({mode:'tri',a,b,la:hyp?`${a}`:`${a}`,lb:hyp?`${b}`:'?',lc:hyp?'?':`${c}`}),ans:hyp?c:b,unit:'ס״מ',...M});
+  }
+  // word
+  const wt=pick(['ladder','walk','rect']),ask=pick(['hyp','leg']);
+  if(wt==='ladder'){
+    const which=pick(['hyp','h','d']);
+    let text,la,lb,lc,ans,M;
+    if(which==='hyp'){text=`סולם נשען על קיר אנכי. תחתית הסולם נמצאת ${a} מ׳ מהקיר, והסולם מגיע לגובה ${b} מ׳ על הקיר.<br><b>מה אורך הסולם?</b>`;la=`${a} מ׳`;lb=`${b} מ׳`;lc='?';ans=c;M=pythMath(a,b,c,true)}
+    else if(which==='h'){text=`סולם באורך ${c} מ׳ נשען על קיר אנכי. תחתית הסולם נמצאת ${a} מ׳ מהקיר.<br><b>לאיזה גובה על הקיר מגיע הסולם?</b>`;la=`${a} מ׳`;lb='?';lc=`${c} מ׳`;ans=b;M=pythMath(a,b,c,false)}
+    else{text=`סולם באורך ${c} מ׳ נשען על קיר אנכי ומגיע לגובה ${b} מ׳.<br><b>כמה מטרים תחתית הסולם רחוקה מהקיר?</b>`;la='?';lb=`${b} מ׳`;lc=`${c} מ׳`;ans=a;M=pythMath(b,a,c,false)}
+    M.hints[0]='הקיר והקרקע יוצרים זווית ישרה, לכן הסולם הוא היתר במשולש ישר זווית. '+M.hints[0];
+    return mk('pyth',lv,{text,svg:triSvg({mode:'ladder',a,b,la,lb,lc}),ans,unit:'מ׳',...M});
+  }
+  if(wt==='walk'){
+    const hyp=ask==='hyp',M=pythMath(a,b,c,hyp);
+    M.hints[0]='ההליכה צפונה ואז מזרחה יוצרת זווית ישרה. המרחק הישר מנקודת ההתחלה הוא היתר. '+M.hints[0];
+    return mk('pyth',lv,{
+      text:hyp?`דנה הלכה ${a} ק״מ צפונה ואז ${b} ק״מ מזרחה.<br><b>מה המרחק שלה, בקו ישר, מנקודת ההתחלה?</b>`:`דנה הלכה ${a} ק״מ צפונה ואז הלכה מזרחה. בסוף היא נמצאת במרחק ${c} ק״מ בקו ישר מנקודת ההתחלה.<br><b>כמה ק״מ הלכה מזרחה?</b>`,
+      svg:triSvg({mode:'walk',a:b,b:a,la:`${a} ק״מ`,lb:hyp?`${b} ק״מ`:'?',lc:hyp?'?':`${c} ק״מ`}),ans:hyp?c:b,unit:'ק״מ',...M});
+  }
+  const hyp=ask==='hyp',M=pythMath(a,b,c,hyp);
+  M.hints[0]='האלכסון במלבד יוצר משולש ישר זווית עם שתי צלעות המלבן. האלכסון הוא היתר. '.replace('במלבד','במלבן')+M.hints[0];
+  return mk('pyth',lv,{
+    text:hyp?`מלבן שאורכו ${a} ס״מ ורוחבו ${b} ס״מ.<br><b>מה אורך האלכסון שלו?</b>`:`אלכסון של מלבן הוא ${c} ס״מ ואחת מצלעותיו ${a} ס״מ.<br><b>מה אורך הצלע השנייה?</b>`,
+    svg:triSvg({mode:'rect',a,b,la:`${a} ס״מ`,lb:hyp?`${b} ס״מ`:'?',lc:hyp?'?':`${c} ס״מ`}),ans:hyp?c:b,unit:'ס״מ',...M});
+}
+
+/* ----- זמן, מרחק, מהירות ----- */
+const VEH=[{n:'מכונית',v:'נוסעת',s:[40,50,60,80,90,100]},{n:'רכבת',v:'נוסעת',s:[80,100,120,150]},{n:'אוטובוס',v:'נוסע',s:[40,50,60,80]},{n:'רוכב אופניים',v:'רוכב',s:[10,12,15,20,24]},{n:'הולך רגל',v:'הולך',s:[3,4,5,6]}];
+function speedHints(){return{}}
+function genSpeed(lv){
+  const veh=pick(VEH),v=pick(veh.s),who=`${veh.n} ${veh.v} במהירות קבועה של ${v} קמ״ש.`;
+  const kind=lv===0?'basic':lv===1?pick(['basic','combo','basic']):pick(['mismatch','combo','basicmin']);
+  if(kind==='basic'||kind==='basicmin'){
+    let t,D;
+    if(kind==='basic'){
+      for(let g=0;g<100;g++){t=lv===0?ri(1,6):ri(2,12)/2;D=rnd(v*t);if(Number.isInteger(D))break}
+      return mk('speed',lv,{
+        text:`${who}<br><b>כמה שעות יימשך מסע של ${D} ק״מ?</b>`,svg:routeSvg(`${D} ק״מ`,'',`${v} קמ״ש`),ans:t,unit:'שעות',
+        hints:['הנוסחה: זמן = מרחק ÷ מהירות.',`המרחק הוא ${D} ק״מ והמהירות ${v} קמ״ש. היחידות מתאימות (ק״מ עם ק״מ לשעה), אז התוצאה תהיה בשעות.`,`חשבו ${D} ÷ ${v}. אם יצא עשרוני, למשל 1.5 – זה שעה וחצי.`],
+        steps:['זמן = מרחק ÷ מהירות',`זמן = ${D} ÷ ${v} = <b>${t}</b> שעות`],
+        diag:wrongs([[rnd(D*v),'כפלתם. אבל זמן = מרחק ÷ מהירות.'],[rnd(v/D),'הפכתם את החילוק. צריך מרחק ÷ מהירות.'],[rnd(t*60),'הפכתם לדקות, אבל שאלו בשעות.']])
+      });
+    }
+    for(let g=0;g<200;g++){t=pick([10,15,20,30,40,45,50,75,90]);D=rnd(v*t/60);if(D*2===Math.round(D*2)&&D>=1)break}
+    const h=rnd(t/60);
+    return mk('speed',lv,{
+      text:`${who}<br><b>כמה דקות יימשך מסע של ${D} ק״מ?</b>`,svg:routeSvg(`${D} ק״מ`,'',`${v} קמ״ש`),ans:t,unit:'דקות',
+      hints:['זמן = מרחק ÷ מהירות. התוצאה תצא בשעות.',`חשבו ${D} ÷ ${v} (בשעות).`,'כדי לעבור משעות לדקות – כפלו ב-60.'],
+      steps:['זמן = מרחק ÷ מהירות',`${D} ÷ ${v} = ${h} שעות`,`בדקות: ${h} × 60 = <b>${t}</b> דקות`],
+      diag:wrongs([[h,'זה הזמן בשעות. שאלו בדקות, אז כפלו ב-60.'],[rnd(D*v),'זמן = מרחק ÷ מהירות, לא כפל.']])
+    });
+  }
+  if(kind==='mismatch'){
+    let t,Dm,vv=pick([3,4,5,6,12,15,18,20,30,36]);
+    for(let g=0;g<300;g++){t=pick([5,10,12,15,20,24,30,36,40,45,60]);Dm=vv*1000*t/60;if(Number.isInteger(Dm)&&Dm>=100&&Dm%50===0)break}
+    const km=rnd(Dm/1000),h=rnd(t/60);
+    return mk('speed',lv,{
+      text:`רוכב ברכיבה במהירות קבועה של ${vv} קמ״ש.<br><b>כמה דקות ייקח לו לעבור ${nf(Dm)} מטר?</b>`,svg:routeSvg(`${nf(Dm)} מטר`,'',`${vv} קמ״ש`),ans:t,unit:'דקות',
+      hints:['שימו לב: המרחק במטרים והמהירות בק״מ לשעה. צריך להמיר לאותה יחידה.',`המירו ${nf(Dm)} מטר לק״מ (חלקו ב-1000).`,'חשבו זמן = מרחק ÷ מהירות בשעות, ואז כפלו ב-60 כדי לקבל דקות.'],
+      steps:[`ממירים למרחק בק״מ: ${nf(Dm)} ÷ 1000 = <b>${km}</b> ק״מ.`,`זמן = ${km} ÷ ${vv} = <b>${h}</b> שעות.`,`בדקות: ${h} × 60 = <b>${t}</b> דקות.`],
+      diag:wrongs([[rnd(Dm/vv),'לא המרתם מטרים לק״מ, ואי אפשר לחלק מטרים בק״מ לשעה.'],[h,'זה בשעות. שאלו בדקות – כפלו ב-60.'],[km,'זה המרחק בק״מ. עוד צריך לחלק במהירות.']])
+    });
+  }
+  // combo with scale
+  for(let g=0;g<2000;g++){
+    const N=pick([10000,20000,25000,50000,100000]),Lm=lv===1?ri(2,20):ri(4,40)/2,km=rnd(Lm*N/100000),vv=pick([4,5,6,10,12,15,20,30,40,60,80]);
+    const t=rnd(km/vv);
+    if(km<2||km>80||Math.abs(km*100-Math.round(km*100))>1e-9)continue;
+    if(Math.abs(t*4-Math.round(t*4))>1e-9||t<.25||t>6)continue;
+    if(lv===1&&(t<1||Math.abs(t*2-Math.round(t*2))>1e-9))continue;
+    const cm=Lm*N,minutes=lv===2,ans=minutes?rnd(t*60):t;
+    return mk('speed',lv,{
+      text:`במפה בקנה מידה ${R([1,N])} המרחק בין שתי עיירות הוא ${Lm} ס״מ. נוסעים ביניהן במהירות קבועה של ${vv} קמ״ש.<br><b>כמה ${minutes?'דקות':'שעות'} יימשך המסע?</b>`,
+      svg:routeSvg(`${Lm} ס״מ במפה`,`קנה מידה 1:${N}`,`${vv} קמ״ש`),ans,unit:minutes?'דקות':'שעות',
+      hints:['קודם צריך למצוא כמה ק״מ זה במציאות, בעזרת קנה המידה.',`${Lm} × ${nf(N)} = ס״מ במציאות. אחר כך חלקו ב-100,000 כדי לקבל ק״מ.`,`עכשיו זמן = מרחק ÷ מהירות${minutes?', ובסוף כפלו ב-60 כדי לקבל דקות':''}.`],
+      steps:[`במציאות: ${Lm} × ${nf(N)} = <b>${nf(cm)}</b> ס״מ.`,`המרה לק״מ: ${nf(cm)} ÷ 100,000 = <b>${km}</b> ק״מ.`,`זמן = ${km} ÷ ${vv} = <b>${t}</b> שעות.`].concat(minutes?[`בדקות: ${t} × 60 = <b>${ans}</b> דקות.`]:[]),
+      diag:wrongs([[km,'זה המרחק האמיתי בק״מ. עוד צריך לחלק במהירות כדי לקבל זמן.'],[rnd(Lm/vv),'לא השתמשתם בקנה המידה. המרחק במפה (בס״מ) הוא לא המרחק האמיתי.'],[t,'זה הזמן בשעות. שאלו בדקות – כפלו ב-60.'],[rnd(ans*60),'כפלתם ב-60 פעמיים או יותר מדי. בדקו שוב.']].concat(minutes?[]:[[rnd(t*60),'זה הזמן בדקות. שאלו בשעות.']]))
+    });
+  }
+  return genSpeed(0);
+}
+
+const GEN={ratio:genRatio,prop:genProp,scale:genScale,pyth:genPyth,speed:genSpeed};
+
+/* ============ קלט ותשובה ============ */
+function parseAns(q,raw){
+  const s=raw.replace(/[‎‏‪-‮]/g,'').trim();
+  if(q.type==='yn'){
+    if(/לא/.test(s))return {valid:true,val:false};
+    if(/כן|yes/i.test(s))return {valid:true,val:true};
+    return {valid:false,msg:'כתבו "כן" או "לא".'};
+  }
+  const nums=(s.replace(/(\d),(\d)/g,'$1.$2').match(/\d+(?:\.\d+)?/g)||[]).map(Number);
+  if(q.type==='ratio'){
+    if(nums.length<2)return {valid:false,msg:'כתבו יחס עם נקודותיים, למשל 3:5.'};
+    return {valid:true,val:nums};
+  }
+  if(!nums.length)return {valid:false,msg:'כתבו את התשובה במספרים.'};
+  const fr=s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
+  const neg=/^\s*-/.test(s)?-1:1;
+  return {valid:true,val:fr&&+fr[2]?neg*fr[1]/fr[2]:neg*nums[0]};
+}
+function matches(q,v){
+  if(q.type==='yn')return v===q.ans;
+  if(q.type==='ratio')return v.length===q.ans.length&&v.every((x,i)=>x===q.ans[i]);
+  return near(v,q.ans);
+}
+
+/* ============ מצב ושמירה ============ */
+const KEY='math8_practice_v1';
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.stats)return Object.assign({level:1,streak:0,best:0,hist:[]},d)}catch(e){}
+  return {stats:{},streak:0,best:0,hist:[],level:1};
+}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let sess=null;
+
+const CHEER=['כל הכבוד! 🎉','מצוין! 💪','יפה מאוד! ⭐','אלוף/ה! 🚀','בדיוק נכון! 🔥','וואו, איזה כיף לראות! ✨','נהדר! המשיכו כך! 🌟'];
+
+/* ============ מסכים ============ */
+function setTop(title,showBar){
+  $('#topTitle').textContent=title;
+  $('#barWrap').style.display=$('#barTxt').style.display=showBar?'block':'none';
+  $('#homeBtn').style.visibility=showBar||title!=='תרגול מתמטיקה'?'visible':'hidden';
+  $('#streakChip').textContent='🔥 '+S.streak;
+}
+function pct(t){const s=S.stats[t];return s&&s.total?Math.round(100*s.ok/s.total):null}
+function levelChips(){
+  return `<div class="chips"><span class="lbl">רמת קושי:</span>${LVN.map((n,i)=>`<button class="chip ${S.level===i?'on':''}" onclick="setLevel(${i})">${n}</button>`).join('')}</div>`;
+}
+function setLevel(i){S.level=i;save();if(sess)renderQ(true);else renderHome();if(sess)toast()}
+function toast(){const f=document.createElement('div');f.textContent='הרמה החדשה תחול מהשאלה הבאה';f.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#251e49;border:1px solid #3a3170;padding:10px 18px;border-radius:999px;z-index:60;font-size:15px';document.body.appendChild(f);setTimeout(()=>f.remove(),1800)}
+
+function recommend(){
+  const arr=TOPICS.map(t=>({t,p:pct(t),n:(S.stats[t]||{}).total||0}));
+  const tried=arr.filter(x=>x.n>=3);
+  if(!tried.length)return {txt:'ענו על כמה שאלות בכל נושא, ואחרי זה נמליץ לכם על מה כדאי לתרגל.',t:null};
+  tried.sort((a,b)=>a.p-b.p);
+  if(tried[0].p<85)return {txt:`כדאי לך לתרגל עוד את: <b>${NAME[tried[0].t]}</b> (${tried[0].p}% הצלחה)`,t:tried[0].t};
+  const un=arr.filter(x=>x.n<3);
+  if(un.length)return {txt:`הולך מעולה! נסו עכשיו את: <b>${NAME[un[0].t]}</b>`,t:un[0].t};
+  return {txt:'כל הכבוד! אתם מעל 85% בכל הנושאים. נסו רמה קשה יותר 💪',t:null};
+}
+function renderHome(){
+  sess=null;setTop('תרגול מתמטיקה',false);
+  const tot=TOPICS.reduce((a,t)=>a+((S.stats[t]||{}).total||0),0),ok=TOPICS.reduce((a,t)=>a+((S.stats[t]||{}).ok||0),0);
+  const rc=recommend();
+  $('#view').innerHTML=`
+    <h1>מתמטיקה כיתה ח׳ – <span>תרגול</span></h1>
+    <p class="sub">בחרו נושא, פתרו, קבלו רמזים והסברים. שאלות חדשות בכל פעם!</p>
+    <div class="stats">
+      <div class="stat"><b>${S.streak} 🔥</b><small>רצף נוכחי</small></div>
+      <div class="stat"><b>${S.best}</b><small>רצף שיא</small></div>
+      <div class="stat"><b>${tot?Math.round(100*ok/tot)+'%':'–'}</b><small>הצלחה כללית (${tot} שאלות)</small></div>
+    </div>
+    ${levelChips()}
+    <div class="reco"><div class="t">💡 ${rc.txt}</div>${rc.t?`<button class="chip on" onclick="startSession('${rc.t}')">בואו נתרגל</button>`:''}</div>
+    <button class="mixed" onclick="startSession('mixed')">🎲 תרגול מעורבב</button>
+    <div class="grid">${TOPICS.map(t=>{const s=S.stats[t]||{ok:0,total:0},p=pct(t);
+      return `<button class="tcard" style="--c:${COL[t]}" onclick="startSession('${t}')">
+        <div class="ic">${ICON[t]}</div><h3>${NAME[t]}</h3><p>${DESC[t]}</p>
+        <div class="mini"><i style="width:${p||0}%"></i></div>
+        <small>${s.total?`${p}% הצלחה · ${s.ok} מתוך ${s.total}`:'עוד לא התחלתם'}</small></button>`}).join('')}</div>
+    <div class="row2"><button class="btn2" onclick="renderHistory()">📜 היסטוריית שאלות (${S.hist.length})</button>
+    <button class="btn2" onclick="resetAll()">🗑️ איפוס התקדמות</button></div>`;
+  window.scrollTo(0,0);
+}
+function goHome(){renderHome()}
+function resetAll(){if(confirm('למחוק את כל ההתקדמות וההיסטוריה?')){S={stats:{},streak:0,best:0,hist:[],level:S.level};save();renderHome()}}
+
+function startSession(topic){
+  sess={topic,items:[],idx:0,r:0,rc:0};
+  newQuestion();
+}
+function newQuestion(){
+  const t=sess.topic==='mixed'?pick(TOPICS):sess.topic;
+  let q;try{q=GEN[t](S.level)}catch(e){console.error(e);q=GEN[t](S.level)}
+  sess.items.push({q,answered:false,user:'',ok:null,hints:0,msg:null,sol:false});
+  sess.idx=sess.items.length-1;
+  renderQ(false,true);
+}
+function renderBar(){
+  const p=Math.min(100,sess.r*10);
+  $('#bar').style.width=p+'%';
+  $('#barTxt').textContent=`סבב נוכחי: ${sess.r} מתוך 10 שאלות · ${sess.rc} נכונות`;
+  $('#streakChip').textContent='🔥 '+S.streak;
+}
+function renderQ(keep,anim){
+  const it=sess.items[sess.idx],q=it.q,c=COL[q.topic];
+  setTop(sess.topic==='mixed'?'🎲 תרגול מעורבב':ICON[sess.topic]+' '+NAME[sess.topic],true);renderBar();
+  const last=sess.idx===sess.items.length-1;
+  const hintsHtml=q.hints.slice(0,it.hints).map((h,i)=>`<div class="hint"><b>רמז ${i+1}:</b> ${mathify(h)}</div>`).join('');
+  $('#view').innerHTML=`${levelChips()}
+  <div class="qcard" id="qcard" style="--c:${c};${anim?'':'animation:none'}">
+    <div class="qhead"><span class="tag">${ICON[q.topic]} ${NAME[q.topic]} · ${LVN[q.level]}</span><span class="qnum">שאלה ${sess.idx+1}</span></div>
+    <div class="qtext">${q.text}</div>
+    <div class="svgbox">${q.svg}</div>
+    <div class="ansrow"><input id="ans" type="text" inputmode="${q.type==='yn'?'text':'decimal'}" autocomplete="off" enterkeyhint="done" placeholder="${q.type==='yn'?'כן או לא':q.type==='ratio'?'כתבו יחס, למשל 3:5':'כתבו את התשובה (אפשר עם יחידות)'}" value="${it.answered?String(it.user).replace(/"/g,'&quot;'):''}" ${it.answered?'disabled':''}>
+    ${it.answered?'':`<button class="go" onclick="checkAnswer()">בדיקה</button>`}</div>
+    ${q.type==='yn'&&!it.answered?`<div class="ynrow"><button class="chip" onclick="setYN('כן')">כן</button><button class="chip" onclick="setYN('לא')">לא</button></div>`:''}
+    ${it.answered?'':`<div class="hintrow"><button class="hbtn" id="hbtn" onclick="giveHint()" ${it.hints>=q.hints.length?'disabled':''}>💡 רמז (${it.hints}/${q.hints.length})</button></div>`}
+    <div id="hints">${hintsHtml}</div>
+    <div id="fb">${it.answered?fbHtml(it):''}</div>
+    <div class="nav">
+      <button onclick="nav(-1)" ${sess.idx===0?'disabled':''}>→ חזרה אחורה</button>
+      <button class="${it.answered?'primary':''}" onclick="nav(1)" ${(last&&!it.answered)?'disabled':''}>הבא ←</button>
+    </div>
+  </div>`;
+  if(!anim)$('#qcard').style.animation='none';
+  window.scrollTo({top:0,behavior:'instant'});
+  if(!it.answered&&matchMedia('(pointer:fine)').matches)setTimeout(()=>$('#ans')&&$('#ans').focus(),50);
+}
+function setYN(v){$('#ans').value=v;checkAnswer()}
+function fbHtml(it){
+  const q=it.q,steps=`<ol>${q.steps.map(s=>`<li>${mathify(s)}</li>`).join('')}</ol>`;
+  if(it.ok)return `<div class="fb ok"><h4>${it.cheer||pick(CHEER)}</h4>
+    <div>התשובה נכונה: <b>${q.ansText}</b></div>
+    ${it.sol?steps:`<button class="link" onclick="toggleSol()">איך פותרים? הצג פתרון</button>`}</div>`;
+  return `<div class="fb no"><h4>לא נורא, בוא נבין יחד 💙</h4>
+    <div>התשובה שלכם: <b dir="auto">${esc(it.user)}</b><br>התשובה הנכונה: <b>${q.ansText}</b></div>
+    ${it.msg?`<div class="mistake">🔎 <b>כנראה הטעות:</b> ${it.msg}</div>`:`<div class="mistake">🔎 בדקו שוב את החישוב ואת סדר הצעדים למטה.</div>`}
+    <b>הפתרון צעד אחר צעד:</b>${steps}</div>`;
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toggleSol(){const it=sess.items[sess.idx];it.sol=true;$('#fb').innerHTML=fbHtml(it)}
+function giveHint(){
+  const it=sess.items[sess.idx];if(it.hints>=it.q.hints.length)return;
+  it.hints++;renderQHints(it);
+}
+function renderQHints(it){
+  const q=it.q;
+  $('#hints').innerHTML=q.hints.slice(0,it.hints).map((h,i)=>`<div class="hint"><b>רמז ${i+1}:</b> ${mathify(h)}</div>`).join('');
+  const b=$('#hbtn');b.textContent=`💡 רמז (${it.hints}/${q.hints.length})`;b.disabled=it.hints>=q.hints.length;
+}
+function checkAnswer(){
+  const it=sess.items[sess.idx];if(it.answered)return;
+  const inp=$('#ans'),raw=inp.value;
+  if(!raw.trim()){shakeIn(inp);return}
+  const p=parseAns(it.q,raw);
+  if(!p.valid){shakeIn(inp);const fb=$('#fb');fb.innerHTML=`<div class="fb no"><h4>${p.msg}</h4></div>`;return}
+  const ok=matches(it.q,p.val);
+  it.answered=true;it.user=raw.trim();it.ok=ok;it.cheer=pick(CHEER);
+  it.msg=ok?null:(it.q.diag?it.q.diag(p.val):null);
+  const t=it.q.topic,st=S.stats[t]||(S.stats[t]={ok:0,total:0});
+  st.total++;if(ok)st.ok++;
+  if(ok){S.streak++;if(S.streak>S.best)S.best=S.streak}else S.streak=0;
+  S.hist.unshift({t,lv:it.q.level,q:it.q.text,user:it.user,ans:it.q.ansText,ok,steps:it.q.steps,h:it.hints,ts:Date.now()});
+  if(S.hist.length>150)S.hist.length=150;
+  save();
+  sess.r++;if(ok)sess.rc++;
+  renderQ(true,false);
+  if(ok){const c=$('#qcard');c.classList.add('pulse');confetti()}
+  if(sess.r>=10)setTimeout(roundDone,ok?1300:2500);
+}
+function shakeIn(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
+function nav(d){
+  const c=$('#qcard');
+  if(d>0&&sess.idx===sess.items.length-1){if(!sess.items[sess.idx].answered)return;
+    if(sess.r>=10)return roundDone();
+    c.classList.add('leave');setTimeout(newQuestion,180);return}
+  const n=sess.idx+d;if(n<0||n>=sess.items.length)return;
+  c.classList.add('leave');setTimeout(()=>{sess.idx=n;renderQ(false,true)},180);
+}
+function roundDone(){
+  if(!sess||sess.r<10)return;
+  const m=$('#modal'),sc=sess.rc,rc=recommend();
+  m.innerHTML=`<div class="mbox"><div style="font-size:48px">${sc>=9?'🏆':sc>=6?'🎉':'💪'}</div><h2>סיימתם סבב!</h2>
+    <div class="big">${sc}/10</div>
+    <p>${sc>=9?'מושלם! אתם אלופים.':sc>=6?'כל הכבוד, תוצאה יפה!':'כל תרגול משפר. נסו שוב ותראו התקדמות!'}</p>
+    <p style="color:var(--muted);font-size:16px">💡 ${rc.txt}</p>
+    <div class="row2"><button class="btn2" onclick="closeRound(false)">🏠 לבית</button><button class="chip on" style="flex:1;min-height:54px" onclick="closeRound(true)">סבב חדש ←</button></div></div>`;
+  m.classList.add('on');confetti(40);
+}
+function closeRound(cont){
+  $('#modal').classList.remove('on');
+  if(!cont)return renderHome();
+  sess.r=0;sess.rc=0;
+  const last=sess.items[sess.items.length-1];
+  if(sess.idx===sess.items.length-1&&last.answered)newQuestion();else renderQ(false,false);
+}
+function confetti(n=22){
+  const fx=$('#fx'),em=['⭐','✨','🎉','💜','💎','🧡'];
+  for(let i=0;i<n;i++){
+    const s=document.createElement('span');s.className='conf';s.textContent=pick(em);
+    s.style.setProperty('--dx',ri(-170,170)+'px');s.style.setProperty('--dy',ri(-260,-60)+'px');s.style.setProperty('--r',ri(-300,300)+'deg');
+    s.style.animationDelay=ri(0,150)+'ms';fx.appendChild(s);setTimeout(()=>s.remove(),1400);
+  }
+}
+
+/* ============ היסטוריה ============ */
+const strip=h=>h.replace(/<br>.*$/,'').replace(/<[^>]+>/g,'');
+function renderHistory(){
+  sess=null;setTop('היסטוריית שאלות',false);$('#homeBtn').style.visibility='visible';
+  const h=S.hist;
+  $('#view').innerHTML=`<h1 style="font-size:26px">📜 <span>מה פתרתי</span></h1>
+   <p class="sub">${h.length?`${h.length} השאלות האחרונות. לחצו על שאלה כדי לראות את ההסבר.`:'עוד אין שאלות. התחילו לתרגל!'}</p>
+   ${h.map(x=>`<details class="hitem" style="--c:${COL[x.t]}"><summary><span class="mk">${x.ok?'✅':'❌'}</span><span class="tg">${NAME[x.t]}</span><span class="sn">${strip(x.q).slice(0,70)}</span></summary>
+     <div class="bd"><p>${x.q}</p><p>התשובה שלי: <b dir="auto">${esc(x.user)}</b> ${x.ok?'✓':'✗'}<br>התשובה הנכונה: <b>${x.ans}</b><br><small>רמה: ${LVN[x.lv]}${x.h?` · רמזים: ${x.h}`:''}</small></p>
+     <b>הפתרון:</b><ol>${x.steps.map(s=>`<li>${mathify(s)}</li>`).join('')}</ol></div></details>`).join('')}
+   <div class="row2"><button class="btn2" onclick="renderHome()">← חזרה למסך הראשי</button></div>`;
+  window.scrollTo(0,0);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!sess)return;
+  if($('#modal').classList.contains('on'))return;
+  const it=sess.items[sess.idx];
+  if(it.answered)nav(1);else if(document.activeElement&&document.activeElement.id==='ans')checkAnswer();
+});
+renderHome();
+</script>
+</body>
 </html>
