@@ -1,11 +1,18 @@
-// מתג "גרפיקה 3D" (נשמר בטלפון). ברירת מחדל: פעיל.
-const KEY = 'avatar-arena-3d';
+// רמת הגרפיקה (נשמרת בטלפון): 'full' = זירה ודמויות בתלת-מימד, 'chars' = דמויות בלבד, 'off' = דו-ממד.
+const KEY = 'avatar-arena-gfx';
+const LEVELS = ['full', 'chars', 'off'];
 let cache = null;
-export function is3D() {
-  if (cache === null) { try { cache = localStorage.getItem(KEY) !== '0'; } catch { cache = true; } }
+const auto = () => ((navigator.hardwareConcurrency || 4) >= 6 ? 'full' : 'chars');
+export function quality() {
+  if (cache === null) {
+    try { const v = localStorage.getItem(KEY); cache = LEVELS.includes(v) ? v : auto(); } catch { cache = auto(); }
+  }
   return cache;
 }
-export function set3D(v) {
-  cache = !!v;
-  try { localStorage.setItem(KEY, v ? '1' : '0'); } catch { /* ignore */ }
+export function setQuality(q) {
+  cache = LEVELS.includes(q) ? q : 'chars';
+  try { localStorage.setItem(KEY, cache); } catch { /* ignore */ }
 }
+export const nextQuality = () => LEVELS[(LEVELS.indexOf(quality()) + 1) % LEVELS.length];
+export const is3D = () => quality() !== 'off';
+export const QUALITY_LABEL = { full: 'תלת-מימד מלא', chars: 'דמויות בלבד', off: 'דו-ממד' };

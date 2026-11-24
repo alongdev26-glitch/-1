@@ -25,7 +25,7 @@ void main() {
 const FRAG = `
 uniform sampler2D uMap;
 uniform float uSide, uAlpha;
-uniform vec3 uRim;
+uniform vec3 uRim, uGlow, uAmb;
 uniform vec4 uTint;
 varying vec2 vUv; varying vec3 vN; varying vec3 vW;
 void main() {
@@ -38,6 +38,8 @@ void main() {
   float rim = pow(1.0 - max(dot(N, V), 0.0), 2.6);
   vec3 col = c.rgb * (0.74 + 0.5 * diff);
   if (uSide < 0.0) col *= 0.7;
+  col *= uAmb;
+  col += uGlow * clamp(0.35 - N.y * 0.9, 0.0, 1.0) * 0.5;
   col += uRim * rim * 0.4;
   col = mix(col, uTint.rgb, uTint.a);
   gl_FragColor = vec4(col, c.a * uAlpha);
@@ -49,7 +51,7 @@ export function makeMaterial(side, rimHex) {
     uniforms: {
       uMap: { value: null }, uDepth: { value: null }, uThick: { value: 20 }, uSide: { value: side }, uBump: { value: 0.8 },
       uTexel: { value: new THREE.Vector2(1 / 100, 1 / 100) }, uSize: { value: new THREE.Vector2(100, 100) },
-      uRim: { value: new THREE.Color(rimHex) }, uTint: { value: new THREE.Vector4(1, 1, 1, 0) }, uAlpha: { value: 1 },
+      uRim: { value: new THREE.Color(rimHex) }, uGlow: { value: new THREE.Vector3(0, 0, 0) }, uAmb: { value: new THREE.Vector3(1, 1, 1) }, uTint: { value: new THREE.Vector4(1, 1, 1, 0) }, uAlpha: { value: 1 },
     },
   });
 }

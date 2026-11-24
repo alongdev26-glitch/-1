@@ -1,8 +1,31 @@
 // הופך איור (קנבס או תמונה) לטקסטורת צבע + טקסטורת עומק ("כרית" לפי המרחק מהשפה).
 // התוצאה נשמרת במטמון לפי מפתח, כך שכל פריים מחושב פעם אחת.
 import * as THREE from 'three';
+import { RIGS } from '../data/rigs.js';
+import { byId } from '../data/characters.js';
+import { PAD, BAKE_SCALE } from '../anim/bake.js';
 
 const cache = new Map();
+
+// שכבות עומק לפי השלד: היד המכה והרגל הקדמית קרובות למצלמה, היד והרגל השנייה רחוקות.
+// האזורים הם של האיור המקורי. בפריימים מוכנים (bk_) ממירים לקואורדינטות שלהם. ההחלקה אחר כך מרככת אי-דיוקים.
+function applyLayers(key, val, w, h) {
+  const m = key.match(/^bk_([a-z]+)_/) || key.match(/^spr_([a-z]+)$/);
+  const rig = m && RIGS[m[1]], def = m && byId(m[1]);
+  if (!rig || !def) return;
+  const baked = key.startsWith('bk_'), S = baked ? BAKE_SCALE : 1, off = baked ? PAD : 0;
+  const rect = (x0, y0, x1, y1, delta) => {
+    const ax = Math.max(0, Math.floor((x0 + off) * S)), bx = Math.min(w, Math.ceil((x1 + off) * S));
+    const ay = Math.max(0, Math.floor((y0 + off) * S)), by = Math.min(h, Math.ceil((y1 + off) * S));
+    for (let y = ay; y < by; y++) for (let x = ax; x < bx; x++) {
+      const i = y * w + x;
+      if (val[i] > 0) val[i] = Math.max(0.05, Math.min(1, val[i] + delta));
+    }
+  };
+  const nearArm = rig.strike ?? 0, nearLeg = def.faces > 0 ? 0 : 1;
+  rig.arms.forEach((a, i) => rect(...a.box, i === nearArm ? 0.3 : -0.3));
+  rig.legs.forEach((l, i) => rect(l.hip[0] - 34, l.hip[1], l.hip[0] + 34, 256, i === nearLeg ? 0.22 : -0.22));
+}
 
 export function buildTex(key, source) {
   if (cache.has(key)) return cache.get(key);
@@ -30,6 +53,7 @@ export function buildTex(key, source) {
   const cap = Math.max(6, Math.max(w, h) * 0.075);
   const val = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) val[i] = Math.sqrt(Math.min(d[i], cap) / cap);
+  applyLayers(key, val, w, h);
   // החלקה קלה (2 מעברי טשטוש) נגד מדרגות
   for (let pass = 0; pass < 3; pass++) {
     const out = new Float32Array(w * h);

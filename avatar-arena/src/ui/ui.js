@@ -5,9 +5,9 @@ import { touch } from './input.js';
 import { isUnlocked, setMode, story as storyData, recordStory } from '../data/progress.js';
 import { realmById, REALMS, evalObjectives, realmOpen } from '../data/story.js';
 import { moveIcon } from './icons.js';
-import { Stage3D } from '../three/stage3d.js';
+import { World3D } from '../three/world3d.js';
 import { createViewer, destroyViewers } from '../three/viewer.js';
-import { is3D, set3D } from '../three/settings.js';
+import { is3D, quality, setQuality, nextQuality, QUALITY_LABEL } from '../three/settings.js';
 import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
   menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen, storyScreen, storyResultsScreen, stageStates,
@@ -25,17 +25,29 @@ function start3D(fighters) {
   stop3D();
   if (!is3D()) return;
   try {
-    state.stage3d = new Stage3D($('three-layer'));
-    state.stage3d.attach(fighters);
-    if (state.cfg) state.cfg.onFrame = (f) => state.stage3d && state.stage3d.sync(f);
+    const w = new World3D($('three-layer'), state.cfg.map, quality());
+    w.attach(fighters);
+    state.stage3d = w;
+    if (w.full) $('fight-bg').style.visibility = 'hidden'; // הזירה התלת-מימדית מחליפה את הרקע הדו-ממדי
+    const sc = state.game?.scene.getScene('Fight');
+    state.cfg.onFrame = (f) => {
+      if (!state.stage3d) return;
+      state.stage3d.sync(f);
+      const cs = state.stage3d.camState();
+      if (cs && sc) { sc.cameras.main.setZoom(cs.zoom); sc.cameras.main.centerOn(cs.cx, cs.cy); } // אותה מצלמה גם לאפקטים
+    };
   } catch (e) { // אין WebGL: ממשיכים ב-2D
     console.warn('3D disabled', e);
     state.stage3d?.dispose?.(); state.stage3d = null;
+    $('fight-bg').style.visibility = '';
   }
 }
 function stop3D() {
   if (state.stage3d) { try { state.stage3d.dispose(); } catch { /* ignore */ } state.stage3d = null; }
   if (state.cfg) state.cfg.onFrame = null;
+  $('fight-bg').style.visibility = '';
+  const sc = state.game?.scene.getScene('Fight');
+  if (sc && sc.cameras && sc.cameras.main) { sc.cameras.main.setZoom(1); sc.cameras.main.centerOn(480, 270); }
 }
 function mountViewers() {
   $('screen').querySelectorAll('[data-v3d]').forEach((el) => createViewer(el, el.dataset.v3d));
@@ -374,15 +386,15 @@ function pause() {
   state.game.scene.pause('Fight');
   state.paused = true;
   Object.keys(touch).forEach((k) => (touch[k] = false));
-  $('overlay').innerHTML = pauseScreen(is3D());
+  $('overlay').innerHTML = pauseScreen(QUALITY_LABEL[quality()]);
   $('overlay').style.pointerEvents = 'auto';
   $('overlay').onclick = (e) => {
     const a = e.target.closest('[data-act]')?.dataset.act;
     if (a === 'resume') resume();
     if (a === 'toggle3d') {
-      set3D(!is3D());
+      setQuality(nextQuality());
       if (is3D()) { start3D(scene.fighters); state.stage3d?.sync(scene.fighters); } else stop3D();
-      $('overlay').innerHTML = pauseScreen(is3D());
+      $('overlay').innerHTML = pauseScreen(QUALITY_LABEL[quality()]);
     }
     if (a === 'restart') { resume(true); startVs(state.over); }
     if (a === 'menu') { resume(true); showMenu(); }

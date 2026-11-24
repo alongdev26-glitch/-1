@@ -361,13 +361,13 @@ export const hudScreen = (fighters, ctx = {}) => {
 };
 
 // ---------- עצירה ----------
-export const pauseScreen = (on3d = true) => `
+export const pauseScreen = (gfx = 'תלת-מימד מלא') => `
 <div dir="rtl" class="screen flex items-center justify-center select-none font-sans">
   <div class="absolute inset-0 bg-[#09111c]/65"></div>
   <section aria-label="תפריט עצירה" class="relative z-20 w-[250px] bg-[rgba(16,26,43,0.94)] game-modal rounded-[9px] p-5 flex flex-col gap-3 items-center border border-[#2e496a] shadow-2xl">
     <button data-act="resume" class="w-full py-2 px-3 rounded-md bg-[#ffcf53] hover:bg-[#f8be35] text-[#1b263b] font-bold text-base tracking-wide gold-button-glow transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow" type="button">המשך</button>
     <button data-act="restart" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">התחל מחדש</button>
-    <button data-act="toggle3d" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">גרפיקה תלת-מימד: ${on3d ? 'פעילה' : 'כבויה'}</button>
+    <button data-act="toggle3d" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">גרפיקה: ${gfx}</button>
     <button data-act="menu" class="w-full py-2 px-3 rounded-md bg-[rgba(23,37,61,0.88)] hover:bg-[rgba(35,54,88,0.95)] text-slate-100 font-medium text-sm border border-[#395476] transition duration-150 active:scale-[0.98] focus:outline-none flex items-center justify-center shadow-sm" type="button">לתפריט</button>
   </section>
 </div>`;
