@@ -2,7 +2,8 @@
 const KEY = 'avatar-arena-gfx';
 const LEVELS = ['full', 'chars', 'off'];
 let cache = null;
-const auto = () => ((navigator.hardwareConcurrency || 4) >= 6 ? 'full' : 'chars');
+// ברירת מחדל: תמיד תלת-מימד מלא. טלפונים מדווחים לרוב על ליבות מעטות מהאמיתי (דפדפן), אז לא סומכים על hardwareConcurrency.
+const auto = () => 'full';
 export function quality() {
   if (cache === null) {
     try { const v = localStorage.getItem(KEY); cache = LEVELS.includes(v) ? v : auto(); } catch { cache = auto(); }
