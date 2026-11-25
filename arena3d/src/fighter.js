@@ -4,8 +4,11 @@ import { ANIMS } from './anims.js';
 import { createRig } from './rig.js';
 import { MOVES, DIRS } from './moves.js';
 
-export const ARENA_R = 8.4;
-const SPEED = 4.6, GRAV = 24, JUMP_V = 9;
+export const FLOOR_R = 8.9;      // רדיוס הרצפה: מעבר לו אין קרקע ונופלים (העפה מהזירה)
+const WALL_R = 11.3;             // המעקה החיצוני של הזירה
+const GRAV = 24, OUT_Y = -5;
+// הבדלי דמויות: מהירות, משקל (כבד = מועף פחות), גובה קפיצה
+const STATS = { toph: { speed: 4.0, weight: 1.25 }, zuko: { speed: 5.4, weight: 0.85 } };
 const frame = (arr, t01) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(t01 * arr.length)))];
 
 export class Fighter {
@@ -19,16 +22,18 @@ export class Fighter {
     this.shadow = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.45, depthWrite: false }));
     this.shadow.rotation.x = -Math.PI / 2;
     this.pos = new THREE.Vector3(); this.vel = new THREE.Vector3(); this.yaw = 0; this.yawVis = 0;
-    this.maxHp = 100; this.hp = 100; this.lives = 3; this.ult = 0;
+    const st = STATS[id] || { speed: 4.6, weight: 1 }; this.speed = st.speed; this.weight = st.weight;
+    this.pct = 0; this.lives = 3; this.ult = 0; this.airJumps = 1; this.out = false;
     this.state = 'idle'; this.t = 0; this.stun = 0; this.walkPhase = 0; this.koT = 0; this.flash = 0;
     this.cur = null; this.hitDone = false; this.tick = 0; this.dashHit = false; this.events = []; this.inv = 0; this.dodge = null; this.blocking = false;
   }
   reset(x, z, yaw) {
-    this.pos.set(x, 0, z); this.vel.set(0, 0, 0); this.yaw = yaw; this.yawVis = yaw; this.hp = this.maxHp; this.state = 'idle'; this.t = 0; this.stun = 0;
+    this.pos.set(x, 0, z); this.vel.set(0, 0, 0); this.yaw = yaw; this.yawVis = yaw; this.state = 'idle'; this.t = 0; this.stun = 0; this.airJumps = 1; this.out = false;
     this.cd = this.moves.map(() => 0); this.koT = 0; this.cur = null; this.events.length = 0; this.inv = 0; this.dodge = null; this.blocking = false;
   }
   get alive() { return this.state !== 'ko'; }
-  get grounded() { return this.pos.y <= 0.001; }
+  get onFloor() { return Math.hypot(this.pos.x, this.pos.z) <= FLOOR_R; }
+  get grounded() { return this.pos.y <= 0.001 && this.onFloor; }
   dir() { return { x: Math.sin(this.yaw), z: Math.cos(this.yaw) }; }
 
   // cmd: { x, z (כיוון תנועה בעולם), a, b (לחיצות), bHold, ult, dir ('none'|'right'|'left'|'down'|'up') }
@@ -36,7 +41,7 @@ export class Fighter {
     this.t += dt; this.flash = Math.max(0, this.flash - dt); this.inv = Math.max(0, this.inv - dt);
     this.cd = this.cd.map((c) => Math.max(0, c - dt));
     this.ult = Math.min(100, this.ult + dt * 1.1);
-    if (this.state === 'ko') { this.koT += dt; this.pos.addScaledVector(this.vel, dt); this.vel.multiplyScalar(0.9); this._apply(); return; }
+    if (this.state === 'ko') { this.koT += dt; if (this.out) this.vel.y -= GRAV * dt; this.pos.addScaledVector(this.vel, dt); this.vel.x *= 0.98; this.vel.z *= 0.98; this._apply(); return; }
     const busy = this.state === 'move' || this.state === 'hit' || this.state === 'dodge';
     this.blocking = this.state === 'block';
     const toFoe = foe ? Math.atan2(foe.pos.x - this.pos.x, foe.pos.z - this.pos.z) : this.yaw;
@@ -48,23 +53,27 @@ export class Fighter {
         this.state = 'block'; this.vel.x *= 0.5; this.vel.z *= 0.5;
       } else {
         if (this.state === 'block') { this.state = 'idle'; this.t = 0; }
-        if (mv > 0.05 && !cmd.a && !cmd.b) { this.vel.x = cmd.x * SPEED; this.vel.z = cmd.z * SPEED; this.walkPhase += dt * 9 * Math.min(1, mv); this.state = grounded ? 'walk' : 'air'; }
+        if (mv > 0.05 && !cmd.a && !cmd.b) { this.vel.x = cmd.x * this.speed; this.vel.z = cmd.z * this.speed; this.walkPhase += dt * 9 * Math.min(1, mv); this.state = grounded ? 'walk' : 'air'; }
         else { this.vel.x *= 0.6; this.vel.z *= 0.6; if (grounded && this.state !== 'air') this.state = 'idle'; }
       }
       if (this.state !== 'block') this.yaw = lerpAngle(this.yaw, toFoe, Math.min(1, dt * 10));
+      if (!grounded && cmd.b && this.airJumps > 0 && this.state !== 'hit') this._airJump();
       if (cmd.ult && this._tryMove(5)) { /* אולט */ }
       else if (cmd.a && grounded) this._tryMove(Math.max(0, DIRS.indexOf(dir)));
       else if (cmd.b && dir !== 'none' && grounded) this._tryDefense(dir);
     } else {
-      this.vel.x *= this.state === 'dodge' ? 0.97 : 0.88; this.vel.z *= this.state === 'dodge' ? 0.97 : 0.88;
+      const fr = this.state === 'dodge' ? 0.97 : (this.state === 'hit' ? 0.955 : 0.88); this.vel.x *= fr; this.vel.z *= fr;
       if (this.state === 'move') this._runMove(dt, foe);
       if (this.state === 'dodge') this._runDodge(dt);
     }
     if (!this.grounded || this.vel.y > 0) { this.vel.y -= GRAV * dt; if (this.state === 'walk' || this.state === 'idle') this.state = 'air'; }
     this.pos.addScaledVector(this.vel, dt);
-    if (this.pos.y <= 0) { this.pos.y = 0; if (this.vel.y < 0) { this.vel.y = 0; if (this.state === 'air') { this.state = 'idle'; this.t = 0; } } }
+    if (this.pos.y <= 0 && this.onFloor && this.pos.y > -0.6) {            // נחיתה על הרצפה
+      this.pos.y = 0; if (this.vel.y < 0) { this.vel.y = 0; this.airJumps = 1; if (this.state === 'air') { this.state = 'idle'; this.t = 0; } }
+    }
     const d = Math.hypot(this.pos.x, this.pos.z);
-    if (d > ARENA_R) { this.pos.x *= ARENA_R / d; this.pos.z *= ARENA_R / d; }
+    if (d > WALL_R) { this.pos.x *= WALL_R / d; this.pos.z *= WALL_R / d; this.vel.x *= -0.3; this.vel.z *= -0.3; }
+    if (this.pos.y < OUT_Y && this.alive) { this.out = true; this.state = 'ko'; this.koT = 0; this.events.push({ type: 'ko', from: null, out: true }); }
     if (foe && foe.alive) {
       const dx = this.pos.x - foe.pos.x, dz = this.pos.z - foe.pos.z, dist = Math.hypot(dx, dz), min = 0.85;
       if (dist < min && dist > 0.001) { const push = (min - dist) / 2; this.pos.x += dx / dist * push; this.pos.z += dz / dist * push; foe.pos.x -= dx / dist * push; foe.pos.z -= dz / dist * push; }
@@ -72,6 +81,10 @@ export class Fighter {
     this._apply();
   }
 
+  _airJump() {                                            // קפיצת התאוששות באוויר (פעם אחת) לכיוון מרכז הזירה
+    const d = Math.hypot(this.pos.x, this.pos.z) || 1; this.airJumps--; this.vel.y = 9.5;
+    this.vel.x = -this.pos.x / d * 5.5; this.vel.z = -this.pos.z / d * 5.5; this.state = 'air'; this.cur = null; this.events.push({ type: 'airjump' });
+  }
   _tryDefense(dir) {
     const f = this.dir(), r = { x: -f.z, z: f.x };
     if (dir === 'right' || dir === 'left') {                  // קפיצה לצד
@@ -121,7 +134,7 @@ export class Fighter {
       case 'melee': {
         if (!foe || !foe.alive) break;
         const dx = foe.pos.x - here.x, dz = foe.pos.z - here.z, dist = Math.hypot(dx, dz);
-        if (dist <= 1.9 && Math.abs(angleDiff(Math.atan2(dx, dz), this.yaw)) <= 1.2 && Math.abs(foe.pos.y - this.pos.y) < 1.4) foe.hurt(mv.dmg, dx / dist, dz / dist, mv.kb, this);
+        if (dist <= (mv.range || 1.9) && Math.abs(angleDiff(Math.atan2(dx, dz), this.yaw)) <= 1.2 && Math.abs(foe.pos.y - this.pos.y) < 1.4) foe.hurt(mv.dmg, dx / dist, dz / dist, mv.kb, this);
         this.events.push({ type: 'punch', x: here.x + d.x * 1.0, y: 1.2, z: here.z + d.z * 1.0 });
         break;
       }
@@ -157,24 +170,24 @@ export class Fighter {
   }
   hurt(dmg, nx, nz, kb, from, heavy = false, soft = false) {
     if (!this.alive || this.inv > 0) return;
-    if (this.state === 'block') {                                       // חסימה: נזק ודחיפה מופחתים, בלי פגיעה
-      dmg *= heavy ? 0.5 : 0.15; kb *= 0.25; this.events.push({ type: 'block' });
-      this.hp = Math.max(0, this.hp - dmg); this.vel.x = nx * kb; this.vel.z = nz * kb;
-      this.ult = Math.min(100, this.ult + dmg * 0.4); if (this.hp <= 0) { this.state = 'ko'; this.koT = 0; this.events.push({ type: 'ko', from }); }
+    if (this.state === 'block') {                                       // חסימה: כמעט בלי נזק ובלי הדיפה
+      this.pct += dmg * (heavy ? 0.4 : 0.1); kb *= 0.25; this.vel.x = nx * kb; this.vel.z = nz * kb;
+      this.events.push({ type: 'block' }); this.ult = Math.min(100, this.ult + dmg * 0.4);
       return;
     }
-    this.hp = Math.max(0, this.hp - dmg); this.flash = 0.18;
+    this.pct += dmg; this.flash = 0.18;
     this.ult = Math.min(100, this.ult + dmg * 0.8); if (from && from !== this) from.ult = Math.min(100, from.ult + dmg * 1.2);
-    this.vel.x = nx * kb; this.vel.z = nz * kb; if (heavy) this.vel.y = 5.5;
-    if (!soft) { this.state = 'hit'; this.t = 0; this.stun = heavy ? 0.55 : 0.32; this.cur = null; }
-    this.events.push({ type: 'hit', heavy, soft, from });
-    if (this.hp <= 0) { this.state = 'ko'; this.koT = 0; this.vel.x = nx * 3; this.vel.z = nz * 3; this.events.push({ type: 'ko', from }); }
+    const scale = (1 + this.pct / 100) / this.weight;                    // ככל שהאחוז גבוה יותר: מועפים רחוק יותר (כמו Smash)
+    this.vel.x = nx * kb * scale; this.vel.z = nz * kb * scale;
+    if (heavy || this.pct > 90) this.vel.y = Math.min(13, 5.5 * (0.8 + this.pct / 160));
+    if (!soft) { this.state = 'hit'; this.t = 0; this.stun = (heavy ? 0.5 : 0.3) * (1 + Math.min(1, this.pct / 200)); this.cur = null; }
+    this.events.push({ type: 'hit', heavy, soft, from, pct: this.pct });
   }
   _apply() {
-    this.group.position.copy(this.pos);
+    this.group.position.copy(this.pos); this.group.visible = this.pos.y > -10;
     this.yawVis = lerpAngle(this.yawVis, this.yaw, 0.35);
     this.pivot.rotation.y = this.yawVis;
-    this.shadow.position.set(this.pos.x, 0.02, this.pos.z);
+    this.shadow.position.set(this.pos.x, 0.02, this.pos.z); this.shadow.visible = this.onFloor;
     this.shadow.scale.setScalar(Math.max(0.4, 1 - this.pos.y * 0.12));
     let fr;
     if (this.state === 'move') fr = frame(ANIMS[this.cur.anim], Math.min(0.999, this.t / this.cur.dur));
@@ -187,7 +200,7 @@ export class Fighter {
     else fr = ANIMS.idle[Math.floor(this.t * 5) % ANIMS.idle.length];
     this.rig.setPose(fr, 0);
     let rx = 0, py = 0;
-    if (this.state === 'ko') { rx = -Math.min(1.5, this.koT * 3); py = 0.15 * Math.min(1, this.koT * 3); }
+    if (this.state === 'ko') { rx = this.out ? this.koT * 6 : -Math.min(1.5, this.koT * 3); py = this.out ? 0 : 0.15 * Math.min(1, this.koT * 3); }
     else if (this.state === 'dodge' && this.dodge) { const k = Math.min(1, this.dodge.t / this.dodge.dur); rx = (this.dodge.kind === 'roll' ? 1 : -1) * Math.PI * 2 * k; py = this.dodge.kind === 'roll' ? 0.45 * Math.sin(k * Math.PI) : 0; }
     this.pivot.rotation.x = rx; this.rig.wrap.position.y = -0.85 + py;
     const f = this.flash > 0;

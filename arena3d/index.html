@@ -16,6 +16,7 @@
   .bar .name { font-weight: 800; letter-spacing: .08em; font-size: 15px; min-width: 70px; }
   .bar .hp { flex: 1; height: 12px; background: rgba(255,255,255,.14); border-radius: 6px; overflow: hidden; } .hp i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#58d68d,#f4d03f); transition: width .15s; }
   .bar.p2 .hp i { float: right; background: linear-gradient(270deg,#ec7063,#f4d03f); }
+  .pct { flex: 1; text-align: center; font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px #000; }
   .gems { display: flex; gap: 4px; } .gems b { width: 14px; height: 14px; transform: rotate(45deg); background: #9be7ff; border: 1px solid #fff; } .gems b.off { background: #25364a; border-color: #4a5d73; }
   #timer { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.18); padding: 6px 18px; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
   #pausebtn { position: absolute; top: 72px; right: 10px; width: 40px; height: 40px; border-radius: 50%; background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 16px; pointer-events: auto; }
@@ -58,8 +59,8 @@
 <div id="app">
   <canvas id="gl"></canvas>
   <div class="hud" id="hud">
-    <div class="bar p1"><span class="name" id="n1">PLAYER</span><div class="hp"><i id="hp1"></i></div><div class="gems" id="g1"></div></div>
-    <div class="bar p2"><span class="name" id="n2">CPU</span><div class="hp"><i id="hp2"></i></div><div class="gems" id="g2"></div></div>
+    <div class="bar p1"><span class="name" id="n1">PLAYER</span><div class="pct" id="pct1">0%</div><div class="gems" id="g1"></div></div>
+    <div class="bar p2"><span class="name" id="n2">CPU</span><div class="pct" id="pct2">0%</div><div class="gems" id="g2"></div></div>
     <div id="timer">3:00</div>
     <button id="pausebtn" type="button">❚❚</button>
     <div id="banner"></div>

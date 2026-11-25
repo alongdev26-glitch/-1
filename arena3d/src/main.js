@@ -28,7 +28,7 @@ function flash(op = 0.7) { const f = $('flash'); f.style.transition = 'none'; f.
 function gems(el, n) { el.innerHTML = Array.from({ length: 3 }, (_, i) => `<b class="${i < n ? '' : 'off'}"></b>`).join(''); }
 function banner(text, ms = 1100) { const b = $('banner'); b.textContent = text; b.style.opacity = text ? 1 : 0; clearTimeout(banner.t); if (text && ms < 1e8) banner.t = setTimeout(() => (b.style.opacity = 0), ms); }
 function hud() {
-  $('hp1').style.width = (me.hp / me.maxHp * 100) + '%'; $('hp2').style.width = (cpu.hp / cpu.maxHp * 100) + '%';
+  for (const [el, f] of [[$('pct1'), me], [$('pct2'), cpu]]) { el.textContent = Math.floor(f.pct) + '%'; el.style.color = `hsl(${Math.max(0, 60 - f.pct * 0.45)} 95% ${f.pct > 120 ? 52 : 62}%)`; }
   gems($('g1'), me.lives); gems($('g2'), cpu.lives);
   const t = Math.max(0, Math.ceil(state.time)); $('timer').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   $('cd-x').style.setProperty('--p', me.ult + '%'); $('btn-x').classList.toggle('ready', me.ult >= 100);
@@ -62,7 +62,7 @@ function howtoHTML(id) {
     <div class="ht-grid" style="margin-top:10px"><div class="ht-row">${joyIcon('none')}<span class="nm">תזוזה</span></div><div class="ht-row"><span class="ab">A</span><span class="nm">תקיפה</span></div><div class="ht-row" style="grid-column:1/3"><span class="ab">B</span><span class="nm">הגנה</span></div></div>
     <div class="ht-grid"><div>${atk}</div><div>${def}</div></div>
     <div class="ht-row" style="margin-top:10px"><span class="ab" style="border-color:#f0b429">X</span><span class="nm">אולטימטיבית: ${mv[5].name} (נטענת בקרב)</span></div>
-    <p style="font-size:12px;opacity:.7;margin-top:6px">למעלה = לכיוון היריב, למטה = לאחור. הכיוון נקבע בג'ויסטיק בזמן שלוחצים על A או B.</p>
+    <p style="font-size:12px;opacity:.75;margin-top:6px">המטרה: להעיף את היריב מהזירה! ככל שהאחוז גבוה יותר הוא עף רחוק יותר. אם עפת החוצה: לחץ B באוויר לקפיצת חזרה. למעלה = לכיוון היריב, למטה = לאחור.</p>
     <button class="go" id="ht-go" type="button">הבנתי</button>`;
 }
 function showHowto(then) {
@@ -88,7 +88,7 @@ function spawn() {
   $('n1').textContent = me.name; $('n2').textContent = cpu.name;
   const m = MOVES[sel()]; $('btn-a').innerHTML = '<span style="font-size:15px">A</span>'; $('btn-x').firstChild.textContent = m[5].icon;
 }
-function roundReset() { me.reset(-3, 3, Math.PI * 0.75); cpu.reset(3, -3, -Math.PI * 0.25); }
+function roundReset(loser) { me.reset(-3, 3, Math.PI * 0.75); cpu.reset(3, -3, -Math.PI * 0.25); if (loser) loser.pct = 0; }
 function startMatch() {
   spawn(); state = { mode: 'match', paused: false, time: 180, over: false, koT: 0, hitstop: 0 };
   $('menu').classList.add('hidden'); $('over').classList.add('hidden'); $('pause').classList.add('hidden'); $('hud').style.display = ''; banner('FIGHT!', 900);
@@ -125,7 +125,7 @@ function handleEvents(f, foe) {
     switch (e.type) {
       case 'start': if (e.idx === 5) { banner(e.move.name, 900); shake = Math.max(shake, 0.15); } break;
       case 'punch': fx.punch(e.x, e.y, e.z, ELEMENT[f.id].glow); break;
-      case 'hit': fx.spark(new THREE.Vector3(f.pos.x, 1.2, f.pos.z), e.heavy, hexOf(e.from)); shake = Math.max(shake, e.soft ? 0.05 : (e.heavy ? 0.4 : 0.15)); if (e.heavy) state.hitstop = 0.06; break;
+      case 'hit': fx.spark(new THREE.Vector3(f.pos.x, f.pos.y + 1.2, f.pos.z), e.heavy, hexOf(e.from)); shake = Math.max(shake, e.soft ? 0.05 : (e.heavy ? 0.4 : 0.15) + Math.min(0.3, e.pct / 400)); if (e.heavy || e.pct > 100) state.hitstop = 0.06; break;
       case 'block': fx.punch(f.pos.x, 1.2, f.pos.z, 0x9fd0ff); fx.dust(f.pos.x, f.pos.z, 3, 0.6); shake = Math.max(shake, 0.08); break;
       case 'dodge': fx.dust(f.pos.x, f.pos.z, 7, 0.9); break;
       case 'wave': fx.wave(e.x, e.z, e.r); shake = Math.max(shake, 0.35); break;
@@ -136,7 +136,8 @@ function handleEvents(f, foe) {
       case 'pillar': fx.pillar(e.x, e.z); shake = Math.max(shake, 0.2); later(0.2, () => damageNear(f, foe, e.x, e.z, 1.5, e.dmg, e.kb, true)); break;
       case 'meteor': fx.ring(e.x, e.z, e.r, 0xff5a2a, 0.8); fx.meteor(e.x, e.z, e.r, () => { fx.wave(e.x, e.z, e.r * 1.2); fx.burst({ x: e.x, y: 0.6, z: e.z }, 24, 0xffaa55); flash(0.45); shake = 0.7; damageNear(f, foe, e.x, e.z, e.r, e.dmg, e.kb, true); }); break;
       case 'lightning': fx.ring(e.x, e.z, e.r, 0x9fd0ff, 0.4); later(0.4, () => { fx.lightning(e.x, e.z); flash(0.85); shake = 0.6; state.hitstop = 0.08; damageNear(f, foe, e.x, e.z, e.r, e.dmg, e.kb, true); }); break;
-      case 'ko': state.koT = 1.8; state.koFor = f; shake = 0.5; break;
+      case 'ko': state.koT = 1.3; state.koFor = f; shake = 0.5; banner('OUT!', 900); break;
+      case 'airjump': fx.dust(f.pos.x, f.pos.z, 4, 0.5, 0xcfe6ff); break;
       default: break;
     }
   }
@@ -162,10 +163,10 @@ function step(dt) {
     if (state.koT <= 0) {
       const loser = state.koFor; loser.lives -= 1; state.koFor = null;
       if (loser.lives <= 0) { endMatch(loser === cpu); return; }
-      banner('KO', 900); roundReset(); balls.forEach((b) => scene.remove(b.mesh)); balls.length = 0;
+      roundReset(loser); balls.forEach((b) => scene.remove(b.mesh)); balls.length = 0;
     }
   }
-  if (state.time <= 0) endMatch(me.hp + me.lives * 100 >= cpu.hp + cpu.lives * 100);
+  if (state.time <= 0) endMatch(me.lives * 1000 - me.pct >= cpu.lives * 1000 - cpu.pct);
 }
 function loop() {
   const dt = Math.min(clock.getDelta(), 1 / 20);

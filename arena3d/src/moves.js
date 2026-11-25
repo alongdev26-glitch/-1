@@ -7,19 +7,19 @@ export const ELEMENT = {
 };
 export const MOVES = {
   toph: [
-    { name: 'אגרוף סלע', icon: '👊', kind: 'melee', anim: 'm2', dur: 0.46, hitAt: 0.5, cd: 0.1, dmg: 8, kb: 5.5 },
-    { name: 'זריקת סלע', icon: '🪨', kind: 'boulder', anim: 'm1', dur: 0.8, hitAt: 0.5, cd: 4.5, dmg: 17, kb: 8, speed: 11 },
+    { name: 'פטיש סלע', icon: '👊', kind: 'melee', anim: 'm1', dur: 0.66, hitAt: 0.55, cd: 0.15, dmg: 11, kb: 7.5, range: 2.1 },
+    { name: 'זריקת סלע', icon: '🪨', kind: 'boulder', anim: 'm4', dur: 0.8, hitAt: 0.5, cd: 4.5, dmg: 17, kb: 8, speed: 11 },
     { name: 'טאטוא אדמה', icon: '🌀', kind: 'sweep', anim: 'm3', dur: 0.6, hitAt: 0.45, cd: 3, dmg: 11, kb: 7.5, range: 2.5 },
     { name: 'רעידת אדמה', icon: '🌋', kind: 'quake', anim: 'stomp', dur: 0.9, hitAt: 0.55, cd: 6, dmg: 18, kb: 9.5, radius: 3.6 },
-    { name: 'עמוד סלע', icon: '⛰️', kind: 'pillar', anim: 'm4', dur: 0.7, hitAt: 0.45, cd: 3.5, dmg: 14, kb: 7 },
+    { name: 'עמוד סלע', icon: '⛰️', kind: 'pillar', anim: 'm2', dur: 0.7, hitAt: 0.45, cd: 3.5, dmg: 14, kb: 7 },
     { name: 'סלע ענק', icon: '☄️', kind: 'meteor', anim: 'ult', dur: 1.3, hitAt: 0.6, cd: 0, dmg: 42, kb: 12, radius: 3.2 },
   ],
   zuko: [
-    { name: 'אגרוף אש', icon: '👊', kind: 'melee', anim: 'm2', dur: 0.46, hitAt: 0.5, cd: 0.1, dmg: 8, kb: 5.5 },
-    { name: 'כדור אש', icon: '🔥', kind: 'fireball', anim: 'm2', dur: 0.75, hitAt: 0.5, cd: 3, dmg: 14, kb: 7, speed: 13 },
-    { name: 'נשיפת להבות', icon: '🌪️', kind: 'flamethrower', anim: 'm1', dur: 1.1, hitAt: 0.3, cd: 6, dmg: 4, kb: 2.5, range: 4.4 },
-    { name: 'טבעת אש', icon: '⭕', kind: 'firering', anim: 'stomp', dur: 0.85, hitAt: 0.55, cd: 6, dmg: 16, kb: 9, radius: 3.4 },
-    { name: 'בעיטת להבות', icon: '🦶', kind: 'flamekick', anim: 'm3', dur: 0.7, hitAt: 0.35, cd: 4, dmg: 15, kb: 8 },
+    { name: 'דקירת אש', icon: '👊', kind: 'melee', anim: 'm2', dur: 0.3, hitAt: 0.45, cd: 0.05, dmg: 5, kb: 3.6, range: 2.3 },
+    { name: 'כדור אש', icon: '🔥', kind: 'fireball', anim: 'm1', dur: 0.75, hitAt: 0.5, cd: 3, dmg: 14, kb: 7, speed: 13 },
+    { name: 'נשיפת להבות', icon: '🌪️', kind: 'flamethrower', anim: 'm4', dur: 1.1, hitAt: 0.3, cd: 6, dmg: 4, kb: 2.5, range: 4.4 },
+    { name: 'טבעת אש', icon: '⭕', kind: 'firering', anim: 'm3', dur: 0.85, hitAt: 0.55, cd: 6, dmg: 16, kb: 9, radius: 3.4 },
+    { name: 'בעיטת להבות', icon: '🦶', kind: 'flamekick', anim: 'jump', dur: 0.7, hitAt: 0.35, cd: 4, dmg: 15, kb: 8 },
     { name: 'ברק', icon: '⚡', kind: 'lightning', anim: 'ult', dur: 1.2, hitAt: 0.6, cd: 0, dmg: 40, kb: 11, radius: 2.2 },
   ],
 };

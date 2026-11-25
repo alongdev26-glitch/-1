@@ -5,6 +5,7 @@ export function makeBot(level = 3) {
     const cmd = { x: 0, z: 0, a: false, b: false, bHold: false, ult: false, dir: 'none' };
     if (!foe.alive || !me.alive) return cmd;
     think -= dt; defT -= dt;
+    if (!me.onFloor) { const c = Math.hypot(me.pos.x, me.pos.z) || 1; cmd.b = true; cmd.x = -me.pos.x / c; cmd.z = -me.pos.z / c; return cmd; }   // התאוששות אחרי העפה
     const dx = foe.pos.x - me.pos.x, dz = foe.pos.z - me.pos.z, d = Math.hypot(dx, dz) || 1, fx = dx / d, fz = dz / d;
     if (think <= 0) { think = 0.3 + Math.random() * (0.9 - level * 0.12); const r = Math.random(); mode = d > 2.4 ? (r < 0.4 ? 'range' : 'approach') : (r < 0.6 ? 'attack' : (r < 0.8 ? 'strafe' : 'retreat')); side = Math.random() < 0.5 ? -1 : 1; }
     // הגנה: אם היריב תוקף מקרוב
@@ -19,7 +20,7 @@ export function makeBot(level = 3) {
     }
     else if (mode === 'strafe') { cmd.x = -fz * side * 0.8; cmd.z = fx * side * 0.8; }
     else { cmd.x = -fx * 0.8; cmd.z = -fz * 0.8; }
-    const c = Math.hypot(me.pos.x, me.pos.z); if (c > 7.2) { cmd.x -= me.pos.x / c * 0.8; cmd.z -= me.pos.z / c * 0.8; }
+    const c = Math.hypot(me.pos.x, me.pos.z); if (c > 7.3) { cmd.x -= me.pos.x / c * 1.2; cmd.z -= me.pos.z / c * 1.2; }
     if (Math.random() < 0.002 * level && me.grounded && !cmd.a) { cmd.b = true; cmd.dir = side > 0 ? 'right' : 'left'; }
     return cmd;
   };
