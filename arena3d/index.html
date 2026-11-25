@@ -26,12 +26,31 @@
   .btn { position: absolute; width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255,255,255,.6); background: rgba(255,255,255,.12); color: #fff; font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
   .btn.on { background: rgba(255,255,255,.4); transform: scale(.94); }
   #btn-a { right: 24px; bottom: 28px; } #btn-b { right: 110px; bottom: 28px; } #btn-x { right: 34px; bottom: 116px; }
-  #btn-x .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) var(--p,0%), transparent 0); pointer-events: none; }
+  #btn-x { overflow: hidden; } #btn-x .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(240,180,41,.65) var(--p,0%), transparent 0); pointer-events: none; } #btn-x.ready { border-color: #ffd24c; box-shadow: 0 0 18px 4px rgba(255,210,76,.8); background: rgba(255,210,76,.28); }
+  #btn-a { width: 86px; height: 86px; } #btn-b { width: 70px; height: 70px; right: 124px; bottom: 26px; }
   .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(circle at 50% 40%, rgba(20,40,70,.85), rgba(6,10,18,.96)); text-align: center; }
   .screen h1 { margin: 0; font-size: 44px; letter-spacing: .12em; } .screen p { margin: 0; opacity: .75; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
   .card { width: 150px; padding: 12px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06); border-radius: 12px; cursor: pointer; font-weight: 700; } .card.sel { border-color: var(--acc); box-shadow: 0 0 18px rgba(240,180,41,.45); } .card.lock { opacity: .4; cursor: default; }
   .go { padding: 12px 42px; font-size: 22px; font-weight: 900; color: #1b1400; background: linear-gradient(#ffea79,#f4b400); border: 0; border-radius: 12px; }
+  .screen.clear { background: linear-gradient(180deg, rgba(5,10,20,.55), rgba(5,10,20,0) 35%, rgba(5,10,20,0) 55%, rgba(5,10,20,.8)); justify-content: flex-start; }
+  #title { margin-top: 3.5vh; font-size: min(11vw, 64px); font-weight: 900; letter-spacing: .22em; text-shadow: 0 0 24px rgba(240,180,41,.6), 0 4px 0 #6b4a00; background: linear-gradient(#fff6c8,#f0b429 60%,#b36b00); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 10px #000); }
+  #subtitle { margin-top: -6px; letter-spacing: .5em; font-size: 12px; opacity: .85; }
+  .arrow { position: absolute; top: 44%; width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); background: rgba(10,20,34,.55); color: #fff; font-size: 22px; } #prev { left: 14px; } #next { right: 14px; }
+  #card { position: absolute; left: 14px; bottom: 14px; width: min(46vw, 330px); padding: 10px 14px; background: rgba(10,20,34,.78); border-left: 5px solid var(--acc); text-align: right; }
+  #card h2 { margin: 0; font-size: 24px; } #card .el { font-size: 12px; opacity: .85; margin-bottom: 6px; }
+  #card .mv { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; } #card .mv i { font-style: normal; width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  #card .mv i.ult { border-color: #f0b429; background: rgba(240,180,41,.2); }
+  #menu-btns { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; width: min(40vw, 230px); }
+  #menu-btns button { padding: 10px 14px; font-weight: 800; font-size: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,.35); background: rgba(10,20,34,.8); color: #fff; } #menu-btns .go { font-size: 22px; border: 0; color: #1b1400; }
+  #flash { position: absolute; inset: 0; background: #cfe6ff; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  #howto { background: rgba(6,10,18,.94); justify-content: flex-start; padding-top: 8px; overflow: auto; }
+  #howto h1 { font-size: 26px; margin: 4px 0 0; background: #fff; color: #111; padding: 4px 34px; letter-spacing: .08em; }
+  .ht-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 36px; text-align: right; margin-top: 8px; font-weight: 800; font-size: 17px; }
+  .ht-row { display: flex; align-items: center; gap: 8px; direction: ltr; } .ht-row span.nm { direction: rtl; }
+  .joy { position: relative; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex: none; } .joy b { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: #fff; left: 50%; top: 50%; margin: -5.5px 0 0 -5.5px; }
+  .joy.up b { top: 24%; } .joy.down b { top: 76%; } .joy.left b { left: 24%; } .joy.right b { left: 76%; }
+  .ab { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; flex: none; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -47,13 +66,16 @@
     <div id="touch-left"><div id="joy-base"><div id="joy-knob"></div></div></div>
     <div class="btn" id="btn-b">B</div><div class="btn" id="btn-a">A</div><div class="btn" id="btn-x">X<span class="cd" id="cd-x"></span></div>
   </div>
-  <div class="screen" id="menu">
-    <h1>ARENA</h1><p>קרב תלת-מימד אחד על אחד</p>
-    <div class="row" id="chars"></div>
-    <button class="go" id="start" type="button" disabled>טוען…</button>
-    <p style="font-size:12px">מקלדת: WASD תנועה • J מכה • K יכולת • רווח קפיצה</p>
+  <div id="flash"></div>
+  <div class="screen clear" id="menu">
+    <div id="title">ARENA</div><div id="subtitle">קרב תלת-מימד</div>
+    <button class="arrow" id="prev" type="button">◀</button><button class="arrow" id="next" type="button">▶</button>
+    <div id="card"></div>
+    <div id="menu-btns"><button class="go" id="start" type="button" disabled style="background:linear-gradient(#ffea79,#f4b400)">טוען…</button><button id="howbtn" type="button">איך משחקים</button><button id="gfx" type="button">גרפיקה: גבוהה</button></div>
   </div>
-  <div class="screen hidden" id="over"><h1 id="over-t"></h1><p id="over-s"></p><button class="go" id="again" type="button">שוב</button></div>
+  <div class="screen hidden" id="howto"></div>
+  <div class="screen hidden" id="pause"><h1>הפסקה</h1><div class="row"><button class="go" id="resume" type="button">המשך</button><button class="go" id="home1" type="button" style="background:#cfd8e6">מסך הבית</button></div></div>
+  <div class="screen hidden" id="over"><h1 id="over-t"></h1><p id="over-s"></p><div class="row"><button class="go" id="again" type="button">שוב</button><button class="go" id="home2" type="button" style="background:#cfd8e6">מסך הבית</button></div></div>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>
