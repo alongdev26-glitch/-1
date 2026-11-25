@@ -8,15 +8,31 @@ import { ANIMS } from '../../anim/bake.js';
 const cache = new Map();     // id -> Promise<gltf scene>
 export const hasModel = (id) => !!(MODELS[id]);
 const MODELS = {
-  toph: { url: 'models/toph.glb', arms: { down: 1.35 } },
+  toph: { url: 'models/toph.glb', b64: 'models/toph.b64.txt', arms: { down: 1.35 } },
 };
+
+// טוען GLB; אם השרת לא מגיש .glb (למשל מארח שמגיש רק טקסט), נופלים לגרסת base64 של אותו קובץ
+async function fetchGlb(conf) {
+  try {
+    const r = await fetch(conf.url);
+    if (r.ok) {
+      const buf = await r.arrayBuffer();
+      if (new Uint8Array(buf, 0, 4).every((c, i) => c === 'glTF'.charCodeAt(i))) return buf;
+    }
+  } catch { /* נופלים לבא */ }
+  const r2 = await fetch(conf.b64);
+  const txt = (await r2.text()).trim();
+  const bin = atob(txt), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr.buffer;
+}
 
 export function preloadModel(id) {
   if (!MODELS[id]) return Promise.resolve(null);
   if (!cache.has(id)) {
-    cache.set(id, new Promise((res) => {
-      new GLTFLoader().load(MODELS[id].url, (g) => res(g.scene), undefined, () => res(null));
-    }));
+    cache.set(id, fetchGlb(MODELS[id]).then((buf) => new Promise((res) => {
+      new GLTFLoader().parse(buf, '', (g) => res(g.scene), () => res(null));
+    })).catch(() => null));
   }
   return cache.get(id);
 }
