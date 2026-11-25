@@ -10,9 +10,15 @@ export const SKELETONS = {
     sh: ['DEF-shoulder.L', 'DEF-shoulder.R'], ua: ['DEF-upper_arm.L', 'DEF-upper_arm.R'], fa: ['DEF-forearm.L', 'DEF-forearm.R'],
     th: ['DEF-thigh.L', 'DEF-thigh.R'], sn: ['DEF-shin.L', 'DEF-shin.R'], ft: ['DEF-foot.L', 'DEF-foot.R'], armDown: 1.35,
   },
+  // Mixamo (זוקו). צד "L" בשלד Mixamo הוא ה-+X, כמו ב-Rigify
+  mixamo: {
+    spine: ['mixamorig:Hips', 'mixamorig:Spine', 'mixamorig:Spine1', 'mixamorig:Spine2'], neck: ['mixamorig:Neck'], head: 'mixamorig:Head',
+    sh: ['mixamorig:LeftShoulder', 'mixamorig:RightShoulder'], ua: ['mixamorig:LeftArm', 'mixamorig:RightArm'], fa: ['mixamorig:LeftForeArm', 'mixamorig:RightForeArm'],
+    th: ['mixamorig:LeftUpLeg', 'mixamorig:RightUpLeg'], sn: ['mixamorig:LeftLeg', 'mixamorig:RightLeg'], ft: ['mixamorig:LeftFoot', 'mixamorig:RightFoot'], armDown: 0.75,
+  },
 };
 
-const MODELS = { toph: { url: 'models/toph.glb', skel: 'rigify' } };
+const MODELS = { toph: { url: 'models/toph.glb', skel: 'rigify' }, zuko: { url: 'models/zuko.glb', skel: 'mixamo' } };
 export const modelIds = () => Object.keys(MODELS);
 
 const cache = new Map();
@@ -35,7 +41,7 @@ export function loadGlb(url) {
 }
 export const loadCharacter = (id) => loadGlb(MODELS[id].url);
 
-const nm = (n) => n.replace(/\./g, '');
+const nm = (n) => n.replace(/[.:]/g, '');
 const AXX = new THREE.Vector3(1, 0, 0), AXZ = new THREE.Vector3(0, 0, 1), AXY = new THREE.Vector3(0, 1, 0);
 const qx = (a) => new THREE.Quaternion().setFromAxisAngle(AXX, a);
 const qz = (a) => new THREE.Quaternion().setFromAxisAngle(AXZ, a);

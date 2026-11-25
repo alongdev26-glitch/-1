@@ -7,6 +7,7 @@ export const ARENA_R = 8.4;         // רדיוס הרצפה הניתנת ללכ
 const SPEED = 4.6, GRAV = 24, JUMP_V = 9;
 const ATTACK = { dur: 0.46, hitAt: 0.5, range: 1.9, arc: 1.2, dmg: 8, kb: 5.5, cd: 0.1 };
 const SPECIAL = { dur: 0.9, hitAt: 0.55, radius: 3.6, dmg: 18, kb: 9.5, cd: 4 };
+const FIRE = { dur: 0.75, hitAt: 0.5, cd: 3 };          // זוקו: כדור אש
 const frame = (arr, t01) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(t01 * arr.length)))];
 
 export class Fighter {
@@ -19,7 +20,7 @@ export class Fighter {
     this.pos = new THREE.Vector3(); this.vel = new THREE.Vector3(); this.yaw = 0; this.yawVis = 0;
     this.maxHp = 100; this.hp = 100; this.lives = 3; this.score = 0;
     this.state = 'idle'; this.t = 0; this.hitDone = false; this.stun = 0; this.cdSpecial = 0; this.cdAttack = 0; this.walkPhase = 0; this.koT = 0;
-    this.flash = 0; this.events = [];
+    this.flash = 0; this.events = []; this.kind = id === 'zuko' ? 'fire' : 'quake'; this.cdMax = this.kind === 'fire' ? FIRE.cd : SPECIAL.cd;
   }
   reset(x, z, yaw) { this.pos.set(x, 0, z); this.vel.set(0, 0, 0); this.yaw = yaw; this.yawVis = yaw; this.hp = this.maxHp; this.state = 'idle'; this.t = 0; this.stun = 0; this.cdSpecial = 0; this.cdAttack = 0; this.koT = 0; }
   get alive() { return this.state !== 'ko'; }
@@ -43,7 +44,7 @@ export class Fighter {
       this.yaw = lerpAngle(this.yaw, toFoe, Math.min(1, dt * 10));
       if (cmd.jump && this.grounded) { this.vel.y = JUMP_V; this.state = 'air'; this.t = 0; }
       if (cmd.attack && this.cdAttack <= 0) { this._start('attack'); }
-      else if (cmd.special && this.cdSpecial <= 0) { this._start('special'); this.cdSpecial = SPECIAL.cd; }
+      else if (cmd.special && this.cdSpecial <= 0) { this._start('special'); this.cdSpecial = this.cdMax; }
     } else {
       this.vel.x *= 0.88; this.vel.z *= 0.88;
       if (this.state !== 'hit') this.yaw = lerpAngle(this.yaw, toFoe, Math.min(1, dt * 6));
@@ -52,8 +53,9 @@ export class Fighter {
         if (!this.hitDone && p >= ATTACK.hitAt) { this.hitDone = true; this._meleeHit(foe); }
         if (p >= 1) { this.state = 'idle'; this.t = 0; this.cdAttack = ATTACK.cd; }
       } else if (this.state === 'special') {
-        const p = this.t / SPECIAL.dur;
-        if (!this.hitDone && p >= SPECIAL.hitAt) { this.hitDone = true; this._shockwave(foe); }
+        const dur = this.kind === 'fire' ? FIRE.dur : SPECIAL.dur, at = this.kind === 'fire' ? FIRE.hitAt : SPECIAL.hitAt;
+        const p = this.t / dur;
+        if (!this.hitDone && p >= at) { this.hitDone = true; if (this.kind === 'fire') this._fireball(); else this._shockwave(foe); }
         if (p >= 1) { this.state = 'idle'; this.t = 0; }
       }
     }
@@ -78,6 +80,10 @@ export class Fighter {
     const ang = Math.abs(angleDiff(Math.atan2(dx, dz), this.yaw));
     if (dist <= ATTACK.range && ang <= ATTACK.arc && Math.abs(foe.pos.y - this.pos.y) < 1.4) foe.hurt(ATTACK.dmg, dx / dist, dz / dist, ATTACK.kb, this);
   }
+  _fireball() {
+    const dx = Math.sin(this.yaw), dz = Math.cos(this.yaw);
+    this.events.push({ type: 'fireball', x: this.pos.x + dx * 0.9, y: 1.1 + this.pos.y, z: this.pos.z + dz * 0.9, dx, dz });
+  }
   _shockwave(foe) {
     this.events.push({ type: 'wave', x: this.pos.x, z: this.pos.z, r: SPECIAL.radius });
     if (!foe || !foe.alive) return;
@@ -101,7 +107,7 @@ export class Fighter {
     // אנימציה
     let fr;
     if (this.state === 'attack') fr = frame(ANIMS.m2, this.t / ATTACK.dur);
-    else if (this.state === 'special') fr = frame(ANIMS.stomp, this.t / SPECIAL.dur);
+    else if (this.state === 'special') fr = frame(this.kind === 'fire' ? ANIMS.m1 : ANIMS.stomp, this.t / (this.kind === 'fire' ? FIRE.dur : SPECIAL.dur));
     else if (this.state === 'hit') fr = frame(ANIMS.hit, Math.min(0.99, this.t / 0.3));
     else if (this.state === 'air') fr = ANIMS.jump[0];
     else if (this.state === 'walk') fr = ANIMS.walk[Math.floor(this.walkPhase) % ANIMS.walk.length];
@@ -112,7 +118,7 @@ export class Fighter {
     this.rig.wrap.rotation.x = this.state === 'ko' ? -Math.min(1.5, this.koT * 3) : 0;
     this.rig.wrap.position.y = this.state === 'ko' ? 0.15 * Math.min(1, this.koT * 3) : 0;
     const f = this.flash > 0 ? 0.8 : 0;
-    this.rig.mats.forEach((m) => { if (m.emissive) { m.emissive.copy(m.color).multiplyScalar(0.25); if (f) m.emissive.setRGB(0.9, 0.2, 0.15); } });
+    this.rig.mats.forEach((m) => { if (m.emissive) { m.emissive.copy(m.color).multiplyScalar(0.32); if (f) m.emissive.setRGB(0.9, 0.2, 0.15); } });
   }
 }
 export const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));

@@ -39,6 +39,24 @@ export class Effects {
     m.position.set(x + Math.sin(a) * dist, 0.1, z + Math.cos(a) * dist); this.scene.add(m);
     this.items.push({ m, t: 0, life: 0.9, vy: 3 + Math.random() * 3, kind: 'rock' });
   }
+  fireball() {   // כדור אש: מחזיר רשת שאפשר להזיז; הזנב נוצר מכאן
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffb347 })));
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 10), new THREE.MeshBasicMaterial({ color: 0xff5a1a, transparent: true, opacity: 0.45, depthWrite: false })));
+    g.add(new THREE.PointLight(0xff8a30, 2.2, 7));
+    this.scene.add(g); return g;
+  }
+  trail(p) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff7a22, transparent: true, opacity: 0.7, depthWrite: false }));
+    m.position.copy(p); this.scene.add(m); this.items.push({ m, t: 0, life: 0.35, kind: 'trail' });
+  }
+  burst(p) {
+    for (let i = 0; i < 14; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 4), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffd27a : 0xff6a1a }));
+      m.position.copy(p); this.scene.add(m);
+      this.items.push({ m, t: 0, life: 0.5, v: new THREE.Vector3((Math.random() - 0.5) * 7, Math.random() * 5 + 1, (Math.random() - 0.5) * 7), kind: 'spark' });
+    }
+  }
   spark(p, heavy) {
     for (let i = 0; i < (heavy ? 10 : 6); i++) {
       const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), new THREE.MeshBasicMaterial({ color: heavy ? 0xffc36a : 0xffffff }));
@@ -51,6 +69,7 @@ export class Effects {
     this.items = this.items.filter((it) => {
       it.t += dt; const k = it.t / it.life;
       if (it.kind === 'wave') { const s = 1 + (it.r / 0.55) * k; it.m.scale.set(s, s, 1); it.m.material.opacity = 0.9 * (1 - k); }
+      else if (it.kind === 'trail') { it.m.scale.setScalar(Math.max(0.01, 1 - k)); it.m.material.opacity = 0.7 * (1 - k); }
       else if (it.kind === 'rock') { it.vy -= 14 * dt; it.m.position.y = Math.max(0.1, it.m.position.y + it.vy * dt); it.m.rotation.x += dt * 6; if (k > 0.7) it.m.scale.setScalar(Math.max(0.01, 1 - (k - 0.7) / 0.3)); }
       else { it.v.y -= 10 * dt; it.m.position.addScaledVector(it.v, dt); it.m.scale.setScalar(Math.max(0.01, 1 - k)); }
       if (k >= 1) { this.scene.remove(it.m); it.m.geometry.dispose(); it.m.material.dispose(); return false; }

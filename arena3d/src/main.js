@@ -13,8 +13,9 @@ const cam = new THREE.PerspectiveCamera(55, 2, 0.1, 200);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
-const CHARS = { toph: { label: 'טוף', icon: '🪨' }, blue: { label: 'האיש הכחול', icon: '🔵', lock: true } };
+const CHARS = { toph: { label: 'טוף', icon: '🪨' }, zuko: { label: 'זוקו', icon: '🔥' } };
 let sel = 'toph', sources = {}, fx, state = { running: false, paused: false, time: 180, over: false };
+const balls = [];
 let me, cpu, bot, camPos = new THREE.Vector3(0, 4, 9), camLook = new THREE.Vector3(), shake = 0, camFwd = new THREE.Vector3(0, 0, -1);
 const clock = new THREE.Clock();
 
@@ -24,7 +25,7 @@ function hud() {
   $('hp1').style.width = (me.hp / me.maxHp * 100) + '%'; $('hp2').style.width = (cpu.hp / cpu.maxHp * 100) + '%';
   gems($('g1'), me.lives); gems($('g2'), cpu.lives);
   const t = Math.max(0, Math.ceil(state.time)); $('timer').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-  $('cd-x').style.setProperty('--p', (me.cdSpecial / 4 * 100) + '%');
+  $('cd-x').style.setProperty('--p', (me.cdSpecial / me.cdMax * 100) + '%');
 }
 
 function menu() {
@@ -34,8 +35,10 @@ function menu() {
 
 function spawn() {
   [me, cpu].forEach((f) => f && scene.remove(f.group, f.shadow));
+  const foeId = sel === 'toph' ? 'zuko' : 'toph';
   me = new Fighter(sel, sources[sel], { name: CHARS[sel].label, human: true });
-  cpu = new Fighter(sel, sources[sel], { hueShift: 0.55, name: 'CPU' });   // אותו מודל בצבע אחר, עד שיהיה מודל שני
+  cpu = new Fighter(foeId, sources[foeId], { name: 'CPU · ' + CHARS[foeId].label });
+  balls.forEach((b) => scene.remove(b.mesh)); balls.length = 0;
   scene.add(me.group, me.shadow, cpu.group, cpu.shadow);
   bot = makeBot(3);
   roundReset();
@@ -78,6 +81,7 @@ function handleEvents(f, foe) {
   for (const e of f.events) {
     if (typeof e === 'object' && e.type === 'wave') { fx.wave(e.x, e.z, e.r); shake = Math.max(shake, 0.35); }
     if (typeof e === 'object' && e.type === 'hit') { fx.spark(new THREE.Vector3(f.pos.x, 1.2, f.pos.z), e.heavy); shake = Math.max(shake, e.heavy ? 0.4 : 0.15); }
+    if (typeof e === 'object' && e.type === 'fireball') balls.push({ mesh: fx.fireball(), x: e.x, y: e.y, z: e.z, dx: e.dx, dz: e.dz, owner: f, foe, life: 1.4, tr: 0 });
     if (typeof e === 'object' && e.type === 'ko') { state.koT = 1.8; state.koFor = f; shake = 0.5; }
   }
 }
@@ -85,6 +89,13 @@ function handleEvents(f, foe) {
 function step(dt) {
   if (!state.running || state.paused) return;
   state.time -= dt;
+  for (let i = balls.length - 1; i >= 0; i--) {                // כדורי אש (לפני עדכון הלוחמים, כדי שאירועי הפגיעה לא יאבדו)
+    const b = balls[i]; b.life -= dt; b.x += b.dx * 13 * dt; b.z += b.dz * 13 * dt; b.mesh.position.set(b.x, b.y, b.z); b.tr -= dt;
+    if (b.tr <= 0) { fx.trail(b.mesh.position); b.tr = 0.03; }
+    const t = b.foe, hitFoe = t.alive && Math.hypot(t.pos.x - b.x, t.pos.z - b.z) < 0.9 && Math.abs(t.pos.y + 1 - b.y) < 1.4;
+    if (hitFoe) t.hurt(14, b.dx, b.dz, 7, b.owner, true);
+    if (hitFoe || b.life <= 0 || Math.hypot(b.x, b.z) > 11) { if (hitFoe) { fx.burst(b.mesh.position); shake = Math.max(shake, 0.35); } scene.remove(b.mesh); balls.splice(i, 1); }
+  }
   const mv = worldMove();
   const myCmd = { x: mv.x, z: mv.z, attack: pressed('attack'), jump: pressed('jump'), special: pressed('special') };
   me.update(dt, myCmd, cpu); cpu.update(dt, bot(dt, cpu, me), me);
