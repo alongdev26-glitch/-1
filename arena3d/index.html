@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Arena 3D</title>
+<style>
+  :root { --hud:#0e1c2e; --acc:#f0b429; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; touch-action: none; }
+  html, body { margin: 0; height: 100%; background: #0b1220; overflow: hidden; font-family: Rubik, Heebo, system-ui, sans-serif; color: #fff; }
+  #app { position: fixed; inset: 0; }
+  canvas#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: absolute; inset: 0; pointer-events: none; }
+  .bar { position: absolute; top: 10px; height: 52px; min-width: 38%; background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.18); display: flex; align-items: center; padding: 0 12px; gap: 10px; }
+  .bar.p1 { left: 8px; border-left: 6px solid #fff; } .bar.p2 { right: 8px; flex-direction: row-reverse; border-right: 6px solid #e5484d; }
+  .bar .name { font-weight: 800; letter-spacing: .08em; font-size: 15px; min-width: 70px; }
+  .bar .hp { flex: 1; height: 12px; background: rgba(255,255,255,.14); border-radius: 6px; overflow: hidden; } .hp i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#58d68d,#f4d03f); transition: width .15s; }
+  .bar.p2 .hp i { float: right; background: linear-gradient(270deg,#ec7063,#f4d03f); }
+  .gems { display: flex; gap: 4px; } .gems b { width: 14px; height: 14px; transform: rotate(45deg); background: #9be7ff; border: 1px solid #fff; } .gems b.off { background: #25364a; border-color: #4a5d73; }
+  #timer { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.18); padding: 6px 18px; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  #pausebtn { position: absolute; top: 72px; right: 10px; width: 40px; height: 40px; border-radius: 50%; background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 16px; pointer-events: auto; }
+  #banner { position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-size: 54px; font-weight: 900; letter-spacing: .05em; text-shadow: 0 4px 18px #000; opacity: 0; transition: opacity .25s; }
+  #touch-left { position: absolute; left: 0; bottom: 0; width: 50%; height: 62%; pointer-events: auto; }
+  #joy-base { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border: 3px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.1); opacity: .35; left: 90px; top: 78%; }
+  #joy-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(255,255,255,.55); }
+  .btn { position: absolute; width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255,255,255,.6); background: rgba(255,255,255,.12); color: #fff; font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+  .btn.on { background: rgba(255,255,255,.4); transform: scale(.94); }
+  #btn-a { right: 24px; bottom: 28px; } #btn-b { right: 110px; bottom: 28px; } #btn-x { right: 34px; bottom: 116px; }
+  #btn-x .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) var(--p,0%), transparent 0); pointer-events: none; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(circle at 50% 40%, rgba(20,40,70,.85), rgba(6,10,18,.96)); text-align: center; }
+  .screen h1 { margin: 0; font-size: 44px; letter-spacing: .12em; } .screen p { margin: 0; opacity: .75; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .card { width: 150px; padding: 12px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06); border-radius: 12px; cursor: pointer; font-weight: 700; } .card.sel { border-color: var(--acc); box-shadow: 0 0 18px rgba(240,180,41,.45); } .card.lock { opacity: .4; cursor: default; }
+  .go { padding: 12px 42px; font-size: 22px; font-weight: 900; color: #1b1400; background: linear-gradient(#ffea79,#f4b400); border: 0; border-radius: 12px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="gl"></canvas>
+  <div class="hud" id="hud">
+    <div class="bar p1"><span class="name" id="n1">PLAYER</span><div class="hp"><i id="hp1"></i></div><div class="gems" id="g1"></div></div>
+    <div class="bar p2"><span class="name" id="n2">CPU</span><div class="hp"><i id="hp2"></i></div><div class="gems" id="g2"></div></div>
+    <div id="timer">3:00</div>
+    <button id="pausebtn" type="button">❚❚</button>
+    <div id="banner"></div>
+    <div id="touch-left"><div id="joy-base"><div id="joy-knob"></div></div></div>
+    <div class="btn" id="btn-b">B</div><div class="btn" id="btn-a">A</div><div class="btn" id="btn-x">X<span class="cd" id="cd-x"></span></div>
+  </div>
+  <div class="screen" id="menu">
+    <h1>ARENA</h1><p>קרב תלת-מימד אחד על אחד</p>
+    <div class="row" id="chars"></div>
+    <button class="go" id="start" type="button" disabled>טוען…</button>
+    <p style="font-size:12px">מקלדת: WASD תנועה • J מכה • K יכולת • רווח קפיצה</p>
+  </div>
+  <div class="screen hidden" id="over"><h1 id="over-t"></h1><p id="over-s"></p><button class="go" id="again" type="button">שוב</button></div>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
