@@ -8,6 +8,7 @@ import { moveIcon } from './icons.js';
 import { World3D } from '../three/world3d.js';
 import { createViewer, destroyViewers } from '../three/viewer.js';
 import { is3D, quality, setQuality, nextQuality, QUALITY_LABEL } from '../three/settings.js';
+import { warm } from '../three/models/rigged.js';
 import { pollPad, rumble, pad, blockInput } from './gamepad.js';
 import {
   menuScreen, selectScreen, mapScreen, vsScreen, hudScreen, pauseScreen, resultsScreen, storyScreen, storyResultsScreen, stageStates,
@@ -19,6 +20,7 @@ const $ = (id) => document.getElementById(id);
 const state = { sel: 'zuko', bots: 1, map: 'random', cpuLv: 5, cfg: null, game: null, last: null, mode: 'menu', paused: false,
   story: { realm: 'air', sel: null, chosen: 'zuko' }, over: null };
 let vsTimer = null;
+if (is3D()) warm(['toph']);   // טוען מראש את מודלי התלת-מימד האמיתיים (נכשל בשקט: נשארים עם האיור)
 
 // ---- תלת-מימד ----
 function start3D(fighters) {

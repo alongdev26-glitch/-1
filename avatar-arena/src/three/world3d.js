@@ -7,6 +7,11 @@ import { shadowTexture, DIST } from './helpers.js';
 import { ARENAS } from './arenas/index.js';
 import { FollowCam } from './camera.js';
 import { ELEMENTS } from '../data/characters.js';
+import { RIGS } from '../data/rigs.js';
+import { ANIMS } from '../anim/bake.js';
+import { hasModel, isReady, createRigged } from './models/rigged.js';
+
+const POSE_KEY = /^bk_[a-z]+_([a-z0-9]+)_(\d+)$/;
 
 const W = 960, H = 540;
 
@@ -31,6 +36,8 @@ export class World3D {
     this.t0 = performance.now();
     this.light = { glow: [0, 0, 0], amb: [1, 1, 1] };
     this.shadowTex = shadowTexture();
+    this.scene.add(new THREE.DirectionalLight(0xfff0e0, 2.4)); // תאורה לדמויות עם מודל (האיורים לא מושפעים)
+    this.scene.children[this.scene.children.length - 1].position.set(-300, 500, 700);
     if (this.full) {
       this.arena = arenaFn(map);
       this.scene.add(this.arena.group);
@@ -50,12 +57,17 @@ export class World3D {
       const front = new THREE.Mesh(sharedGeometry(), makeMaterial(1, rim));
       const back = new THREE.Mesh(sharedGeometry(), makeMaterial(-1, rim));
       g.add(front, back);
+      let rig = null;
+      if (hasModel(f.def.id) && isReady(f.def.id)) {
+        rig = createRigged(f.def.id);
+        if (rig) { g.add(rig.root); front.visible = back.visible = false; }
+      }
       g.position.z = f.uid * 4;
       this.scene.add(g);
       const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.shadowTex, transparent: true, depthWrite: false, fog: false }));
       shadow.position.z = -3;
       this.scene.add(shadow);
-      this.items.set(f.uid, { g, front, back, shadow, sx: f.vis.flipX ? -1 : 1, tilt: 0 });
+      this.items.set(f.uid, { g, front, back, rig, yaw: f.facing > 0 ? Math.PI / 2 - 0.4 : -Math.PI / 2 + 0.4, shadow, sx: f.vis.flipX ? -1 : 1, tilt: 0 });
       f.vis.renderWebGL = () => {};   // לא מצייר ב-Phaser
       f.vis.renderCanvas = () => {};
       this.hidden.push(f.vis);
@@ -76,6 +88,7 @@ export class World3D {
       it.g.visible = v.visible && v.alpha > 0.01;
       it.shadow.visible = it.g.visible && (f.body.blocked.down || f.body.touching.down);
       if (!it.g.visible) continue;
+      if (it.rig) { this.syncRig(f, it, v); continue; }
       const src = v.texture.getSourceImage && v.texture.getSourceImage();
       if (!src || !src.width) { it.g.visible = false; continue; }
       const entry = buildTex(v.texture.key, src);
@@ -102,6 +115,33 @@ export class World3D {
       it.g.rotation.set(0, it.tilt, (-v.angle * Math.PI) / 180);
     }
     this.r.render(this.scene, this.cam);
+  }
+
+  // לוחם עם מודל תלת-מימד אמיתי: פריים האנימציה (לפי שם הטקסטורה האפויה) הופך לסיבובי עצמות
+  syncRig(f, it, v) {
+    const dh = Math.abs(v.displayHeight), dw = Math.abs(v.displayWidth);
+    const mk = POSE_KEY.exec(v.texture.key);
+    const anim = mk && ANIMS[mk[1]] ? ANIMS[mk[1]] : ANIMS.idle;
+    it.rig.setPose(anim[mk ? Math.min(+mk[2], anim.length - 1) : 0], (RIGS[f.def.id] || {}).strike || 0);
+    const sc = (dh * 0.95) / it.rig.height;
+    it.rig.root.scale.setScalar(sc);
+    it.rig.root.position.y = (v.y - f.body.bottom) - it.rig.footY * sc + 2;
+    const target = f.facing > 0 ? Math.PI / 2 - 0.4 : -Math.PI / 2 + 0.4;
+    let d = target - it.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+    it.yaw += d * 0.3;
+    it.rig.root.rotation.y = it.yaw;
+    const tinted = v.isTinted && v.tintFill, c = v.tintTopLeft;
+    it.rig.mats.forEach((m) => {
+      if (m.emissive && !tinted) m.emissive.copy(m.color).multiplyScalar(0.3);   // קריאות מול זירה כהה
+      else if (m.emissive) m.emissive.setRGB(tinted ? ((c >> 16) & 255) / 255 * 0.9 : 0, tinted ? ((c >> 8) & 255) / 255 * 0.9 : 0, tinted ? (c & 255) / 255 * 0.9 : 0);
+      m.transparent = v.alpha < 0.99; m.opacity = v.alpha;
+    });
+    it.g.position.x = v.x - W / 2;
+    it.g.position.y = H / 2 - v.y;
+    it.shadow.position.set(v.x - W / 2, H / 2 - f.body.bottom + 2, -3);
+    it.shadow.scale.set(dw * 0.6, 18, 1);
+    it.g.scale.x = 1;
+    it.g.rotation.set(0, 0, (-v.angle * Math.PI) / 180);
   }
 
   // מצב המצלמה, להעברה ל-Phaser (רק ברמת "מלא")
