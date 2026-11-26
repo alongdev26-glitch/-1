@@ -2,20 +2,24 @@
 import * as THREE from 'three';
 import { loadGlb } from './rig.js';
 
-const ARENA_SCALE = 2.2;
+export const ARENA_SCALE = 3.2;
+const HIDE = new Set(['Cylinder_s', 'Cylinder001_s', 'Cylinder003_s', 'Cylinder004_s']);   // המעקה והקיר החיצוני (בלי מעקה אפשר ליפול החוצה)
 export async function buildWorld(scene) {
   scene.background = skyTexture();
-  scene.fog = new THREE.Fog(0x16212e, 28, 70);
+  scene.fog = new THREE.Fog(0x16212e, 45, 120);
   scene.add(new THREE.HemisphereLight(0xcfe2ff, 0x3a3328, 0.85));
   const sun = new THREE.DirectionalLight(0xfff1d8, 1.25); sun.position.set(-6, 14, 9); scene.add(sun);
   const arena = (await loadGlb('models/arena.glb')).clone(true);
   arena.scale.setScalar(ARENA_SCALE);
   arena.position.y = 0.32 * ARENA_SCALE;        // הרצפה (דיסק) נמצאת ב-y=-0.32 במודל: מעלים אותה ל-0
+  arena.traverse((o) => { if (o.isMesh && HIDE.has(o.name.replace(/\./g, ''))) o.visible = false; });
   arena.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); if (o.material.emissive) o.material.emissive.copy(o.material.color).multiplyScalar(0.08); if (o.material.name === 'Material.001') o.material.color.setScalar(0.30); } });
   scene.add(arena);
+  const edge = new THREE.Mesh(new THREE.RingGeometry(12.75, 13.15, 128), new THREE.MeshBasicMaterial({ color: 0x4fe0f0, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));   // קו קצה זוהר: מאיפה נופלים
+  edge.rotation.x = -Math.PI / 2; edge.position.y = 0.03; scene.add(edge);
   // קרקע רחוקה (חושך סביב הזירה) כדי שלא נראה חלל ריק
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(120, 48), new THREE.MeshStandardMaterial({ color: 0x1b222b, roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -3; scene.add(ground);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(400, 48), new THREE.MeshStandardMaterial({ color: 0x1b222b, roughness: 1 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -60; scene.add(ground);
   return { arena };
 }
 function skyTexture() {
@@ -64,6 +68,18 @@ export class Effects {
     const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(1.7, 1), new THREE.MeshStandardMaterial({ color: 0x77664a, flatShading: true, emissive: 0x552200, emissiveIntensity: 0.6 })); rock.position.set(x, 20, z);
     const g = new THREE.Group(); g.add(shadow, ring, rock);
     this._add(g, { kind: 'meteor', life: 0.85, x, z, r, shadow, ring, rock, onImpact });
+  }
+  charge(x, z, color) {            // חלקיקים נשאבים פנימה אל הדמות (טעינת סופר)
+    for (let i = 0; i < 4; i++) {
+      const a = Math.random() * Math.PI * 2, d = 2.5 + Math.random() * 1.5, m = sph(0.08 + Math.random() * 0.07, color, 0.95, 6);
+      m.position.set(x + Math.sin(a) * d, 0.2 + Math.random() * 2.2, z + Math.cos(a) * d); this._add(m, { kind: 'suck', life: 0.4, cx: x, cz: z, sx: m.position.x, sy: m.position.y, sz: m.position.z });
+    }
+  }
+  superBurst(x, z, color) {        // פרץ אנרגיה: טבעות, עמוד אור, הבזק
+    this.ring(x, z, 9, color, 0.7, 0.08); this.ring(x, z, 6, 0xffffff, 0.5, 0.1); this.ring(x, z, 12, color, 0.95, 0.06);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.3, 40, 20, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    beam.position.set(x, 20, z); this._add(beam, { kind: 'beam', life: 0.9 });
+    this.dust(x, z, 18, 4); this.burst({ x, y: 1, z }, 40, color); this.flashLight(color, 14, x, 3, z, 0.8);
   }
   fireball() {
     const g = new THREE.Group();
@@ -121,6 +137,8 @@ export class Effects {
         }
         case 'flame': it.v.y += 1.5 * dt; it.m.position.addScaledVector(it.v, dt); it.m.scale.setScalar(1 + k * 1.1); it.m.material.opacity = 0.8 * (1 - k); break;
         case 'bolt': it.m.visible = Math.random() > 0.15; it.m.children.forEach((c) => (c.material.opacity = (c.material.opacity > 0.9 ? 1 : 0.55) * (1 - k * 0.8))); break;
+        case 'suck': { const e = k * k; it.m.position.set(it.sx + (it.cx - it.sx) * e, it.sy + (1 - it.sy) * e, it.sz + (it.cz - it.sz) * e); break; }
+        case 'beam': it.m.scale.set(1 + k * 1.5, 1, 1 + k * 1.5); it.m.material.opacity = 0.7 * (1 - k); break;
         case 'trail': it.m.scale.setScalar(Math.max(0.01, 1 - k)); it.m.material.opacity = 0.7 * (1 - k); break;
         default: it.v.y -= 10 * dt; it.m.position.addScaledVector(it.v, dt); it.m.scale.setScalar(Math.max(0.01, 1 - k));
       }

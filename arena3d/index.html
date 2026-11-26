@@ -20,7 +20,7 @@
   .gems { display: flex; gap: 4px; } .gems b { width: 14px; height: 14px; transform: rotate(45deg); background: #9be7ff; border: 1px solid #fff; } .gems b.off { background: #25364a; border-color: #4a5d73; }
   #timer { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.18); padding: 6px 18px; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
   #pausebtn { position: absolute; top: 72px; right: 10px; width: 40px; height: 40px; border-radius: 50%; background: rgba(14,28,46,.82); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 16px; pointer-events: auto; }
-  #banner { position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-size: 54px; font-weight: 900; letter-spacing: .05em; text-shadow: 0 4px 18px #000; opacity: 0; transition: opacity .25s; }
+  #banner { direction: ltr; position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-size: 54px; font-weight: 900; letter-spacing: .05em; text-shadow: 0 4px 18px #000; opacity: 0; transition: opacity .25s; }
   #touch-left { position: absolute; left: 0; bottom: 0; width: 50%; height: 62%; pointer-events: auto; }
   #joy-base { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border: 3px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.1); opacity: .35; left: 90px; top: 78%; }
   #joy-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(255,255,255,.55); }
@@ -44,6 +44,8 @@
   #card .mv i.ult { border-color: #f0b429; background: rgba(240,180,41,.2); }
   #menu-btns { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; width: min(40vw, 230px); }
   #menu-btns button { padding: 10px 14px; font-weight: 800; font-size: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,.35); background: rgba(10,20,34,.8); color: #fff; } #menu-btns .go { font-size: 22px; border: 0; color: #1b1400; }
+  #movelbl { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); font-size: 18px; font-weight: 900; padding: 4px 14px; border-radius: 20px; background: rgba(10,20,34,.75); opacity: 0; transition: opacity .15s; text-shadow: 0 2px 4px #000; }
+  #btn-x.used { opacity: .45; filter: grayscale(1); } #btn-x.active { border-color: #7fd0ff; box-shadow: 0 0 22px 6px rgba(127,208,255,.9); font-size: 26px; }
   #flash { position: absolute; inset: 0; background: #cfe6ff; opacity: 0; pointer-events: none; transition: opacity .25s; }
   #howto { background: rgba(6,10,18,.94); justify-content: flex-start; padding-top: 8px; overflow: auto; }
   #howto h1 { font-size: 26px; margin: 4px 0 0; background: #fff; color: #111; padding: 4px 34px; letter-spacing: .08em; }
@@ -65,7 +67,7 @@
     <button id="pausebtn" type="button">❚❚</button>
     <div id="banner"></div>
     <div id="touch-left"><div id="joy-base"><div id="joy-knob"></div></div></div>
-    <div class="btn" id="btn-b">B</div><div class="btn" id="btn-a">A</div><div class="btn" id="btn-x">X<span class="cd" id="cd-x"></span></div>
+    <div class="btn" id="btn-b">B</div><div class="btn" id="btn-a">A</div><div class="btn" id="btn-x"><span id="xl">X</span><span class="cd" id="cd-x"></span></div><div id="movelbl"></div>
   </div>
   <div id="flash"></div>
   <div class="screen clear" id="menu">

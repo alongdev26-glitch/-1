@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { buildWorld, Effects } from './world.js';
 import { loadCharacter, modelIds } from './rig.js';
 import { Fighter } from './fighter.js';
-import { initInput, currentMove, pressed, held, joyDir } from './input.js';
+import { initInput, currentMove, pressed, held, dirOf } from './input.js';
 import { makeBot } from './ai.js';
-import { MOVES, DIRS, DEFENSE, ELEMENT } from './moves.js';
+import { MOVES, DIRS, DEFENSE, ELEMENT, SUPER_TIME } from './moves.js';
 
 const $ = (id) => document.getElementById(id);
 const renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true });
@@ -25,13 +25,19 @@ const sel = () => ROSTER[selIdx].id;
 const later = (delay, fn) => timers.push({ t: delay, fn });
 function flash(op = 0.7) { const f = $('flash'); f.style.transition = 'none'; f.style.opacity = op; requestAnimationFrame(() => { f.style.transition = 'opacity .35s'; f.style.opacity = 0; }); }
 
+const ARR = { up: '⬆️', down: '⬇️', left: '⬅️', right: '➡️', none: '👊' };
+const arrow = (d) => ARR[d] || '';
+function label(text) { const l = $('movelbl'); l.textContent = text; l.style.opacity = 1; clearTimeout(label.t); label.t = setTimeout(() => (l.style.opacity = 0), 650); }
 function gems(el, n) { el.innerHTML = Array.from({ length: 3 }, (_, i) => `<b class="${i < n ? '' : 'off'}"></b>`).join(''); }
 function banner(text, ms = 1100) { const b = $('banner'); b.textContent = text; b.style.opacity = text ? 1 : 0; clearTimeout(banner.t); if (text && ms < 1e8) banner.t = setTimeout(() => (b.style.opacity = 0), ms); }
 function hud() {
   for (const [el, f] of [[$('pct1'), me], [$('pct2'), cpu]]) { el.textContent = Math.floor(f.pct) + '%'; el.style.color = `hsl(${Math.max(0, 60 - f.pct * 0.45)} 95% ${f.pct > 120 ? 52 : 62}%)`; }
   gems($('g1'), me.lives); gems($('g2'), cpu.lives);
   const t = Math.max(0, Math.ceil(state.time)); $('timer').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-  $('cd-x').style.setProperty('--p', me.ult + '%'); $('btn-x').classList.toggle('ready', me.ult >= 100);
+  const bx = $('btn-x');
+  if (me.superT > 0) { bx.classList.add('active'); bx.classList.remove('ready'); $('xl').textContent = Math.ceil(me.superT); $('cd-x').style.setProperty('--p', (me.superT / SUPER_TIME * 100) + '%'); }
+  else if (me.superUsed) { bx.classList.remove('active', 'ready'); bx.classList.add('used'); $('xl').textContent = '✓'; $('cd-x').style.setProperty('--p', '0%'); }
+  else { bx.classList.remove('active', 'used'); bx.classList.toggle('ready', me.ult >= 100); $('xl').textContent = MOVES[me.id][5].icon; $('cd-x').style.setProperty('--p', me.ult + '%'); }
 }
 
 // ---------- מסך בית ----------
@@ -61,7 +67,7 @@ function howtoHTML(id) {
   return `<h1>איך משחקים</h1>
     <div class="ht-grid" style="margin-top:10px"><div class="ht-row">${joyIcon('none')}<span class="nm">תזוזה</span></div><div class="ht-row"><span class="ab">A</span><span class="nm">תקיפה</span></div><div class="ht-row" style="grid-column:1/3"><span class="ab">B</span><span class="nm">הגנה</span></div></div>
     <div class="ht-grid"><div>${atk}</div><div>${def}</div></div>
-    <div class="ht-row" style="margin-top:10px"><span class="ab" style="border-color:#f0b429">X</span><span class="nm">אולטימטיבית: ${mv[5].name} (נטענת בקרב)</span></div>
+    <div class="ht-row" style="margin-top:10px"><span class="ab" style="border-color:#f0b429">X</span><span class="nm">${mv[5].name} — טרנספורמציה חד-פעמית ל-30 שניות (נטענת בקרב): חזק, מהיר וקשה להעיף</span></div>
     <p style="font-size:12px;opacity:.75;margin-top:6px">המטרה: להעיף את היריב מהזירה! ככל שהאחוז גבוה יותר הוא עף רחוק יותר. אם עפת החוצה: לחץ B באוויר לקפיצת חזרה. למעלה = לכיוון היריב, למטה = לאחור.</p>
     <button class="go" id="ht-go" type="button">הבנתי</button>`;
 }
@@ -86,9 +92,9 @@ function spawn() {
   scene.add(me.group, me.shadow, cpu.group, cpu.shadow);
   bot = makeBot(3); roundReset();
   $('n1').textContent = me.name; $('n2').textContent = cpu.name;
-  const m = MOVES[sel()]; $('btn-a').innerHTML = '<span style="font-size:15px">A</span>'; $('btn-x').firstChild.textContent = m[5].icon;
+  $('btn-a').innerHTML = '<span style="font-size:15px">A</span>'; $('btn-x').classList.remove('used', 'active', 'ready');
 }
-function roundReset(loser) { me.reset(-3, 3, Math.PI * 0.75); cpu.reset(3, -3, -Math.PI * 0.25); if (loser) loser.pct = 0; }
+function roundReset(loser) { me.reset(-4.5, 4.5, Math.PI * 0.75); cpu.reset(4.5, -4.5, -Math.PI * 0.25); if (loser) loser.pct = 0; }
 function startMatch() {
   spawn(); state = { mode: 'match', paused: false, time: 180, over: false, koT: 0, hitstop: 0 };
   $('menu').classList.add('hidden'); $('over').classList.add('hidden'); $('pause').classList.add('hidden'); $('hud').style.display = ''; banner('FIGHT!', 900);
@@ -106,7 +112,7 @@ function updateCamera(dt) {
   const dx = me.pos.x - cpu.pos.x, dz = me.pos.z - cpu.pos.z, d = Math.hypot(dx, dz) || 1;
   const bx = dx / d, bz = dz / d, dist = THREE.MathUtils.clamp(5.6 + d * 0.2, 6, 8);
   const want = new THREE.Vector3(me.pos.x + bx * dist - bz * 1.9, 3.4 + d * 0.07, me.pos.z + bz * dist + bx * 1.9);
-  const c = Math.hypot(want.x, want.z); if (c > 14) { want.x *= 14 / c; want.z *= 14 / c; }
+  const c = Math.hypot(want.x, want.z); if (c > 24) { want.x *= 24 / c; want.z *= 24 / c; }
   camPos.lerp(want, Math.min(1, dt * 4));
   camLook.lerp(new THREE.Vector3(me.pos.x - bx * Math.min(d, 6) * 0.5, 1.0, me.pos.z - bz * Math.min(d, 6) * 0.5), Math.min(1, dt * 6));
   cam.position.copy(camPos);
@@ -123,19 +129,20 @@ function handleEvents(f, foe) {
   const evs = f.events.splice(0);
   for (const e of evs) {
     switch (e.type) {
-      case 'start': if (e.idx === 5) { banner(e.move.name, 900); shake = Math.max(shake, 0.15); } break;
+      case 'start': if (f === me) label(DIRS[e.idx] ? arrow(DIRS[e.idx]) + ' ' + e.move.name : e.move.name); if (e.idx === 5) { banner(e.move.name, 1200); shake = Math.max(shake, 0.2); } break;
+      case 'charge': fx.charge(e.x, e.z, ELEMENT[f.id].sup); shake = Math.max(shake, 0.12); break;
+      case 'superburst': fx.superBurst(e.x, e.z, ELEMENT[f.id].sup); flash(0.9); shake = 1.0; state.hitstop = 0.12; banner('SUPER!', 1400); break;
+      case 'superend': if (f === me) banner('', 1); break;
       case 'punch': fx.punch(e.x, e.y, e.z, ELEMENT[f.id].glow); break;
       case 'hit': fx.spark(new THREE.Vector3(f.pos.x, f.pos.y + 1.2, f.pos.z), e.heavy, hexOf(e.from)); shake = Math.max(shake, e.soft ? 0.05 : (e.heavy ? 0.4 : 0.15) + Math.min(0.3, e.pct / 400)); if (e.heavy || e.pct > 100) state.hitstop = 0.06; break;
       case 'block': fx.punch(f.pos.x, 1.2, f.pos.z, 0x9fd0ff); fx.dust(f.pos.x, f.pos.z, 3, 0.6); shake = Math.max(shake, 0.08); break;
-      case 'dodge': fx.dust(f.pos.x, f.pos.z, 7, 0.9); break;
+      case 'dodge': fx.dust(f.pos.x, f.pos.z, 7, 0.9); if (f === me && DEFENSE[e.dir]) label(arrow(e.dir) + ' ' + DEFENSE[e.dir].name); break;
       case 'wave': fx.wave(e.x, e.z, e.r); shake = Math.max(shake, 0.35); break;
       case 'firering': fx.firering(e.x, e.z, e.r); shake = Math.max(shake, 0.3); break;
       case 'sweep': fx.sweep(e.x, e.z, e.yaw); break;
       case 'flame': fx.flame(e.x, e.y, e.z, e.dx, e.dz, e.n, e.big); break;
       case 'proj': balls.push({ kind: e.kind, mesh: e.kind === 'boulder' ? fx.boulder() : fx.fireball(), x: e.x, y: e.y, z: e.z, dx: e.dx, dz: e.dz, speed: e.speed, dmg: e.dmg, kb: e.kb, owner: f, foe, life: 1.6, tr: 0 }); break;
       case 'pillar': fx.pillar(e.x, e.z); shake = Math.max(shake, 0.2); later(0.2, () => damageNear(f, foe, e.x, e.z, 1.5, e.dmg, e.kb, true)); break;
-      case 'meteor': fx.ring(e.x, e.z, e.r, 0xff5a2a, 0.8); fx.meteor(e.x, e.z, e.r, () => { fx.wave(e.x, e.z, e.r * 1.2); fx.burst({ x: e.x, y: 0.6, z: e.z }, 24, 0xffaa55); flash(0.45); shake = 0.7; damageNear(f, foe, e.x, e.z, e.r, e.dmg, e.kb, true); }); break;
-      case 'lightning': fx.ring(e.x, e.z, e.r, 0x9fd0ff, 0.4); later(0.4, () => { fx.lightning(e.x, e.z); flash(0.85); shake = 0.6; state.hitstop = 0.08; damageNear(f, foe, e.x, e.z, e.r, e.dmg, e.kb, true); }); break;
       case 'ko': state.koT = 1.3; state.koFor = f; shake = 0.5; banner('OUT!', 900); break;
       case 'airjump': fx.dust(f.pos.x, f.pos.z, 4, 0.5, 0xcfe6ff); break;
       default: break;
@@ -152,9 +159,9 @@ function step(dt) {
     if (b.kind === 'boulder') b.mesh.rotation.x += dt * 9; b.tr -= dt; if (b.tr <= 0) { b.kind === 'boulder' ? fx.dust(b.x, b.z, 1, 0.3) : fx.trail(b.mesh.position); b.tr = 0.04; }
     const t = b.foe, hitFoe = t.alive && Math.hypot(t.pos.x - b.x, t.pos.z - b.z) < 0.95 && Math.abs(t.pos.y + 1 - b.y) < 1.5;
     if (hitFoe) t.hurt(b.dmg, b.dx, b.dz, b.kb, b.owner, true);
-    if (hitFoe || b.life <= 0 || Math.hypot(b.x, b.z) > 11) { if (hitFoe) { b.kind === 'boulder' ? (fx.dust(b.x, b.z, 8, 1), fx.spark(b.mesh.position, true, 0xc9b27d)) : fx.burst(b.mesh.position); shake = Math.max(shake, 0.35); } scene.remove(b.mesh); balls.splice(i, 1); }
+    if (hitFoe || b.life <= 0 || Math.hypot(b.x, b.z) > 22) { if (hitFoe) { b.kind === 'boulder' ? (fx.dust(b.x, b.z, 8, 1), fx.spark(b.mesh.position, true, 0xc9b27d)) : fx.burst(b.mesh.position); shake = Math.max(shake, 0.35); } scene.remove(b.mesh); balls.splice(i, 1); }
   }
-  const mv = worldMove(), dir = joyDir();
+  const mv = worldMove(), dir = pressed('a') ? dirOf('a') : dirOf('b');
   me.update(dt, { x: mv.x, z: mv.z, dir, a: pressed('a'), b: pressed('b'), bHold: held('b'), ult: pressed('ult') }, cpu);
   cpu.update(dt, bot(dt, cpu, me), me);
   for (let n = 0; n < 3; n++) { handleEvents(me, cpu); handleEvents(cpu, me); }

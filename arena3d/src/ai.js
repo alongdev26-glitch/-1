@@ -11,7 +11,7 @@ export function makeBot(level = 3) {
     // הגנה: אם היריב תוקף מקרוב
     if (foe.state === 'move' && d < 3 && defT <= 0 && Math.random() < 0.012 * level) { defT = 1.2; defDir = ['down', 'up', 'left', 'right'][Math.floor(Math.random() * 4)]; cmd.b = true; cmd.dir = defDir; return cmd; }
     if (foe.state === 'move' && d < 2.6 && Math.random() < 0.02 * level) { cmd.bHold = true; return cmd; }
-    if (me.ult >= 100 && d < 8 && Math.random() < 0.04) { cmd.ult = true; return cmd; }
+    if (me.ult >= 100 && !me.superUsed && me.superT <= 0 && Math.random() < 0.05) { cmd.ult = true; return cmd; }
     if (mode === 'approach') { cmd.x = fx; cmd.z = fz; }
     else if (mode === 'range') { if (d > 3.2 && d < 8 && Math.random() < 0.06 * level) { cmd.a = true; cmd.dir = 'right'; } else { cmd.x = fx * 0.4; cmd.z = fz * 0.4; } }
     else if (mode === 'attack') {
@@ -20,7 +20,7 @@ export function makeBot(level = 3) {
     }
     else if (mode === 'strafe') { cmd.x = -fz * side * 0.8; cmd.z = fx * side * 0.8; }
     else { cmd.x = -fx * 0.8; cmd.z = -fz * 0.8; }
-    const c = Math.hypot(me.pos.x, me.pos.z); if (c > 7.3) { cmd.x -= me.pos.x / c * 1.2; cmd.z -= me.pos.z / c * 1.2; }
+    const c = Math.hypot(me.pos.x, me.pos.z); if (c > 11) { cmd.x -= me.pos.x / c * 1.2; cmd.z -= me.pos.z / c * 1.2; }
     if (Math.random() < 0.002 * level && me.grounded && !cmd.a) { cmd.b = true; cmd.dir = side > 0 ? 'right' : 'left'; }
     return cmd;
   };
